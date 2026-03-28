@@ -263,6 +263,13 @@ h2 {
   border-color: #9fd7c7;
 }
 
+.camp-search-input {
+  flex: 0 1 620px;
+  width: min(100%, 620px);
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+
 .filter-group {
   display: flex;
   flex-wrap: wrap;

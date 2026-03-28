@@ -78,7 +78,7 @@ function CampPage() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="search-input"
+            className="search-input camp-search-input"
             placeholder="팀명, 포지션, 해커톤명으로 검색"
           />
 
