@@ -277,6 +277,16 @@ h2 {
   appearance: none;
 }
 
+.camp-toolbar {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.camp-status-filter {
+  flex-wrap: nowrap;
+}
+
 .filter-group {
   display: flex;
   flex-wrap: wrap;
@@ -793,11 +803,13 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 86px;
   padding: 8px 14px;
   border-radius: 8px;
   font-size: 0.82rem;
   font-weight: 700;
   border: 1px solid;
+  white-space: nowrap;
 }
 
 .status-outline--open {
@@ -1881,6 +1893,15 @@ h2 {
   .camp-grid {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .camp-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .camp-status-filter {
+    flex-wrap: wrap;
   }
 
   .team-card {

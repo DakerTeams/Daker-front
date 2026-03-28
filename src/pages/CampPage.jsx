@@ -1,22 +1,14 @@
 import { useMemo, useState } from 'react'
 import { teams } from '../mock/teams.js'
 
-const hackathonFilters = [
-  { key: 'all', label: '전체' },
-  { key: 'ai-summit-2026', label: 'AI Summit 2026' },
-  { key: 'mobile-craft-day', label: 'Mobile Craft Day' },
-  { key: 'independent', label: '해커톤 미정' },
-]
-
 const openFilters = [
-  { key: 'all', label: '전체 상태' },
+  { key: 'all', label: '전체' },
   { key: 'open', label: '모집중' },
   { key: 'closed', label: '마감' },
 ]
 
 function CampPage() {
   const [query, setQuery] = useState('')
-  const [hackathonFilter, setHackathonFilter] = useState('all')
   const [openFilter, setOpenFilter] = useState('all')
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false)
 
@@ -24,9 +16,6 @@ function CampPage() {
     const normalizedQuery = query.trim().toLowerCase()
 
     return teams.filter((team) => {
-      const matchesHackathon =
-        hackathonFilter === 'all' || team.hackathonSlug === hackathonFilter
-
       const matchesOpen =
         openFilter === 'all' ||
         (openFilter === 'open' && team.isOpen) ||
@@ -40,9 +29,9 @@ function CampPage() {
           position.toLowerCase().includes(normalizedQuery),
         )
 
-      return matchesHackathon && matchesOpen && matchesQuery
+      return matchesOpen && matchesQuery
     })
-  }, [hackathonFilter, openFilter, query])
+  }, [openFilter, query])
 
   return (
     <section className="page-section">
@@ -73,7 +62,7 @@ function CampPage() {
       </section>
 
       <section className="surface-card">
-        <div className="toolbar toolbar--stack">
+        <div className="toolbar camp-toolbar">
           <input
             type="search"
             value={query}
@@ -82,36 +71,19 @@ function CampPage() {
             placeholder="팀명, 포지션, 해커톤명으로 검색"
           />
 
-          <div className="filter-cluster">
-            <div className="filter-group" aria-label="해커톤 필터">
-              {hackathonFilters.map((filter) => (
-                <button
-                  key={filter.key}
-                  type="button"
-                  className={`filter-chip${
-                    hackathonFilter === filter.key ? ' filter-chip--active' : ''
-                  }`}
-                  onClick={() => setHackathonFilter(filter.key)}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="filter-group" aria-label="모집 상태 필터">
-              {openFilters.map((filter) => (
-                <button
-                  key={filter.key}
-                  type="button"
-                  className={`filter-chip${
-                    openFilter === filter.key ? ' filter-chip--active' : ''
-                  }`}
-                  onClick={() => setOpenFilter(filter.key)}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
+          <div className="filter-group camp-status-filter" aria-label="모집 상태 필터">
+            {openFilters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                className={`filter-chip${
+                  openFilter === filter.key ? ' filter-chip--active' : ''
+                }`}
+                onClick={() => setOpenFilter(filter.key)}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
