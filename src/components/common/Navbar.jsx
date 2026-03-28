@@ -57,7 +57,8 @@ function Navbar() {
         <div className="navbar__auth">
           {user ? (
             <>
-              <div className="navbar__profile">
+              <div className="navbar__role-chip">role: user ↻</div>
+              <Link to="/me" className="navbar__profile">
                 <span className="navbar__profile-avatar">
                   {user.nickname?.slice(0, 1).toUpperCase()}
                 </span>
@@ -65,7 +66,7 @@ function Navbar() {
                   <strong>{user.nickname}</strong>
                   <span>{user.email}</span>
                 </div>
-              </div>
+              </Link>
               <button
                 type="button"
                 className="navbar__auth-button navbar__auth-button--ghost"

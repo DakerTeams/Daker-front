@@ -140,6 +140,20 @@ select {
   gap: 12px;
 }
 
+.navbar__role-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .navbar__profile {
   display: flex;
   align-items: center;
@@ -1750,6 +1764,238 @@ h2 {
   font-weight: 800;
 }
 
+.mypage-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 38px 44px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 92% 30%, rgba(22, 199, 154, 0.14), transparent 22%),
+    #171717;
+  color: #ffffff;
+}
+
+.mypage-hero__profile {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.mypage-hero__avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  border: 3px solid #16c79a;
+  background: #e8faf3;
+  color: #8fa8cc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+}
+
+.mypage-hero__copy h1 {
+  font-size: 2rem;
+  margin-bottom: 6px;
+}
+
+.mypage-hero__copy p {
+  color: rgba(255, 255, 255, 0.58);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 600;
+}
+
+.mypage-hero__copy p span {
+  margin: 0 8px;
+}
+
+.mypage-hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 38px;
+  margin-top: 24px;
+}
+
+.mypage-hero__stats strong {
+  display: block;
+  color: #16c79a;
+  font-size: 1.6rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.mypage-hero__stats span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.mypage-hero__edit {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mypage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+  gap: 28px;
+}
+
+.mypage-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 30px 34px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.mypage-card__title {
+  color: #9ca3af;
+  font-size: 1rem;
+  margin-bottom: 26px;
+}
+
+.mypage-team-list,
+.mypage-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mypage-team-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 20px;
+  background: #ffffff;
+}
+
+.mypage-team-item--primary {
+  border-color: #afead8;
+  background: #e7faf3;
+}
+
+.mypage-team-item__head,
+.mypage-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.mypage-team-item__head h3,
+.mypage-history-item h3 {
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+}
+
+.mypage-team-item__head p,
+.mypage-history-item p {
+  color: #8b9099;
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.mypage-team-item__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.mypage-role-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #dfe3e8;
+  background: #f7f7f8;
+  color: #6b7280;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.mypage-ranking {
+  text-align: center;
+  padding: 10px 0 28px;
+}
+
+.mypage-ranking strong {
+  display: block;
+  color: #16c79a;
+  font-size: 4.2rem;
+  line-height: 1;
+  letter-spacing: -0.08em;
+}
+
+.mypage-ranking p {
+  margin-top: 10px;
+  color: #9ca3af;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.mypage-ranking-meta {
+  margin-top: 10px;
+}
+
+.mypage-outline-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  margin-top: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #3f3f46;
+  font-weight: 700;
+}
+
+.mypage-history-item {
+  padding: 18px 10px;
+  border-bottom: 1px solid #eef1f4;
+}
+
+.mypage-history-item:last-child {
+  border-bottom: 0;
+}
+
+.mypage-history-item__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mypage-history-item__icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  background: #e7faf3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+.mypage-history-item__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
 .team-tab-layout {
   gap: 34px;
 }
@@ -2219,6 +2465,26 @@ h2 {
 
   .auth-card__header h1 {
     font-size: 1.7rem;
+  }
+
+  .mypage-hero,
+  .mypage-hero__profile,
+  .mypage-history-item,
+  .mypage-team-item__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mypage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-card {
+    padding: 24px 20px;
+  }
+
+  .mypage-history-item__right {
+    align-items: flex-start;
   }
 
   .team-state-card {

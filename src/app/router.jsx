@@ -5,6 +5,7 @@ import HackathonDetailPage from '../pages/HackathonDetailPage.jsx'
 import HackathonsPage from '../pages/HackathonsPage.jsx'
 import LoginPage from '../pages/LoginPage.jsx'
 import MainPage from '../pages/MainPage.jsx'
+import MyPage from '../pages/MyPage.jsx'
 import RankingsPage from '../pages/RankingsPage.jsx'
 import SignupPage from '../pages/SignupPage.jsx'
 import TeamCreatePage from '../pages/TeamCreatePage.jsx'
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
       {
         path: 'signup',
         element: <SignupPage />,
+      },
+      {
+        path: 'me',
+        element: <MyPage />,
       },
     ],
   },
