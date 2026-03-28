@@ -925,14 +925,32 @@ h2 {
   border: 1px solid #e5e7eb;
   padding: 30px 32px 28px;
   position: relative;
+  overflow: hidden;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
 
+.team-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #13d0a2 0%, #16c79a 100%);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
 .team-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.team-card:hover::after {
+  transform: scaleX(1);
 }
 
 .team-card-head {
