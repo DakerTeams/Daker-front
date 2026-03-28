@@ -1,6 +1,27 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+
+const AUTH_STORAGE_KEY = 'hackhub-demo-user'
 
 function SignupPage() {
+  const navigate = useNavigate()
+
+  const signupDemoUser = () => {
+    window.localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({
+        nickname: 'jinwoo_k',
+        email: 'jinwoo@example.com',
+      }),
+    )
+    window.dispatchEvent(new Event('mock-auth-change'))
+    navigate('/')
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    signupDemoUser()
+  }
+
   return (
     <section className="auth-page">
       <div className="auth-card">
@@ -14,7 +35,7 @@ function SignupPage() {
           <p>계정을 만들고 첫 해커톤에 참가해보세요.</p>
         </div>
 
-        <button type="button" className="auth-social-button">
+        <button type="button" className="auth-social-button" onClick={signupDemoUser}>
           <span className="auth-social-button__icon">◔</span>
           GitHub으로 가입 (추천)
         </button>
@@ -28,7 +49,7 @@ function SignupPage() {
           <span />
         </div>
 
-        <form className="auth-form">
+        <form className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-field">
             <span className="auth-field__label">
               닉네임 <strong>*</strong>
