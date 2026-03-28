@@ -234,6 +234,11 @@ h2 {
   box-shadow: var(--shadow);
 }
 
+.surface-card--soft {
+  background: #f9fbf9;
+  box-shadow: none;
+}
+
 .surface-card--link {
   transition:
     transform 0.18s ease,
@@ -304,6 +309,17 @@ h2 {
   font-weight: 700;
 }
 
+.button-link--soft {
+  background: #111827;
+  color: #ffffff;
+}
+
+.button-link--ghost {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
 .hackathon-card {
   gap: 18px;
 }
@@ -362,6 +378,51 @@ h2 {
   font-weight: 700;
 }
 
+.detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 16px;
+}
+
+.detail-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detail-tab {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.detail-tab--active {
+  border-color: #9fd7c7;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.detail-panel {
+  min-height: 320px;
+}
+
+.detail-section__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-list-row {
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
 @media (max-width: 720px) {
   .navbar__inner {
     min-height: auto;
@@ -392,5 +453,9 @@ h2 {
   .hackathon-card__footer,
   .meta-cluster {
     justify-content: flex-start;
+  }
+
+  .detail-hero {
+    grid-template-columns: 1fr;
   }
 }
