@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { teams } from '../mock/teams.js'
 
 const hackathonFilters = [
@@ -19,6 +18,7 @@ function CampPage() {
   const [query, setQuery] = useState('')
   const [hackathonFilter, setHackathonFilter] = useState('all')
   const [openFilter, setOpenFilter] = useState('all')
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false)
 
   const filteredTeams = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -50,7 +50,7 @@ function CampPage() {
         <p className="eyebrow">/camp</p>
         <h1>팀원 모집</h1>
         <p className="page-description">
-          팀 탐색은 이 페이지에서, 실제 팀 생성은 별도 페이지에서 진행하는 구조입니다.
+          해커톤별 팀 모집글을 확인하고, 바로 팀을 만들거나 기존 팀에 지원해보세요.
         </p>
       </div>
 
@@ -59,12 +59,16 @@ function CampPage() {
           <div className="stack-list stack-list--compact">
             <h2>함께 해커톤을 완주할 팀원을 찾아보세요.</h2>
             <p className="page-description">
-              해커톤별 팀을 필터링해서 탐색하고, 필요하면 팀 생성 페이지로 이동합니다.
+              모집 상태와 해커톤별로 필터링해서 원하는 팀을 빠르게 찾을 수 있습니다.
             </p>
           </div>
-          <Link to="/team-create" className="button-link">
-            + 팀 만들기
-          </Link>
+          <button
+            type="button"
+            className="button-link"
+            onClick={() => setIsCreateDrawerOpen(true)}
+          >
+            + 팀 생성하기
+          </button>
         </div>
       </section>
 
@@ -125,15 +129,15 @@ function CampPage() {
             <article key={team.id} className="team-card">
               <div className="team-card-head">
                 <div>
-                  <p className="meta-text">{team.hackathonName}</p>
                   <h2>{team.name}</h2>
+                  <p className="team-card__hackathon">🏆 {team.hackathonName}</p>
                 </div>
                 <span
-                  className={`status-pill ${
-                    team.isOpen ? 'status-pill--open' : 'status-pill--closed'
+                  className={`status-outline ${
+                    team.isOpen ? 'status-outline--open' : 'status-outline--closed'
                   }`}
                 >
-                  {team.isOpen ? '모집중' : '마감'}
+                  {team.isOpen ? '모집 중' : '마감'}
                 </span>
               </div>
 
@@ -148,24 +152,116 @@ function CampPage() {
               </div>
 
               <div className="team-footer">
-                <span>팀장 {team.leader}</span>
-                <span>
-                  팀원 {team.currentMembers}/{team.maxMembers}
-                </span>
-              </div>
-
-              <div className="camp-card__actions">
-                <span className="button-link button-link--ghost">상세 보기</span>
+                <span>팀장: {team.leader}</span>
                 <span
-                  className={`button-link ${
-                    team.isOpen ? 'button-link--soft' : 'button-link--disabled'
+                  className={`camp-contact-button ${
+                    team.isOpen ? 'camp-contact-button--open' : 'camp-contact-button--closed'
                   }`}
                 >
-                  {team.isOpen ? `${team.contactLabel} 연락하기` : '모집 마감'}
+                  {team.isOpen ? '연락하기' : '마감'}
                 </span>
               </div>
             </article>
           ))}
+        </div>
+      )}
+
+      {isCreateDrawerOpen && (
+        <div
+          className="drawer-backdrop"
+          role="presentation"
+          onClick={() => setIsCreateDrawerOpen(false)}
+        >
+          <aside
+            className="team-create-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="team-create-drawer-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="team-create-drawer__header">
+              <div>
+                <p className="eyebrow">new team</p>
+                <h2 id="team-create-drawer-title">팀 모집글 작성</h2>
+              </div>
+              <button
+                type="button"
+                className="drawer-close-button"
+                onClick={() => setIsCreateDrawerOpen(false)}
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="team-create-drawer__body">
+              <section className="surface-card surface-card--soft">
+                <p className="meta-text">작성 전 체크</p>
+                <ul className="bullet-list">
+                  <li>한 해커톤에는 1개 팀만 참여할 수 있습니다.</li>
+                  <li>개인 참가도 1인 팀 생성으로 처리됩니다.</li>
+                  <li>연락 링크는 공개 범위를 고려해 입력해야 합니다.</li>
+                </ul>
+              </section>
+
+              <section className="surface-card">
+                <div className="form-grid">
+                  <label className="form-field">
+                    <span className="form-label">연결할 해커톤</span>
+                    <select className="form-control" defaultValue="ai-summit-2026">
+                      <option value="ai-summit-2026">AI Summit 2026</option>
+                      <option value="mobile-craft-day">Mobile CraftDay</option>
+                      <option value="web3-buildathon">Web3 Buildathon</option>
+                      <option value="independent">해커톤 미정</option>
+                    </select>
+                  </label>
+
+                  <label className="form-field">
+                    <span className="form-label">팀명</span>
+                    <input className="form-control" placeholder="예: NeuralNinjas" />
+                  </label>
+
+                  <label className="form-field form-field--full">
+                    <span className="form-label">팀 소개</span>
+                    <textarea
+                      className="form-control form-control--textarea"
+                      placeholder="무엇을 만들 팀인지, 어떤 팀원을 찾는지 적어주세요."
+                    />
+                  </label>
+
+                  <label className="form-field form-field--full">
+                    <span className="form-label">모집 포지션</span>
+                    <input className="form-control" placeholder="예: 백엔드, AI/ML" />
+                  </label>
+
+                  <label className="form-field">
+                    <span className="form-label">모집 상태</span>
+                    <select className="form-control" defaultValue="open">
+                      <option value="open">모집 중</option>
+                      <option value="closed">마감</option>
+                    </select>
+                  </label>
+
+                  <label className="form-field">
+                    <span className="form-label">연락 링크</span>
+                    <input className="form-control" placeholder="오픈채팅, 구글폼 등" />
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            <div className="team-create-drawer__footer">
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => setIsCreateDrawerOpen(false)}
+              >
+                취소
+              </button>
+              <button type="button" className="team-primary-button">
+                팀 생성 완료
+              </button>
+            </div>
+          </aside>
         </div>
       )}
     </section>

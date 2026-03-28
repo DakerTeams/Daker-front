@@ -915,38 +915,24 @@ h2 {
 
 .camp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px 28px;
 }
 
 .team-card {
   background: #ffffff;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  padding: 22px;
+  border-radius: 22px;
+  border: 1px solid #e5e7eb;
+  padding: 30px 32px 28px;
   position: relative;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.team-card::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  background: var(--primary);
-  transform: scaleX(0);
-  transition: transform 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .team-card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.team-card:hover::after {
-  transform: scaleX(1);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
 .team-card-head {
@@ -954,18 +940,33 @@ h2 {
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: 18px;
+}
+
+.team-card-head h2 {
+  font-size: 2rem;
+  letter-spacing: -0.05em;
+}
+
+.team-card__hackathon {
+  margin-top: 10px;
+  color: #9ca3af;
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .team-desc {
-  color: var(--text-muted);
-  line-height: 1.6;
+  min-height: 104px;
+  color: #6b7280;
+  font-size: 0.98rem;
+  line-height: 1.55;
 }
 
 .team-positions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .team-footer {
@@ -973,14 +974,95 @@ h2 {
   justify-content: space-between;
   gap: 10px;
   align-items: center;
-  color: var(--text-muted);
-  font-size: 0.84rem;
+  margin-top: 34px;
+  color: #9ca3af;
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .camp-card__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.camp-contact-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 134px;
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 14px;
+  font-size: 0.96rem;
+  font-weight: 800;
+}
+
+.camp-contact-button--open {
+  background: #16c79a;
+  color: #ffffff;
+}
+
+.camp-contact-button--closed {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border: 1px solid #eceff1;
+}
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(17, 24, 39, 0.24);
+}
+
+.team-create-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(560px, 100vw);
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -18px 0 48px rgba(15, 23, 42, 0.16);
+  display: flex;
+  flex-direction: column;
+}
+
+.team-create-drawer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 28px 24px;
+  border-bottom: 1px solid #eef1f4;
+}
+
+.team-create-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.team-create-drawer__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 22px 28px 28px;
+  border-top: 1px solid #eef1f4;
+}
+
+.drawer-close-button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .detail-header h1 {
@@ -1494,6 +1576,92 @@ h2 {
   margin-top: 28px;
 }
 
+.submit-guide-card {
+  border: 2px solid #16c79a;
+  border-radius: 20px;
+  background: #e6faf3;
+  padding: 34px 36px;
+}
+
+.submit-guide-card__title,
+.submit-form-card__title {
+  margin: 0 0 24px;
+  font-size: 1.7rem;
+  letter-spacing: -0.05em;
+}
+
+.submit-guide-card__title {
+  color: #16c79a;
+}
+
+.submit-guide-list {
+  margin: 0;
+  padding-left: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.submit-form-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  background: #ffffff;
+  padding: 34px 36px 30px;
+}
+
+.submit-required {
+  color: #ff4d4f;
+}
+
+.submit-textarea {
+  min-height: 154px;
+  background: #ffffff;
+}
+
+.submit-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 240px;
+  border: 2px dashed #d1d5db;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.submit-dropzone p {
+  color: #9ca3af;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.submit-dropzone span {
+  color: #9ca3af;
+  font-size: 0.94rem;
+  font-weight: 600;
+}
+
+.submit-file-button {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.submit-button {
+  min-width: 136px;
+}
+
 @media (max-width: 720px) {
   .navbar__inner {
     min-height: auto;
@@ -1595,5 +1763,31 @@ h2 {
   .team-notice-actions {
     flex-direction: column;
     justify-content: stretch;
+  }
+
+  .submit-guide-card,
+  .submit-form-card {
+    padding: 26px 22px;
+  }
+
+  .camp-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .team-card {
+    padding: 24px 22px;
+  }
+
+  .team-desc {
+    min-height: auto;
+  }
+
+  .team-create-drawer {
+    width: 100vw;
+  }
+
+  .team-create-drawer__footer {
+    flex-direction: column;
   }
 }

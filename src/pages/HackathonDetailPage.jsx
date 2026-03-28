@@ -294,6 +294,60 @@ function HackathonDetailPage() {
     }
 
     if (activeTab === 'submit') {
+      if (submitState === 'open') {
+        return (
+          <div className="stack-list">
+            <section className="detail-block">
+              <h2 className="detail-block__title">제출</h2>
+
+              <div className="submit-guide-card">
+                <h3 className="submit-guide-card__title">제출 가이드</h3>
+                <ul className="submit-guide-list">
+                  <li>ZIP 또는 PDF 파일만 허용됩니다. (최대 50MB)</li>
+                  <li>팀원 전원의 GitHub 아이디를 메모에 포함해주세요.</li>
+                  <li>종료일 이후에는 제출이 불가합니다.</li>
+                  <li>제출 후 수정은 1회까지 가능합니다.</li>
+                </ul>
+              </div>
+
+              <div className="submit-form-card">
+                <h3 className="submit-form-card__title">제출 폼</h3>
+                <div className="stack-list">
+                  <label className="form-field">
+                    <span className="form-label">
+                      메모 <span className="submit-required">*</span>
+                    </span>
+                    <textarea
+                      className="form-control form-control--textarea submit-textarea"
+                      placeholder="팀원 소개, 프로젝트 설명, 사용 기술 스택 등을 입력하세요."
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span className="form-label">
+                      파일 첨부 <span className="submit-required">*</span>
+                    </span>
+                    <div className="submit-dropzone">
+                      <p>ZIP, PDF, CSV 파일을 끌어다 놓거나</p>
+                      <button type="button" className="submit-file-button">
+                        파일 선택
+                      </button>
+                      <span>최대 50MB · ZIP / PDF / CSV</span>
+                    </div>
+                  </label>
+
+                  <div>
+                    <button type="button" className="team-primary-button submit-button">
+                      제출하기
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        )
+      }
+
       return (
         <div className="stack-list">
           <div className="surface-card surface-card--soft">
