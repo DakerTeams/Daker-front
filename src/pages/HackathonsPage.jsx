@@ -36,9 +36,9 @@ function HackathonsPage() {
     <section className="page-section">
       <div className="page-header">
         <p className="eyebrow">/hackathons</p>
-        <h1>해커톤 목록</h1>
+        <h1>해커톤</h1>
         <p className="page-description">
-          검색, 상태 필터, 카드 메타 정보를 포함한 목록 와이어프레임입니다.
+          참가 가능한 모든 해커톤을 확인하세요.
         </p>
       </div>
 
@@ -82,10 +82,10 @@ function HackathonsPage() {
           <Link
             key={hackathon.slug}
             to={`/hackathons/${hackathon.slug}`}
-            className="surface-card surface-card--link hackathon-card"
+            className="surface-card surface-card--link hackathon-card hackathon-card--list"
           >
             <div className="row-between row-between--start">
-              <div className="stack-list stack-list--compact">
+              <div className="stack-list stack-list--compact hackathon-card__left">
                 <div className="row-between row-between--wrap">
                   <h2>{hackathon.title}</h2>
                   <span
@@ -97,9 +97,10 @@ function HackathonsPage() {
                 <p>{hackathon.summary}</p>
               </div>
 
-              <div className="hackathon-card__meta">
+              <div className="hackathon-card__meta hackathon-card__meta--right">
                 <span>{hackathon.startDate}</span>
                 <span>{hackathon.endDate}</span>
+                <span className="button-inline">상세 보기</span>
               </div>
             </div>
 

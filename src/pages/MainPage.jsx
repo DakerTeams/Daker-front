@@ -1,30 +1,143 @@
 import { Link } from 'react-router-dom'
+import { hackathons } from '../mock/hackathons.js'
 
 function MainPage() {
   return (
     <section className="page-section">
-      <div className="page-header">
-        <p className="eyebrow">Hackathon Platform</p>
-        <h1>와이어프레임을 프론트 구조로 옮기는 단계입니다.</h1>
-        <p className="page-description">
-          메인, 해커톤 목록, 상세, 팀원 모집, 랭킹 흐름을 우선 페이지 단위로 정리합니다.
-        </p>
+      <div className="main-banner">
+        <div className="main-banner__content">
+          <div className="main-banner__left">
+            <p className="banner-label">// HACKATHON PLATFORM v2.0</p>
+            <h1 className="banner-title">
+              Build teams.
+              <br />
+              Compete fast.
+              <br />
+              <span className="banner-title__accent">Rank higher.</span>
+            </h1>
+            <p className="banner-subtitle">
+              팀을 만들고, 해커톤에 참가하고,
+              <br />
+              실력으로 랭킹을 올려보세요.
+            </p>
+            <div className="banner-actions">
+              <Link to="/hackathons" className="banner-button banner-button--primary">
+                해커톤 둘러보기
+              </Link>
+              <Link to="/camp" className="banner-button banner-button--ghost">
+                팀 찾기
+              </Link>
+            </div>
+            <div className="banner-stats">
+              <div>
+                <strong>478+</strong>
+                <span>참가자</span>
+              </div>
+              <div>
+                <strong>4</strong>
+                <span>진행 해커톤</span>
+              </div>
+              <div>
+                <strong>₩11M+</strong>
+                <span>총 상금</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="code-window">
+            <div className="code-window__header">
+              <span />
+              <span />
+              <span />
+            </div>
+            <code className="code-window__body">
+              <span className="code-comment">// hackathon.config.ts</span>
+              <span>
+                <span className="code-keyword">export const</span>{' '}
+                <span className="code-function">config</span> = {'{'}
+              </span>
+              <span>  name: <span className="code-string">"AI Summit 2026"</span>,</span>
+              <span>  status: <span className="code-string">"open"</span>,</span>
+              <span>  prize: <span className="code-string">"₩3,000,000"</span>,</span>
+              <span>  tags: [<span className="code-string">"AI/ML"</span>, <span className="code-string">"Web"</span>],</span>
+              <span>  maxTeamSize: 4,</span>
+              <span>{'}'}</span>
+              <span />
+              <span>
+                <span className="code-keyword">await</span>{' '}
+                <span className="code-function">hackathon</span>.join(config)
+              </span>
+            </code>
+          </div>
+        </div>
       </div>
 
-      <div className="card-grid">
-        <Link to="/hackathons" className="surface-card surface-card--link">
-          <h2>해커톤 둘러보기</h2>
-          <p>해커톤 목록과 상세 페이지 와이어프레임을 먼저 옮깁니다.</p>
-        </Link>
-        <Link to="/camp" className="surface-card surface-card--link">
-          <h2>팀 찾기</h2>
-          <p>팀원 모집 목록과 팀 생성 흐름을 분리해서 정리합니다.</p>
-        </Link>
-        <Link to="/rankings" className="surface-card surface-card--link">
-          <h2>랭킹 보기</h2>
-          <p>리더보드와 전체 랭킹 화면 구조를 후순위로 연결합니다.</p>
-        </Link>
-      </div>
+      <section className="main-hero">
+        <div className="page-header page-header--center">
+          <h1>
+            개발자들의 무대,
+            <br />
+            <span className="headline-accent">지금 시작하세요</span>
+          </h1>
+          <p className="page-description">
+            해커톤 참가, 팀원 모집, 성과 랭킹까지 한 곳에서.
+          </p>
+        </div>
+
+        <div className="hero-cards">
+          <Link to="/hackathons" className="hero-card">
+            <div className="hero-card__icon">🏆</div>
+            <h2>해커톤 보러가기</h2>
+            <p>진행 중이거나 예정된 해커톤을 확인하고 지금 바로 참가하세요.</p>
+            <span className="hero-card__arrow">목록 보기 →</span>
+          </Link>
+          <Link to="/camp" className="hero-card">
+            <div className="hero-card__icon">🤝</div>
+            <h2>팀 찾기</h2>
+            <p>함께할 팀원을 모집하거나, 마음에 드는 팀에 지원해 보세요.</p>
+            <span className="hero-card__arrow">팀 탐색하기 →</span>
+          </Link>
+          <Link to="/rankings" className="hero-card">
+            <div className="hero-card__icon">📊</div>
+            <h2>랭킹 보기</h2>
+            <p>전체 참가자 중 나의 위치는 어디인지 지금 바로 확인해보세요.</p>
+            <span className="hero-card__arrow">랭킹 확인 →</span>
+          </Link>
+        </div>
+      </section>
+
+      <section className="page-section">
+        <div className="section-head">
+          <h2>지금 모집 중인 해커톤</h2>
+        </div>
+        <div className="stack-list">
+          {hackathons
+            .filter((item) => item.status === 'open')
+            .map((hackathon) => (
+              <Link
+                key={hackathon.slug}
+                to={`/hackathons/${hackathon.slug}`}
+                className="surface-card surface-card--link hackathon-card"
+              >
+                <div className="row-between row-between--start">
+                  <div className="stack-list stack-list--compact">
+                    <div className="row-between row-between--wrap">
+                      <h2>{hackathon.title}</h2>
+                      <span className={`status-pill status-pill--${hackathon.status}`}>
+                        {hackathon.statusLabel}
+                      </span>
+                    </div>
+                    <p>{hackathon.summary}</p>
+                  </div>
+                  <div className="hackathon-card__meta">
+                    <span>{hackathon.startDate}</span>
+                    <span>{hackathon.endDate}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+        </div>
+      </section>
     </section>
   )
 }

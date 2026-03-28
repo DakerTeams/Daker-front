@@ -57,7 +57,7 @@ function CampPage() {
       <section className="surface-card">
         <div className="row-between row-between--wrap">
           <div className="stack-list stack-list--compact">
-            <h2>팀을 직접 찾거나 새 팀을 만들 수 있습니다.</h2>
+            <h2>함께 해커톤을 완주할 팀원을 찾아보세요.</h2>
             <p className="page-description">
               해커톤별 팀을 필터링해서 탐색하고, 필요하면 팀 생성 페이지로 이동합니다.
             </p>
@@ -122,8 +122,8 @@ function CampPage() {
       ) : (
         <div className="camp-grid">
           {filteredTeams.map((team) => (
-            <article key={team.id} className="surface-card camp-card">
-              <div className="row-between row-between--wrap">
+            <article key={team.id} className="team-card">
+              <div className="team-card-head">
                 <div>
                   <p className="meta-text">{team.hackathonName}</p>
                   <h2>{team.name}</h2>
@@ -137,9 +137,9 @@ function CampPage() {
                 </span>
               </div>
 
-              <p>{team.description}</p>
+              <p className="team-desc">{team.description}</p>
 
-              <div className="tag-list">
+              <div className="team-positions">
                 {team.positions.map((position) => (
                   <span key={position} className="tag-chip">
                     {position}
@@ -147,7 +147,7 @@ function CampPage() {
                 ))}
               </div>
 
-              <div className="camp-card__meta">
+              <div className="team-footer">
                 <span>팀장 {team.leader}</span>
                 <span>
                   팀원 {team.currentMembers}/{team.maxMembers}

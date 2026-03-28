@@ -26,20 +26,17 @@ function RankingsPage() {
         </p>
       </div>
 
-      <section className="ranking-hero">
-        <div className="surface-card">
-          <p className="meta-text">내 랭킹</p>
-          <div className="ranking-hero__value">
-            <strong>#{myRanking?.rank}</strong>
-            <span>{myRanking?.nickname}</span>
-          </div>
-          <p className="page-description">
-            점수 {myRanking?.score.toLocaleString()}점 · 참여 {myRanking?.participationCount}회
-          </p>
+      <section className="rank-hero">
+        <div>
+          <p className="eyebrow">global_rankings.exe</p>
+          <h2>글로벌 랭킹</h2>
+          <p>전체 해커톤 참가 성과를 기반으로 산정된 랭킹입니다.</p>
         </div>
+        <div className="rank-hero__accent">#1</div>
+      </section>
 
-        <div className="surface-card surface-card--soft">
-          <p className="meta-text">기간 필터</p>
+      <section className="surface-card surface-card--soft">
+        <div className="row-between row-between--wrap">
           <div className="filter-group" aria-label="랭킹 기간 필터">
             {periodFilters.map((filter) => (
               <button
@@ -50,13 +47,13 @@ function RankingsPage() {
                 }`}
                 onClick={() => setPeriod(filter.key)}
               >
-                {filter.label}
+                {filter.label === '전체' ? '전체 기간' : filter.label}
               </button>
             ))}
           </div>
-          <p className="page-description">
-            현재는 와이어프레임 단계라 실제 데이터 대신 더미 데이터를 사용합니다.
-          </p>
+          <div className="my-rank-chip">
+            내 순위 #{myRanking?.rank} · {myRanking?.nickname}
+          </div>
         </div>
       </section>
 

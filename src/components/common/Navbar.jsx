@@ -11,8 +11,9 @@ function Navbar() {
     <header className="navbar">
       <div className="navbar__inner">
         <NavLink to="/" className="navbar__logo">
-          <span className="navbar__logo-mark">Daker</span>
-          <span className="navbar__logo-text">Front</span>
+          <span className="navbar__logo-prefix">&gt;</span>
+          <span className="navbar__logo-text">HackHub</span>
+          <span className="navbar__logo-cursor" />
         </NavLink>
 
         <nav className="navbar__nav" aria-label="주요 메뉴">

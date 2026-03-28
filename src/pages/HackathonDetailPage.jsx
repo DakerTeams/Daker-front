@@ -291,58 +291,73 @@ function HackathonDetailPage() {
 
   return (
     <section className="page-section">
-      <div className="page-header">
+      <div>
+        <Link to="/hackathons" className="button-back">
+          ← 목록으로
+        </Link>
+      </div>
+
+      <div className="detail-header">
         <p className="eyebrow">/hackathons/{hackathon.slug}</p>
         <h1>{hackathon.title}</h1>
         <p className="page-description">{hackathon.summary}</p>
+        <div className="detail-meta">
+          <span>{hackathon.period}</span>
+          <span>참가자 {hackathon.participantCount}명</span>
+          <span>{hackathon.statusLabel}</span>
+        </div>
       </div>
 
-      <div className="detail-hero">
-        <div className="surface-card">
-          <div className="row-between row-between--wrap">
-            <div>
-              <p className="meta-text">기간</p>
-              <h2>{hackathon.period}</h2>
-            </div>
-            <span className={`status-pill status-pill--${hackathon.status}`}>
-              {hackathon.statusLabel}
-            </span>
-          </div>
-          <div className="tag-list">
-            {hackathon.tags.map((tag) => (
-              <span key={tag} className="tag-chip">
-                #{tag}
-              </span>
+      <div className="detail-grid">
+        <div className="stack-list">
+          <div className="detail-tabs" role="tablist" aria-label="해커톤 상세 탭">
+            {detailTabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={`detail-tab${
+                  activeTab === tab.key ? ' detail-tab--active' : ''
+                }`}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
+
+          <div className="surface-card detail-panel">{renderTabContent()}</div>
         </div>
 
-        <div className="surface-card surface-card--soft">
-          <p className="meta-text">탐색 포인트</p>
-          <ul className="bullet-list">
-            <li>팀 탭은 내 팀 상태 중심으로 확인</li>
-            <li>제출 탭은 상태에 따라 비활성/활성 분기</li>
-            <li>리더보드는 해커톤별 순위 확인</li>
-          </ul>
-        </div>
-      </div>
+        <aside className="stack-list">
+          <div className="sidebar-card">
+            <h3>진행 정보</h3>
+            <div className="info-row">
+              <span>상태</span>
+              <span>{hackathon.statusLabel}</span>
+            </div>
+            <div className="info-row">
+              <span>기간</span>
+              <span>{hackathon.period}</span>
+            </div>
+            <div className="info-row">
+              <span>참가자</span>
+              <span>{hackathon.participantCount}명</span>
+            </div>
+          </div>
 
-      <div className="detail-tabs" role="tablist" aria-label="해커톤 상세 탭">
-        {detailTabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={`detail-tab${
-              activeTab === tab.key ? ' detail-tab--active' : ''
-            }`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
+          <div className="sidebar-card">
+            <h3>빠른 이동</h3>
+            <div className="stack-list stack-list--compact">
+              <Link to="/camp" className="button-link button-link--ghost sidebar-button">
+                팀원 모집 보기
+              </Link>
+              <Link to="/team-create" className="button-link button-link--soft sidebar-button">
+                팀 생성하기
+              </Link>
+            </div>
+          </div>
+        </aside>
       </div>
-
-      <div className="surface-card detail-panel">{renderTabContent()}</div>
     </section>
   )
 }
