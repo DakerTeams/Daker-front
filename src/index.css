@@ -881,10 +881,56 @@ h2 {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+.rankings-period-filter {
+  margin-top: 8px;
+}
+
+.rankings-board {
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.rankings-board__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rankings-board__tab {
+  min-height: 58px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: #ffffff;
+  color: #9ca3af;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.rankings-board__tab:hover {
+  color: #374151;
+}
+
+.rankings-board__tab--active {
+  color: #111827;
+  border-bottom-color: #16c79a;
+  background: #ffffff;
+}
+
 .ranking-table {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.ranking-table--board {
+  gap: 0;
 }
 
 .ranking-table__head {
@@ -897,6 +943,25 @@ h2 {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.ranking-table__head--board,
+.ranking-row--board {
+  grid-template-columns: 90px minmax(0, 1.35fr) 1fr 1fr 1fr;
+}
+
+.ranking-table__head--board {
+  padding: 16px 24px;
+  background: #fafafa;
+  border-bottom: 1px solid #eaeef2;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.88rem;
+}
+
+.ranking-table__rows {
+  display: flex;
+  flex-direction: column;
 }
 
 .ranking-table__head--wide,
@@ -915,9 +980,20 @@ h2 {
   background: #ffffff;
 }
 
+.ranking-row--board {
+  padding: 18px 24px;
+  border: 0;
+  border-bottom: 1px solid #eef1f4;
+  border-radius: 0;
+}
+
 .ranking-row--me {
   background: var(--primary-soft);
   border-color: #9fd7c7;
+}
+
+.ranking-points {
+  color: #16c79a;
 }
 
 .camp-grid {

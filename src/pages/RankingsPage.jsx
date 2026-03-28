@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 import { rankings } from '../mock/rankings.js'
 
 const periodFilters = [
-  { key: 'all', label: '전체' },
-  { key: 'month', label: '이번 달' },
-  { key: 'week', label: '이번 주' },
+  { key: 'all', label: '전체 기간' },
+  { key: 'month', label: '최근 30일' },
+  { key: 'week', label: '최근 7일' },
 ]
 
 function RankingsPage() {
@@ -15,6 +15,22 @@ function RankingsPage() {
     () => rankings.find((ranking) => ranking.isMe),
     [],
   )
+
+  const rows = useMemo(
+    () =>
+      rankings.map((ranking) => ({
+        ...ranking,
+        visibleScore: ranking.period?.[period] ?? ranking.score,
+      })),
+    [period],
+  )
+
+  const rankIcon = (rank) => {
+    if (rank === 1) return '🥇'
+    if (rank === 2) return '🥈'
+    if (rank === 3) return '🥉'
+    return rank
+  }
 
   return (
     <section className="page-section">
@@ -35,41 +51,37 @@ function RankingsPage() {
         <div className="rank-hero__accent">#1</div>
       </section>
 
-      <section className="surface-card surface-card--soft">
-        <div className="row-between row-between--wrap">
-          <div className="filter-group" aria-label="랭킹 기간 필터">
-            {periodFilters.map((filter) => (
-              <button
-                key={filter.key}
-                type="button"
-                className={`filter-chip${
-                  period === filter.key ? ' filter-chip--active' : ''
-                }`}
-                onClick={() => setPeriod(filter.key)}
-              >
-                {filter.label === '전체' ? '전체 기간' : filter.label}
-              </button>
-            ))}
-          </div>
-          <div className="my-rank-chip">
-            내 순위 #{myRanking?.rank} · {myRanking?.nickname}
-          </div>
-        </div>
-      </section>
+      <div className="filter-group rankings-period-filter" aria-label="랭킹 기간 필터">
+        {periodFilters.map((filter) => (
+          <button
+            key={filter.key}
+            type="button"
+            className={`filter-chip${
+              period === filter.key ? ' filter-chip--active' : ''
+            }`}
+            onClick={() => setPeriod(filter.key)}
+          >
+            {period === filter.key ? '◉ ' : '• '}
+            {filter.label}
+          </button>
+        ))}
+      </div>
 
-      <section className="surface-card">
-        <div className="detail-tabs" role="tablist" aria-label="랭킹 기준 탭">
+      <section className="rankings-board">
+        <div className="rankings-board__tabs" role="tablist" aria-label="랭킹 기준 탭">
           <button
             type="button"
-            className={`detail-tab${activeTab === 'score' ? ' detail-tab--active' : ''}`}
+            className={`rankings-board__tab${
+              activeTab === 'score' ? ' rankings-board__tab--active' : ''
+            }`}
             onClick={() => setActiveTab('score')}
           >
-            점수 기준
+            순위 기준
           </button>
           <button
             type="button"
-            className={`detail-tab${
-              activeTab === 'participation' ? ' detail-tab--active' : ''
+            className={`rankings-board__tab${
+              activeTab === 'participation' ? ' rankings-board__tab--active' : ''
             }`}
             onClick={() => setActiveTab('participation')}
           >
@@ -78,44 +90,52 @@ function RankingsPage() {
         </div>
 
         {activeTab === 'score' ? (
-          <div className="ranking-table">
-            <div className="ranking-table__head">
-              <span>#</span>
+          <div className="ranking-table ranking-table--board">
+            <div className="ranking-table__head ranking-table__head--board">
+              <span>순위</span>
               <span>닉네임</span>
+              <span>참여 횟수</span>
+              <span>최고 순위</span>
               <span>포인트</span>
             </div>
-            <div className="stack-list stack-list--compact">
-              {rankings.map((ranking) => (
+            <div className="ranking-table__rows">
+              {rows.map((ranking) => (
                 <div
                   key={ranking.userId}
-                  className={`ranking-row${ranking.isMe ? ' ranking-row--me' : ''}`}
+                  className={`ranking-row ranking-row--board${
+                    ranking.isMe ? ' ranking-row--me' : ''
+                  }`}
                 >
-                  <strong>#{ranking.rank}</strong>
-                  <span>{ranking.nickname}</span>
-                  <strong>{ranking.score.toLocaleString()} pts</strong>
+                  <strong>{rankIcon(ranking.rank)}</strong>
+                  <strong>{ranking.nickname}</strong>
+                  <span>{ranking.participationCount}회</span>
+                  <span>{ranking.bestRank}</span>
+                  <strong className="ranking-points">
+                    {ranking.visibleScore.toLocaleString()}
+                  </strong>
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <div className="ranking-table">
-            <div className="ranking-table__head ranking-table__head--wide">
-              <span>#</span>
+          <div className="ranking-table ranking-table--board">
+            <div className="ranking-table__head ranking-table__head--board ranking-table__head--participation">
+              <span>순위</span>
               <span>닉네임</span>
               <span>참여 횟수</span>
               <span>완료</span>
               <span>제출률</span>
             </div>
-            <div className="stack-list stack-list--compact">
-              {rankings.map((ranking) => (
+            <div className="ranking-table__rows">
+              {rows.map((ranking) => (
                 <div
                   key={ranking.userId}
-                  className={`ranking-row ranking-row--wide${
+                  className={`ranking-row ranking-row--board ranking-row--participation${
                     ranking.isMe ? ' ranking-row--me' : ''
                   }`}
                 >
-                  <strong>#{ranking.rank}</strong>
-                  <span>{ranking.nickname}</span>
+                  <strong>{rankIcon(ranking.rank)}</strong>
+                  <strong>{ranking.nickname}</strong>
                   <span>{ranking.participationCount}회</span>
                   <span>{ranking.completedCount}회</span>
                   <strong>{ranking.submitRate}</strong>
