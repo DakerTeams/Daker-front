@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 
 const navItems = [
   { to: '/hackathons', label: '해커톤' },
@@ -10,6 +10,7 @@ const navItems = [
 const AUTH_STORAGE_KEY = 'hackhub-demo-user'
 
 function Navbar() {
+  const location = useLocation()
   const [user, setUser] = useState(null)
 
   useEffect(() => {
@@ -31,6 +32,17 @@ function Navbar() {
     window.dispatchEvent(new Event('mock-auth-change'))
   }
 
+  const isAdminView = location.pathname.startsWith('/admin')
+  const isJudgeView = location.pathname.startsWith('/judge')
+  const visibleNavItems =
+    [
+      ...navItems,
+      ...((isJudgeView || user?.role === 'judge') ? [{ to: '/judge', label: '심사' }] : []),
+      ...((isAdminView || user?.role === 'admin') ? [{ to: '/admin', label: '관리자' }] : []),
+    ]
+
+  const displayRole = isAdminView ? 'admin' : isJudgeView ? 'judge' : user?.role || 'user'
+
   return (
     <header className="navbar">
       <div className="navbar__inner">
@@ -41,7 +53,7 @@ function Navbar() {
         </NavLink>
 
         <nav className="navbar__nav" aria-label="주요 메뉴">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -57,7 +69,7 @@ function Navbar() {
         <div className="navbar__auth">
           {user ? (
             <>
-              <div className="navbar__role-chip">role: user ↻</div>
+              <div className="navbar__role-chip">role: {displayRole} ↻</div>
               <Link to="/me" className="navbar__profile">
                 <span className="navbar__profile-avatar">
                   {user.nickname?.slice(0, 1).toUpperCase()}

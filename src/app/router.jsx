@@ -1,8 +1,10 @@
 import { createBrowserRouter } from 'react-router-dom'
 import MainLayout from '../layouts/MainLayout.jsx'
 import CampPage from '../pages/CampPage.jsx'
+import AdminPage from '../pages/AdminPage.jsx'
 import HackathonDetailPage from '../pages/HackathonDetailPage.jsx'
 import HackathonsPage from '../pages/HackathonsPage.jsx'
+import JudgePage from '../pages/JudgePage.jsx'
 import LoginPage from '../pages/LoginPage.jsx'
 import MainPage from '../pages/MainPage.jsx'
 import MyPage from '../pages/MyPage.jsx'
@@ -50,6 +52,14 @@ export const router = createBrowserRouter([
       {
         path: 'me',
         element: <MyPage />,
+      },
+      {
+        path: 'admin',
+        element: <AdminPage />,
+      },
+      {
+        path: 'judge',
+        element: <JudgePage />,
       },
     ],
   },
