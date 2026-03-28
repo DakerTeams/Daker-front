@@ -1,4 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  fetchParticipationRankings,
+  fetchScoreRankings,
+} from '../api/rankings.js'
 import { rankings } from '../mock/rankings.js'
 
 const periodFilters = [
@@ -10,20 +14,68 @@ const periodFilters = [
 function RankingsPage() {
   const [activeTab, setActiveTab] = useState('score')
   const [period, setPeriod] = useState('all')
+  const [scoreRows, setScoreRows] = useState(rankings)
+  const [participationRows, setParticipationRows] = useState(rankings)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadRankings() {
+      setIsLoading(true)
+
+      try {
+        const [scoreData, participationData] = await Promise.all([
+          fetchScoreRankings(period),
+          fetchParticipationRankings(period),
+        ])
+
+        if (!isMounted) return
+
+        if (scoreData.length > 0) {
+          setScoreRows(scoreData)
+        } else {
+          setScoreRows(rankings)
+        }
+
+        if (participationData.length > 0) {
+          setParticipationRows(participationData)
+        } else {
+          setParticipationRows(rankings)
+        }
+      } catch {
+        if (!isMounted) return
+        setScoreRows(rankings)
+        setParticipationRows(rankings)
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadRankings()
+
+    return () => {
+      isMounted = false
+    }
+  }, [period])
 
   const myRanking = useMemo(
-    () => rankings.find((ranking) => ranking.isMe),
-    [],
+    () => scoreRows.find((ranking) => ranking.isMe) ?? scoreRows[0],
+    [scoreRows],
   )
 
-  const rows = useMemo(
+  const scoredRows = useMemo(
     () =>
-      rankings.map((ranking) => ({
+      scoreRows.map((ranking) => ({
         ...ranking,
         visibleScore: ranking.period?.[period] ?? ranking.score,
       })),
-    [period],
+    [period, scoreRows],
   )
+
+  const votingRows = useMemo(() => participationRows, [participationRows])
 
   const rankIcon = (rank) => {
     if (rank === 1) return '🥇'
@@ -46,7 +98,11 @@ function RankingsPage() {
         <div>
           <p className="eyebrow">global_rankings.exe</p>
           <h2>글로벌 랭킹</h2>
-          <p>전체 해커톤 참가 성과를 기반으로 산정된 랭킹입니다.</p>
+          <p>
+            {myRanking
+              ? `${myRanking.nickname}님의 현재 포인트는 ${myRanking.score.toLocaleString()}점입니다.`
+              : '전체 해커톤 참가 성과를 기반으로 산정된 랭킹입니다.'}
+          </p>
         </div>
         <div className="rank-hero__accent">#1</div>
       </section>
@@ -66,6 +122,12 @@ function RankingsPage() {
           </button>
         ))}
       </div>
+
+      {isLoading ? (
+        <section className="surface-card empty-panel">
+          <p className="empty-panel__title">랭킹을 불러오는 중입니다.</p>
+        </section>
+      ) : null}
 
       <section className="rankings-board">
         <div className="rankings-board__tabs" role="tablist" aria-label="랭킹 기준 탭">
@@ -99,7 +161,7 @@ function RankingsPage() {
               <span>포인트</span>
             </div>
             <div className="ranking-table__rows">
-              {rows.map((ranking) => (
+              {scoredRows.map((ranking) => (
                 <div
                   key={ranking.userId}
                   className={`ranking-row ranking-row--board${
@@ -127,7 +189,7 @@ function RankingsPage() {
               <span>제출률</span>
             </div>
             <div className="ranking-table__rows">
-              {rows.map((ranking) => (
+              {votingRows.map((ranking) => (
                 <div
                   key={ranking.userId}
                   className={`ranking-row ranking-row--board ranking-row--participation${

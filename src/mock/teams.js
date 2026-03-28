@@ -1,6 +1,7 @@
 export const teams = [
   {
     id: 1,
+    hackathonId: 1,
     name: 'NeuralNinjas',
     hackathonSlug: 'ai-summit-2026',
     hackathonName: 'AI Summit 2026',
@@ -15,6 +16,7 @@ export const teams = [
   },
   {
     id: 2,
+    hackathonId: 1,
     name: 'DataDragons',
     hackathonSlug: 'ai-summit-2026',
     hackathonName: 'AI Summit 2026',
@@ -29,6 +31,7 @@ export const teams = [
   },
   {
     id: 3,
+    hackathonId: 2,
     name: 'ChainCrafters',
     hackathonSlug: 'web3-buildathon',
     hackathonName: 'Web3 Buildathon',
@@ -43,6 +46,7 @@ export const teams = [
   },
   {
     id: 4,
+    hackathonId: 3,
     name: 'SwiftSurfers',
     hackathonSlug: 'mobile-craft-day',
     hackathonName: 'Mobile CraftDay',
@@ -57,6 +61,7 @@ export const teams = [
   },
   {
     id: 5,
+    hackathonId: 3,
     name: 'FlutterFlyers',
     hackathonSlug: 'mobile-craft-day',
     hackathonName: 'Mobile CraftDay',
@@ -71,6 +76,7 @@ export const teams = [
   },
   {
     id: 6,
+    hackathonId: null,
     name: 'FreeStyloTeam',
     hackathonSlug: 'independent',
     hackathonName: '해커톤 미정',

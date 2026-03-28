@@ -1,5 +1,6 @@
 export const hackathons = [
   {
+    id: 1,
     slug: 'ai-summit-2026',
     title: 'AI Summit 2026',
     summary: 'AI 기반 서비스 프로토타입을 만드는 집중형 해커톤입니다.',
@@ -68,6 +69,7 @@ export const hackathons = [
     ],
   },
   {
+    id: 2,
     slug: 'web3-buildathon',
     title: 'Web3 Buildathon',
     summary: '블록체인과 DApp 아이디어를 빠르게 구현하는 해커톤입니다.',
@@ -127,6 +129,7 @@ export const hackathons = [
     ],
   },
   {
+    id: 3,
     slug: 'mobile-craft-day',
     title: 'Mobile Craft Day',
     summary: '모바일 UX와 빠른 MVP 구현에 초점을 맞춘 단기 해커톤입니다.',

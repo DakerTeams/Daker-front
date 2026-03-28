@@ -26,7 +26,7 @@ export const router = createBrowserRouter([
         element: <HackathonsPage />,
       },
       {
-        path: 'hackathons/:slug',
+        path: 'hackathons/:id',
         element: <HackathonDetailPage />,
       },
       {

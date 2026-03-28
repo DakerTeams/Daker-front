@@ -13,24 +13,24 @@ const detailTabs = [
 ]
 
 function HackathonDetailPage() {
-  const { slug } = useParams()
+  const { id } = useParams()
   const [activeTab, setActiveTab] = useState('overview')
   const [teamState, setTeamState] = useState('notRegistered')
   const [submitState, setSubmitState] = useState('notRegistered')
   const [isTeamNoticeOpen, setIsTeamNoticeOpen] = useState(false)
 
   const hackathon = useMemo(
-    () => hackathons.find((item) => item.slug === slug),
-    [slug],
+    () => hackathons.find((item) => String(item.id) === String(id)),
+    [id],
   )
 
   const participantTeams = useMemo(
-    () => teams.filter((team) => team.hackathonSlug === slug),
-    [slug],
+    () => teams.filter((team) => String(team.hackathonId) === String(id)),
+    [id],
   )
 
   const scheduleSections = useMemo(() => {
-    if (slug === 'ai-summit-2026') {
+    if (String(id) === '1') {
       return [
         {
           title: '참가 신청',
@@ -72,13 +72,13 @@ function HackathonDetailPage() {
       expanded: index === 0,
       items: [{ date: schedule.at.split(' ')[0], label: schedule.label }],
     }))
-  }, [hackathon.schedules, slug])
+  }, [hackathon.schedules, id])
 
   if (!hackathon) {
     return (
       <section className="page-section">
         <div className="page-header">
-          <p className="eyebrow">/hackathons/:slug</p>
+          <p className="eyebrow">/hackathons/:id</p>
           <h1>해커톤을 찾을 수 없습니다.</h1>
           <p className="page-description">
             목록으로 돌아가서 다른 해커톤을 선택해주세요.

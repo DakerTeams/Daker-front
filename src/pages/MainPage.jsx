@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { fetchHackathons } from '../api/hackathons.js'
+import { fetchPlatformStats } from '../api/stats.js'
 import { hackathons } from '../mock/hackathons.js'
 
 const typewriterWords = ['Build.', 'Compete.', 'Win.']
@@ -13,6 +15,14 @@ function MainPage() {
   const totalLength = cumulativeLengths[cumulativeLengths.length - 1]
   const [displayedLength, setDisplayedLength] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [visibleHackathons, setVisibleHackathons] = useState(
+    hackathons.filter((item) => item.status === 'open'),
+  )
+  const [stats, setStats] = useState({
+    participants: 478,
+    activeHackathons: 4,
+    totalPrize: '₩11,000,000',
+  })
 
   const renderedWords = useMemo(
     () =>
@@ -59,6 +69,39 @@ function MainPage() {
     return () => window.clearTimeout(timeout)
   }, [displayedLength, isDeleting, totalLength])
 
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadPublicData() {
+      try {
+        const [hackathonResponse, statsResponse] = await Promise.all([
+          fetchHackathons(),
+          fetchPlatformStats(),
+        ])
+
+        if (!isMounted) return
+
+        if (hackathonResponse.length > 0) {
+          setVisibleHackathons(
+            hackathonResponse.filter((item) => item.status === 'open'),
+          )
+        }
+
+        setStats(statsResponse)
+      } catch {
+        if (!isMounted) return
+
+        setVisibleHackathons(hackathons.filter((item) => item.status === 'open'))
+      }
+    }
+
+    loadPublicData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   return (
     <section className="page-section">
       <div className="main-banner">
@@ -90,15 +133,15 @@ function MainPage() {
             </div>
             <div className="banner-stats">
               <div>
-                <strong>478+</strong>
+                <strong>{stats.participants}+</strong>
                 <span>참가자</span>
               </div>
               <div>
-                <strong>4</strong>
+                <strong>{stats.activeHackathons}</strong>
                 <span>진행 해커톤</span>
               </div>
               <div>
-                <strong>₩11M+</strong>
+                <strong>{stats.totalPrize}</strong>
                 <span>총 상금</span>
               </div>
             </div>
@@ -171,12 +214,10 @@ function MainPage() {
           <h2>지금 모집 중인 해커톤</h2>
         </div>
         <div className="stack-list">
-          {hackathons
-            .filter((item) => item.status === 'open')
-            .map((hackathon) => (
+          {visibleHackathons.map((hackathon) => (
               <Link
-                key={hackathon.slug}
-                to={`/hackathons/${hackathon.slug}`}
+                key={hackathon.id ?? hackathon.slug}
+                to={`/hackathons/${hackathon.id ?? hackathon.slug}`}
                 className="surface-card surface-card--link hackathon-card"
               >
                 <div className="row-between row-between--start">
@@ -195,7 +236,7 @@ function MainPage() {
                   </div>
                 </div>
               </Link>
-            ))}
+          ))}
         </div>
       </section>
     </section>

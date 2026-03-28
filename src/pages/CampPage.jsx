@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { fetchTeams } from '../api/teams.js'
 import { teams } from '../mock/teams.js'
 
 const openFilters = [
@@ -11,11 +12,43 @@ function CampPage() {
   const [query, setQuery] = useState('')
   const [openFilter, setOpenFilter] = useState('all')
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false)
+  const [items, setItems] = useState(teams)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadTeams() {
+      setIsLoading(true)
+
+      try {
+        const data = await fetchTeams()
+        if (!isMounted) return
+
+        if (data.length > 0) {
+          setItems(data)
+        }
+      } catch {
+        if (!isMounted) return
+        setItems(teams)
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadTeams()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const filteredTeams = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
-    return teams.filter((team) => {
+    return items.filter((team) => {
       const matchesOpen =
         openFilter === 'all' ||
         (openFilter === 'open' && team.isOpen) ||
@@ -31,7 +64,7 @@ function CampPage() {
 
       return matchesOpen && matchesQuery
     })
-  }, [openFilter, query])
+  }, [items, openFilter, query])
 
   return (
     <section className="page-section">
@@ -87,6 +120,12 @@ function CampPage() {
           </div>
         </div>
       </section>
+
+      {isLoading ? (
+        <section className="surface-card empty-panel">
+          <p className="empty-panel__title">팀 모집글을 불러오는 중입니다.</p>
+        </section>
+      ) : null}
 
       {filteredTeams.length === 0 ? (
         <section className="surface-card empty-panel">

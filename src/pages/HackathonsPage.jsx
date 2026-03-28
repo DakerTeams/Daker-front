@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { fetchHackathons } from '../api/hackathons.js'
 import { hackathons } from '../mock/hackathons.js'
 
 const statusFilters = [
@@ -12,11 +13,43 @@ const statusFilters = [
 function HackathonsPage() {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [items, setItems] = useState(hackathons)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadHackathons() {
+      setIsLoading(true)
+
+      try {
+        const data = await fetchHackathons()
+        if (!isMounted) return
+
+        if (data.length > 0) {
+          setItems(data)
+        }
+      } catch {
+        if (!isMounted) return
+        setItems(hackathons)
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadHackathons()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const filteredHackathons = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
-    return hackathons.filter((hackathon) => {
+    return items.filter((hackathon) => {
       const matchesStatus =
         statusFilter === 'all' || hackathon.status === statusFilter
 
@@ -30,7 +63,7 @@ function HackathonsPage() {
 
       return matchesStatus && matchesQuery
     })
-  }, [query, statusFilter])
+  }, [items, query, statusFilter])
 
   return (
     <section className="page-section">
@@ -69,6 +102,12 @@ function HackathonsPage() {
         </div>
       </section>
 
+      {isLoading ? (
+        <section className="surface-card empty-panel">
+          <p className="empty-panel__title">해커톤 목록을 불러오는 중입니다.</p>
+        </section>
+      ) : null}
+
       {filteredHackathons.length === 0 ? (
         <section className="surface-card empty-panel">
           <p className="empty-panel__title">조건에 맞는 해커톤이 없습니다.</p>
@@ -80,8 +119,8 @@ function HackathonsPage() {
         <div className="stack-list">
           {filteredHackathons.map((hackathon) => (
           <Link
-            key={hackathon.slug}
-            to={`/hackathons/${hackathon.slug}`}
+            key={hackathon.id ?? hackathon.slug}
+            to={`/hackathons/${hackathon.id ?? hackathon.slug}`}
             className="surface-card surface-card--link hackathon-card hackathon-card--list"
           >
             <div className="row-between row-between--start">
