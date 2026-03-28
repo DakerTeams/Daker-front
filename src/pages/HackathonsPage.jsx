@@ -5,8 +5,8 @@ import { hackathons } from '../mock/hackathons.js'
 const statusFilters = [
   { key: 'all', label: '전체' },
   { key: 'open', label: '모집중' },
-  { key: 'upcoming', label: '오픈예정' },
-  { key: 'closed', label: '마감' },
+  { key: 'upcoming', label: '진행중' },
+  { key: 'closed', label: '종료' },
 ]
 
 function HackathonsPage() {
@@ -49,7 +49,7 @@ function HackathonsPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             className="search-input"
-            placeholder="해커톤명, 요약, 태그로 검색"
+            placeholder="제목, 태그 검색... (예: AI/ML, Web)"
           />
 
           <div className="filter-group" aria-label="해커톤 상태 필터">
@@ -86,38 +86,33 @@ function HackathonsPage() {
           >
             <div className="row-between row-between--start">
               <div className="stack-list stack-list--compact hackathon-card__left">
-                <div className="row-between row-between--wrap">
-                  <h2>{hackathon.title}</h2>
+                <div className="hackathon-card__topline">
                   <span
-                    className={`status-pill status-pill--${hackathon.status}`}
+                    className={`status-outline status-outline--${hackathon.status}`}
                   >
-                    {hackathon.statusLabel}
+                    {hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}
                   </span>
+                  <h2>{hackathon.title}</h2>
                 </div>
-                <p>{hackathon.summary}</p>
+                <div className="tag-list" aria-label="해커톤 태그">
+                  {hackathon.tags.map((tag) => (
+                    <span key={tag} className="tag-chip tag-chip--blue">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               <div className="hackathon-card__meta hackathon-card__meta--right">
-                <span>{hackathon.startDate}</span>
-                <span>{hackathon.endDate}</span>
-                <span className="button-inline">상세 보기</span>
+                <span className="button-action">상세 보기</span>
               </div>
             </div>
 
             <div className="hackathon-card__footer">
-              <div className="tag-list" aria-label="해커톤 태그">
-                {hackathon.tags.map((tag) => (
-                  <span key={tag} className="tag-chip">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-
               <div className="meta-cluster">
-                <small className="meta-text">{hackathon.period}</small>
-                <small className="meta-text">
-                  참가자 {hackathon.participantCount}명
-                </small>
+                <small className="meta-text">{hackathon.startDate} ~ {hackathon.endDate}</small>
+                <small className="meta-text">참가자 {hackathon.participantCount}명</small>
+                <small className="meta-text">{hackathon.organizer}</small>
               </div>
             </div>
           </Link>

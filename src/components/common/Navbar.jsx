@@ -29,6 +29,15 @@ function Navbar() {
             </NavLink>
           ))}
         </nav>
+
+        <div className="navbar__auth">
+          <button type="button" className="navbar__auth-button navbar__auth-button--ghost">
+            로그인
+          </button>
+          <button type="button" className="navbar__auth-button navbar__auth-button--primary">
+            회원가입
+          </button>
+        </div>
       </div>
     </header>
   )

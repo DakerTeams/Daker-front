@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { hackathons } from '../mock/hackathons.js'
+import { teams } from '../mock/teams.js'
 
 const detailTabs = [
   { key: 'overview', label: '개요' },
-  { key: 'guide', label: '안내' },
   { key: 'schedule', label: '일정' },
-  { key: 'evaluation', label: '평가' },
   { key: 'prize', label: '상금' },
   { key: 'team', label: '팀' },
   { key: 'submit', label: '제출' },
@@ -18,9 +17,15 @@ function HackathonDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [teamState, setTeamState] = useState('notRegistered')
   const [submitState, setSubmitState] = useState('notRegistered')
+  const [isTeamNoticeOpen, setIsTeamNoticeOpen] = useState(false)
 
   const hackathon = useMemo(
     () => hackathons.find((item) => item.slug === slug),
+    [slug],
+  )
+
+  const participantTeams = useMemo(
+    () => teams.filter((team) => team.hackathonSlug === slug),
     [slug],
   )
 
@@ -47,26 +52,26 @@ function HackathonDetailPage() {
     if (activeTab === 'overview') {
       return (
         <div className="detail-section__content">
-          <p>{hackathon.overview}</p>
-          <div className="tag-list">
-            {hackathon.tags.map((tag) => (
-              <span key={tag} className="tag-chip">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      )
-    }
+          <section className="detail-block">
+            <h2 className="detail-block__title">대회 개요</h2>
+            <p className="detail-description">{hackathon.overview}</p>
+          </section>
 
-    if (activeTab === 'guide') {
-      return (
-        <div className="stack-list stack-list--compact">
-          {hackathon.notices.map((notice) => (
-            <div key={notice} className="detail-list-row">
-              {notice}
+          <section className="detail-block">
+            <h2 className="detail-block__title">평가 기준</h2>
+            <div className="detail-score-table">
+              <div className="detail-score-row detail-score-row--head">
+                <span>평가 항목</span>
+                <span>비중</span>
+              </div>
+              {hackathon.evaluations.map((item) => (
+                <div key={item.label} className="detail-score-row">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
             </div>
-          ))}
+          </section>
         </div>
       )
     }
@@ -112,9 +117,10 @@ function HackathonDetailPage() {
 
     if (activeTab === 'team') {
       return (
-        <div className="stack-list">
-          <div className="surface-card surface-card--soft">
-            <div className="filter-group" aria-label="팀 상태 미리보기">
+        <div className="stack-list team-tab-layout">
+          <div className="team-state-switcher" aria-label="팀 상태 미리보기">
+            <span className="team-state-switcher__label">데모 상태 :</span>
+            <div className="filter-group">
               <button
                 type="button"
                 className={`filter-chip${
@@ -145,57 +151,144 @@ function HackathonDetailPage() {
             </div>
           </div>
 
-          <div className="surface-card">
-            {'teamName' in activeTeamState ? (
-              <>
-                <div className="row-between row-between--wrap">
+          {teamState === 'notRegistered' && (
+            <div className="team-state-card team-state-card--locked">
+              <div className="team-state-card__icon">🔒</div>
+              <h2 className="team-state-card__title">
+                해커톤에 먼저 신청해야 합니다
+              </h2>
+              <p className="team-state-card__description">
+                팀을 구성하려면 먼저 이 해커톤에 참가 신청을 해야 해요.
+              </p>
+              <p className="team-state-card__description">
+                신청 후 팀을 생성하거나 기존 팀에 합류할 수 있어요.
+              </p>
+              <button
+                type="button"
+                className="team-primary-button"
+                onClick={() => setTeamState('noTeam')}
+              >
+                지금 참가 신청하기
+              </button>
+            </div>
+          )}
+
+          {teamState === 'noTeam' && (
+            <div className="team-state-card team-state-card--ready">
+              <div className="team-state-card__icon">🤝</div>
+              <h2 className="team-state-card__title">
+                참가 신청 완료! 이제 팀을 만들어보세요
+              </h2>
+              <p className="team-state-card__description">
+                팀 없이는 제출할 수 없어요. 1인 팀도 가능하니 먼저 팀을 생성해
+                주세요.
+              </p>
+              <p className="team-state-card__description">
+                팀원 모집 페이지에서 다른 팀에 합류할 수도 있어요.
+              </p>
+              <div className="team-state-actions">
+                <button
+                  type="button"
+                  className="team-primary-button"
+                  onClick={() => setIsTeamNoticeOpen(true)}
+                >
+                  + 팀 생성하기
+                </button>
+                <Link to="/camp" className="team-secondary-button">
+                  기존 팀 찾기 →
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {teamState === 'hasTeam' && (
+            <>
+              <section className="my-team-panel">
+                <div className="my-team-panel__header">
                   <div>
-                    <p className="meta-text">내 팀 현황</p>
-                    <h2>{activeTeamState.teamName}</h2>
+                    <h2 className="my-team-panel__title">NeuralNinjas</h2>
+                    <p className="my-team-panel__meta">내 팀 · 팀장</p>
                   </div>
-                  <span className="status-pill">{activeTeamState.role}</span>
+                  <div className="my-team-panel__badges">
+                    <span className="status-outline status-outline--open">
+                      모집 중
+                    </span>
+                    <button type="button" className="team-primary-button team-primary-button--small">
+                      신청 관리 (3)
+                    </button>
+                  </div>
                 </div>
-                <div className="card-grid">
-                  <div className="surface-card surface-card--soft">
-                    <p className="meta-text">현재 팀원</p>
-                    <ul className="bullet-list">
-                      {activeTeamState.members.map((member) => (
-                        <li key={member}>{member}</li>
-                      ))}
-                    </ul>
+
+                <div className="my-team-panel__section">
+                  <p className="my-team-panel__label">팀원 4명</p>
+                  <ul className="my-team-members">
+                    <li className="my-team-member">
+                      <span className="my-team-member__dot my-team-member__dot--active" />
+                      <strong>jinwoo_k</strong>
+                      <span className="team-role-badge">팀장</span>
+                    </li>
+                    <li className="my-team-member">
+                      <span className="my-team-member__dot" />
+                      <strong>minhyun99</strong>
+                      <span className="my-team-member__role">디자이너</span>
+                    </li>
+                    <li className="my-team-member">
+                      <span className="my-team-member__dot" />
+                      <strong>dart_joon</strong>
+                      <span className="my-team-member__role">프론트엔드</span>
+                    </li>
+                    <li className="my-team-member">
+                      <span className="my-team-member__dot" />
+                      <strong>ethereal_dev</strong>
+                      <span className="my-team-member__role">백엔드</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="my-team-panel__actions">
+                  <button type="button" className="team-secondary-button team-secondary-button--muted">
+                    팀 정보 수정
+                  </button>
+                  <button type="button" className="team-danger-button">
+                    모집 마감
+                  </button>
+                </div>
+              </section>
+
+              <section className="detail-block">
+                <h2 className="detail-block__title">참가 팀 현황</h2>
+                <div className="participant-team-table">
+                  <div className="participant-team-table__head">
+                    <span>팀명</span>
+                    <span>팀장</span>
+                    <span>팀원 수</span>
+                    <span>상태</span>
                   </div>
-                  <div className="surface-card surface-card--soft">
-                    <p className="meta-text">모집 포지션</p>
-                    {activeTeamState.recruiting.length > 0 ? (
-                      <div className="tag-list">
-                        {activeTeamState.recruiting.map((position) => (
-                          <span key={position} className="tag-chip">
-                            {position}
-                          </span>
-                        ))}
+                  {participantTeams.map((team) => (
+                    <div key={team.id} className="participant-team-table__row">
+                      <div className="participant-team-table__team">
+                        <strong>{team.name}</strong>
+                        {team.name === 'Neural Ninjas' && (
+                          <span className="team-role-badge">내 팀</span>
+                        )}
                       </div>
-                    ) : (
-                      <p>현재 추가 모집 중인 포지션이 없습니다.</p>
-                    )}
-                  </div>
+                      <span>{team.leader}</span>
+                      <span>{team.currentMembers}명</span>
+                      <span
+                        className={`status-outline ${
+                          team.isOpen
+                            ? 'status-outline--open'
+                            : 'status-outline--closed'
+                        }`}
+                      >
+                        {team.isOpen ? '모집 중' : '마감'}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              </>
-            ) : (
-              <>
-                <p className="meta-text">팀 탭 상태</p>
-                <h2>{activeTeamState.title}</h2>
-                <p>{activeTeamState.description}</p>
-                <div className="filter-group">
-                  <span className="button-link button-link--soft">
-                    {activeTeamState.primaryAction}
-                  </span>
-                  <span className="button-link button-link--ghost">
-                    {activeTeamState.secondaryAction}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
+              </section>
+            </>
+          )}
         </div>
       )
     }
@@ -298,13 +391,21 @@ function HackathonDetailPage() {
       </div>
 
       <div className="detail-header">
-        <p className="eyebrow">/hackathons/{hackathon.slug}</p>
+        <div className="tag-list">
+          <span className={`status-outline status-outline--${hackathon.status}`}>
+            {hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}
+          </span>
+          {hackathon.tags.map((tag) => (
+            <span key={tag} className="tag-chip tag-chip--blue">
+              {tag}
+            </span>
+          ))}
+        </div>
         <h1>{hackathon.title}</h1>
-        <p className="page-description">{hackathon.summary}</p>
         <div className="detail-meta">
-          <span>{hackathon.period}</span>
+          <span>{hackathon.organizer}</span>
+          <span>{hackathon.startDate} ~ {hackathon.endDate}</span>
           <span>참가자 {hackathon.participantCount}명</span>
-          <span>{hackathon.statusLabel}</span>
         </div>
       </div>
 
@@ -330,34 +431,84 @@ function HackathonDetailPage() {
 
         <aside className="stack-list">
           <div className="sidebar-card">
-            <h3>진행 정보</h3>
+            <h3>대회 정보</h3>
             <div className="info-row">
-              <span>상태</span>
-              <span>{hackathon.statusLabel}</span>
+              <span>주최</span>
+              <span>{hackathon.organizer}</span>
             </div>
             <div className="info-row">
-              <span>기간</span>
-              <span>{hackathon.period}</span>
+              <span>시작일</span>
+              <span>{hackathon.startDate}</span>
+            </div>
+            <div className="info-row">
+              <span>종료일</span>
+              <span>{hackathon.endDate}</span>
             </div>
             <div className="info-row">
               <span>참가자</span>
               <span>{hackathon.participantCount}명</span>
             </div>
+            <div className="info-row">
+              <span>상태</span>
+              <span>{hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}</span>
+            </div>
+            <button type="button" className="detail-apply-button">
+              지금 참가 신청
+            </button>
           </div>
 
           <div className="sidebar-card">
-            <h3>빠른 이동</h3>
-            <div className="stack-list stack-list--compact">
-              <Link to="/camp" className="button-link button-link--ghost sidebar-button">
-                팀원 모집 보기
-              </Link>
-              <Link to="/team-create" className="button-link button-link--soft sidebar-button">
-                팀 생성하기
-              </Link>
+            <h3>최고 상금</h3>
+            <div className="detail-prize-card">
+              <strong>{hackathon.prizes[0]?.value}</strong>
+              <span>대상</span>
             </div>
           </div>
         </aside>
       </div>
+
+      {isTeamNoticeOpen && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setIsTeamNoticeOpen(false)}
+        >
+          <div
+            className="team-notice-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="team-notice-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="team-notice-title">팀 구성 유의사항</h2>
+            <ul className="team-notice-list">
+              <li>한 해커톤에 1개 팀만 참여할 수 있습니다.</li>
+              <li>팀 생성 후 24시간 이내에 최소 2명 이상의 팀원이 필요합니다.</li>
+              <li>팀 구성이 완료되면 팀원 변경이 제한될 수 있습니다.</li>
+              <li>팀장만 제출 권한을 가집니다.</li>
+            </ul>
+            <p className="team-notice-copy">
+              위 사항을 확인하셨으면 팀 생성 페이지로 이동합니다.
+            </p>
+            <div className="team-notice-actions">
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => setIsTeamNoticeOpen(false)}
+              >
+                취소
+              </button>
+              <Link
+                to="/team-create"
+                className="team-primary-button"
+                onClick={() => setIsTeamNoticeOpen(false)}
+              >
+                확인, 팀 생성 페이지로
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

@@ -1,7 +1,64 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { hackathons } from '../mock/hackathons.js'
 
+const typewriterWords = ['Build.', 'Compete.', 'Win.']
+const cumulativeLengths = typewriterWords.reduce((accumulator, word, index) => {
+  const previous = index === 0 ? 0 : accumulator[index - 1]
+  accumulator.push(previous + word.length)
+  return accumulator
+}, [])
+
 function MainPage() {
+  const totalLength = cumulativeLengths[cumulativeLengths.length - 1]
+  const [displayedLength, setDisplayedLength] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const renderedWords = useMemo(
+    () =>
+      typewriterWords.map((word, index) => {
+        const previousLength = index === 0 ? 0 : cumulativeLengths[index - 1]
+        const visibleLength = Math.max(
+          0,
+          Math.min(word.length, displayedLength - previousLength),
+        )
+
+        return word.slice(0, visibleLength)
+      }),
+    [displayedLength],
+  )
+
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => {
+        if (!isDeleting && displayedLength < totalLength) {
+          setDisplayedLength((value) => value + 1)
+          return
+        }
+
+        if (!isDeleting && displayedLength === totalLength) {
+          setIsDeleting(true)
+          return
+        }
+
+        if (isDeleting && displayedLength > 0) {
+          setDisplayedLength((value) => value - 1)
+          return
+        }
+
+        setDisplayedLength(0)
+        setIsDeleting(false)
+      },
+      !isDeleting && displayedLength === totalLength
+        ? 900
+        : isDeleting
+          ? 70
+          : 110,
+    )
+
+    return () => window.clearTimeout(timeout)
+  }, [displayedLength, isDeleting, totalLength])
+
   return (
     <section className="page-section">
       <div className="main-banner">
@@ -9,11 +66,14 @@ function MainPage() {
           <div className="main-banner__left">
             <p className="banner-label">// HACKATHON PLATFORM v2.0</p>
             <h1 className="banner-title">
-              Build teams.
+              <span>{renderedWords[0]}</span>
               <br />
-              Compete fast.
+              <span>{renderedWords[1]}</span>
               <br />
-              <span className="banner-title__accent">Rank higher.</span>
+              <span className="banner-title__accent">
+                {renderedWords[2]}
+                <span className="banner-type-cursor">|</span>
+              </span>
             </h1>
             <p className="banner-subtitle">
               팀을 만들고, 해커톤에 참가하고,
