@@ -265,9 +265,16 @@ h2 {
 
 .camp-search-input {
   flex: 0 1 620px;
+  display: block;
+  align-self: flex-start;
   width: min(100%, 620px);
+  height: 52px;
+  min-height: 52px;
+  max-height: 52px;
   padding: 12px 16px;
+  line-height: 1.2;
   border-radius: 12px;
+  appearance: none;
 }
 
 .filter-group {
