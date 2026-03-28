@@ -1568,6 +1568,14 @@ h2 {
   font-weight: 600;
 }
 
+.auth-helper-copy {
+  margin-top: 10px;
+  color: #a1a1aa;
+  text-align: center;
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
 .auth-social-button {
   width: 100%;
   min-height: 60px;
@@ -1628,6 +1636,12 @@ h2 {
 
 .auth-field__label strong {
   color: #ff4d4f;
+}
+
+.auth-field__hint {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .auth-input {
