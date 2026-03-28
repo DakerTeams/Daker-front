@@ -65,3 +65,20 @@ export async function fetchHackathons(params = {}) {
   const payload = await apiRequest(`/hackathons${query}`)
   return extractArray(payload).map(normalizeHackathon)
 }
+
+export async function fetchHackathonDetail(id) {
+  const payload = await apiRequest(`/hackathons/${id}`)
+  return normalizeHackathon(payload?.data ?? payload)
+}
+
+export async function fetchHackathonLeaderboard(id) {
+  const payload = await apiRequest(`/hackathons/${id}/leaderboard`)
+  const rows = extractArray(payload)
+
+  return rows.map((item, index) => ({
+    rank: item.rank ?? item.rankNo ?? index + 1,
+    teamName: item.teamName ?? item.name ?? item.team?.name ?? `team_${index + 1}`,
+    score: item.score ?? item.totalScore ?? null,
+    submitted: item.submitted ?? item.isSubmitted ?? item.score !== undefined,
+  }))
+}

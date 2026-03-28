@@ -1,5 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import {
+  fetchHackathonDetail,
+  fetchHackathonLeaderboard,
+} from '../api/hackathons.js'
+import { fetchTeams } from '../api/teams.js'
 import { hackathons } from '../mock/hackathons.js'
 import { teams } from '../mock/teams.js'
 
@@ -18,18 +23,97 @@ function HackathonDetailPage() {
   const [teamState, setTeamState] = useState('notRegistered')
   const [submitState, setSubmitState] = useState('notRegistered')
   const [isTeamNoticeOpen, setIsTeamNoticeOpen] = useState(false)
+  const [remoteHackathon, setRemoteHackathon] = useState(null)
+  const [remoteTeams, setRemoteTeams] = useState(null)
+  const [remoteLeaderboard, setRemoteLeaderboard] = useState(null)
 
-  const hackathon = useMemo(
+  const mockHackathon = useMemo(
     () => hackathons.find((item) => String(item.id) === String(id)),
     [id],
   )
 
-  const participantTeams = useMemo(
+  const mockParticipantTeams = useMemo(
     () => teams.filter((team) => String(team.hackathonId) === String(id)),
     [id],
   )
 
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadDetail() {
+      try {
+        const [detail, participantTeams, leaderboard] = await Promise.all([
+          fetchHackathonDetail(id),
+          fetchTeams({ hackathonId: id }),
+          fetchHackathonLeaderboard(id),
+        ])
+
+        if (!isMounted) return
+
+        setRemoteHackathon(detail)
+        setRemoteTeams(participantTeams)
+        setRemoteLeaderboard(leaderboard)
+      } catch {
+        if (!isMounted) return
+
+        setRemoteHackathon(null)
+        setRemoteTeams(null)
+        setRemoteLeaderboard(null)
+      }
+    }
+
+    loadDetail()
+
+    return () => {
+      isMounted = false
+    }
+  }, [id])
+
+  const hackathon = useMemo(() => {
+    if (!mockHackathon && !remoteHackathon) {
+      return null
+    }
+
+    return {
+      ...(mockHackathon ?? {}),
+      ...(remoteHackathon ?? {}),
+      schedules:
+        mockHackathon?.schedules ??
+        remoteHackathon?.schedules ??
+        [],
+      evaluations:
+        mockHackathon?.evaluations ??
+        remoteHackathon?.evaluations ??
+        [],
+      prizes:
+        mockHackathon?.prizes ??
+        remoteHackathon?.prizes ??
+        [],
+      teamStates:
+        mockHackathon?.teamStates ??
+        remoteHackathon?.teamStates ??
+        {},
+      submitStates:
+        mockHackathon?.submitStates ??
+        remoteHackathon?.submitStates ??
+        {},
+      leaderboard:
+        remoteLeaderboard && remoteLeaderboard.length > 0
+          ? remoteLeaderboard
+          : mockHackathon?.leaderboard ?? [],
+    }
+  }, [mockHackathon, remoteHackathon, remoteLeaderboard])
+
+  const participantTeams = useMemo(
+    () => (remoteTeams && remoteTeams.length > 0 ? remoteTeams : mockParticipantTeams),
+    [mockParticipantTeams, remoteTeams],
+  )
+
   const scheduleSections = useMemo(() => {
+    if (!hackathon) {
+      return []
+    }
+
     if (String(id) === '1') {
       return [
         {
@@ -72,7 +156,7 @@ function HackathonDetailPage() {
       expanded: index === 0,
       items: [{ date: schedule.at.split(' ')[0], label: schedule.label }],
     }))
-  }, [hackathon.schedules, id])
+  }, [hackathon, id])
 
   if (!hackathon) {
     return (
@@ -90,8 +174,6 @@ function HackathonDetailPage() {
       </section>
     )
   }
-
-  const activeTeamState = hackathon.teamStates[teamState]
 
   const renderTabContent = () => {
     if (activeTab === 'overview') {
