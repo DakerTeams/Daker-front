@@ -29,6 +29,51 @@ function HackathonDetailPage() {
     [slug],
   )
 
+  const scheduleSections = useMemo(() => {
+    if (slug === 'ai-summit-2026') {
+      return [
+        {
+          title: '참가 신청',
+          status: 'done',
+          summaryDate: '2026-03-15',
+          expanded: true,
+          items: [
+            { date: '2026-03-15', label: '참가 신청 오픈' },
+            { date: '2026-03-31', label: '참가 신청 마감' },
+          ],
+        },
+        {
+          title: '해커톤 진행',
+          status: 'upcoming',
+          summaryDate: '2026-04-01 09:00',
+          expanded: false,
+          items: [
+            { date: '2026-04-01 09:00', label: '오프닝 및 안내' },
+            { date: '2026-04-02 18:00', label: '중간 점검' },
+          ],
+        },
+        {
+          title: '마감 및 시상',
+          status: 'upcoming',
+          summaryDate: '2026-04-03 20:00',
+          expanded: false,
+          items: [
+            { date: '2026-04-03 18:00', label: '최종 제출 마감' },
+            { date: '2026-04-03 20:00', label: '시상 및 클로징' },
+          ],
+        },
+      ]
+    }
+
+    return hackathon.schedules.map((schedule, index) => ({
+      title: schedule.label,
+      status: index === 0 ? 'done' : 'upcoming',
+      summaryDate: schedule.at,
+      expanded: index === 0,
+      items: [{ date: schedule.at.split(' ')[0], label: schedule.label }],
+    }))
+  }, [hackathon.schedules, slug])
+
   if (!hackathon) {
     return (
       <section className="page-section">
@@ -78,13 +123,58 @@ function HackathonDetailPage() {
 
     if (activeTab === 'schedule') {
       return (
-        <div className="stack-list stack-list--compact">
-          {hackathon.schedules.map((schedule) => (
-            <div key={schedule.label} className="detail-list-row row-between">
-              <strong>{schedule.label}</strong>
-              <span className="meta-text">{schedule.at}</span>
+        <div className="detail-section__content">
+          <section className="detail-block">
+            <div className="row-between row-between--wrap">
+              <h2 className="detail-block__title detail-block__title--plain">대회 일정</h2>
+              <div className="schedule-legend">
+                <span className="schedule-legend__item">
+                  <span className="schedule-legend__dot schedule-legend__dot--done" />
+                  완료
+                </span>
+                <span className="schedule-legend__item">
+                  <span className="schedule-legend__dot schedule-legend__dot--progress" />
+                  진행 중
+                </span>
+                <span className="schedule-legend__item">
+                  <span className="schedule-legend__dot schedule-legend__dot--upcoming" />
+                  예정
+                </span>
+              </div>
             </div>
-          ))}
+
+            <div className="schedule-stack">
+              {scheduleSections.map((section) => (
+                <article key={section.title} className="schedule-card">
+                  <div className="schedule-card__head">
+                    <div className="schedule-card__title-wrap">
+                      <span
+                        className={`schedule-card__dot schedule-card__dot--${section.status}`}
+                      />
+                      <strong className="schedule-card__title">{section.title}</strong>
+                    </div>
+                    <div className="schedule-card__summary">
+                      <span>{section.summaryDate}</span>
+                      <span className="schedule-card__chevron">
+                        {section.expanded ? '▲' : '▼'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {section.expanded && (
+                    <div className="schedule-card__body">
+                      {section.items.map((item) => (
+                        <div key={`${section.title}-${item.label}`} className="schedule-card__item">
+                          <span className="schedule-card__item-date">{item.date}</span>
+                          <span className="schedule-card__item-label">{item.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
       )
     }

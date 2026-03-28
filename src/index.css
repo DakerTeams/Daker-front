@@ -1259,10 +1259,127 @@ h2 {
   border-bottom: 1px solid #eceff1;
 }
 
+.detail-block__title--plain {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
 .detail-description {
   font-size: 1rem;
   line-height: 1.95;
   color: #4b5563;
+}
+
+.schedule-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  color: #9ca3af;
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.schedule-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-legend__dot,
+.schedule-card__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.schedule-legend__dot--done,
+.schedule-card__dot--done {
+  background: #16c79a;
+}
+
+.schedule-legend__dot--progress,
+.schedule-card__dot--progress {
+  background: #f59e0b;
+}
+
+.schedule-legend__dot--upcoming,
+.schedule-card__dot--upcoming {
+  background: #d1d5db;
+}
+
+.schedule-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.schedule-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.schedule-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 28px;
+}
+
+.schedule-card__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.schedule-card__title {
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.schedule-card__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  color: #9ca3af;
+  font-size: 0.96rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.schedule-card__chevron {
+  font-size: 1rem;
+}
+
+.schedule-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px;
+  border-top: 1px solid #eef1f4;
+}
+
+.schedule-card__item {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.schedule-card__item-date {
+  color: #9ca3af;
+  font-size: 0.98rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.schedule-card__item-label {
+  color: #1f2937;
+  font-size: 1.08rem;
+  font-weight: 700;
 }
 
 .detail-score-table {
@@ -1398,6 +1515,186 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.auth-page {
+  min-height: calc(100vh - 170px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 0 72px;
+}
+
+.auth-card {
+  width: min(100%, 590px);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: 54px 56px 42px;
+}
+
+.auth-card--placeholder {
+  max-width: 520px;
+}
+
+.auth-card__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #16c79a;
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 18px;
+}
+
+.auth-card__brand-prefix {
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.auth-card__header {
+  margin-bottom: 28px;
+}
+
+.auth-card__header h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.auth-card__header p {
+  color: #9ca3af;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.auth-social-button {
+  width: 100%;
+  min-height: 60px;
+  border: 0;
+  border-radius: 12px;
+  background: #171717;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-social-button__icon {
+  font-size: 1.35rem;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 30px 0 28px;
+}
+
+.auth-divider span {
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.auth-divider em {
+  color: #c0c4cc;
+  font-style: normal;
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-field__label {
+  color: #3f3f46;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.auth-field__label strong {
+  color: #ff4d4f;
+}
+
+.auth-input {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.98rem;
+}
+
+.auth-input:focus {
+  outline: 2px solid rgba(15, 157, 122, 0.18);
+  border-color: #9fd7c7;
+}
+
+.auth-submit-button {
+  width: 100%;
+  min-height: 56px;
+  border: 0;
+  border-radius: 12px;
+  background: #16c79a;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-submit-button--link {
+  margin-top: 10px;
+}
+
+.auth-demo-note {
+  margin-top: 22px;
+  padding: 18px 20px;
+  border: 1px solid #b9f0df;
+  border-radius: 12px;
+  background: #e7faf3;
+  color: #16a085;
+}
+
+.auth-demo-note p {
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.auth-demo-note strong {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 1rem;
+}
+
+.auth-footer {
+  margin-top: 30px;
+  color: #9ca3af;
+  text-align: center;
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.auth-footer a {
+  color: #16c79a;
+  font-weight: 800;
 }
 
 .team-tab-layout {
@@ -1858,6 +2155,19 @@ h2 {
     flex-wrap: wrap;
   }
 
+  .auth-page {
+    min-height: auto;
+    padding-top: 8px;
+  }
+
+  .auth-card {
+    padding: 34px 22px 28px;
+  }
+
+  .auth-card__header h1 {
+    font-size: 1.7rem;
+  }
+
   .team-state-card {
     padding: 56px 24px;
   }
@@ -1883,6 +2193,20 @@ h2 {
   .team-notice-actions {
     flex-direction: column;
     justify-content: stretch;
+  }
+
+  .schedule-card__head,
+  .schedule-card__item {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .schedule-card__head {
+    gap: 12px;
+  }
+
+  .schedule-card__summary {
+    justify-content: space-between;
   }
 
   .submit-guide-card,

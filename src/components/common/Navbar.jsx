@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 
 const navItems = [
   { to: '/hackathons', label: '해커톤' },
@@ -31,12 +31,12 @@ function Navbar() {
         </nav>
 
         <div className="navbar__auth">
-          <button type="button" className="navbar__auth-button navbar__auth-button--ghost">
+          <Link to="/login" className="navbar__auth-button navbar__auth-button--ghost">
             로그인
-          </button>
-          <button type="button" className="navbar__auth-button navbar__auth-button--primary">
+          </Link>
+          <Link to="/signup" className="navbar__auth-button navbar__auth-button--primary">
             회원가입
-          </button>
+          </Link>
         </div>
       </div>
     </header>
