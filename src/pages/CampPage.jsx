@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchHackathons } from '../api/hackathons.js'
+import { useNavigate } from 'react-router-dom'
 import {
   applyToTeam,
-  createTeam,
   deleteTeam,
   fetchMyTeams,
   fetchTeamDetail,
@@ -11,7 +10,6 @@ import {
 } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
 import { teams } from '../mock/teams.js'
-import { hackathons } from '../mock/hackathons.js'
 
 const openFilters = [
   { key: 'all', label: '전체' },
@@ -20,20 +18,11 @@ const openFilters = [
 ]
 
 function CampPage() {
+  const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [openFilter, setOpenFilter] = useState('all')
-  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false)
   const [items, setItems] = useState(teams)
   const [isLoading, setIsLoading] = useState(false)
-  const [availableHackathons, setAvailableHackathons] = useState(hackathons)
-  const [createForm, setCreateForm] = useState({
-    hackathonId: '1',
-    name: '',
-    description: '',
-    isOpen: 'true',
-  })
-  const [createMessage, setCreateMessage] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [myTeams, setMyTeams] = useState([])
   const [appliedTeamIds, setAppliedTeamIds] = useState([])
@@ -56,7 +45,7 @@ function CampPage() {
       setIsLoading(true)
 
       try {
-        const [teamData, hackathonData, myTeamData] = await Promise.all([
+        const [teamData, myTeamData] = await Promise.all([
           fetchTeams({
             isOpen:
               openFilter === 'all'
@@ -64,7 +53,6 @@ function CampPage() {
                 : openFilter === 'open',
             q: query.trim() || undefined,
           }),
-          fetchHackathons(),
           getStoredUser() ? fetchMyTeams().catch(() => []) : Promise.resolve([]),
         ])
         if (!isMounted) return
@@ -73,19 +61,10 @@ function CampPage() {
           setItems(teamData)
         }
 
-        if (hackathonData.length > 0) {
-          setAvailableHackathons(hackathonData)
-          setCreateForm((current) => ({
-            ...current,
-            hackathonId: String(hackathonData[0].id),
-          }))
-        }
-
         setMyTeams(myTeamData)
       } catch {
         if (!isMounted) return
         setItems(teams)
-        setAvailableHackathons(hackathons)
         setMyTeams([])
       } finally {
         if (isMounted) {
@@ -100,49 +79,6 @@ function CampPage() {
       isMounted = false
     }
   }, [openFilter, query])
-
-  const handleCreateChange = (event) => {
-    const { name, value } = event.target
-    setCreateForm((current) => ({
-      ...current,
-      [name]: value,
-    }))
-  }
-
-  const handleCreateSubmit = async () => {
-    if (!getStoredUser()) {
-      setCreateMessage('로그인 후 팀을 생성할 수 있습니다.')
-      return
-    }
-
-    setIsCreating(true)
-    setCreateMessage('')
-
-    try {
-      const created = await createTeam({
-        hackathonId: Number(createForm.hackathonId),
-        name: createForm.name,
-        description: createForm.description,
-        isOpen: createForm.isOpen === 'true',
-      })
-
-      setItems((current) => [created, ...current])
-      setMyTeams((current) => [created, ...current])
-      setSelectedTeam(created)
-      setCreateMessage('팀이 생성되었습니다. 해커톤 참가도 함께 처리되었습니다.')
-      setCreateForm((current) => ({
-        ...current,
-        name: '',
-        description: '',
-        isOpen: 'true',
-      }))
-      setIsCreateDrawerOpen(false)
-    } catch {
-      setCreateMessage('팀 생성에 실패했습니다. 등록 기간과 입력값을 확인해주세요.')
-    } finally {
-      setIsCreating(false)
-    }
-  }
 
   const handleOpenTeam = async (teamId) => {
     setTeamDetailMessage('')
@@ -244,7 +180,7 @@ function CampPage() {
           <button
             type="button"
             className="button-link"
-            onClick={() => setIsCreateDrawerOpen(true)}
+            onClick={() => navigate('/team-create')}
           >
             + 팀 생성하기
           </button>
@@ -343,116 +279,6 @@ function CampPage() {
               </div>
             </article>
           ))}
-        </div>
-      )}
-
-      {isCreateDrawerOpen && (
-        <div
-          className="drawer-backdrop"
-          role="presentation"
-          onClick={() => setIsCreateDrawerOpen(false)}
-        >
-          <aside
-            className="team-create-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="team-create-drawer-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="team-create-drawer__header">
-              <div>
-                <p className="eyebrow">new team</p>
-                <h2 id="team-create-drawer-title">팀 모집글 작성</h2>
-              </div>
-              <button
-                type="button"
-                className="drawer-close-button"
-                onClick={() => setIsCreateDrawerOpen(false)}
-              >
-                닫기
-              </button>
-            </div>
-
-            <div className="team-create-drawer__body">
-              <section className="surface-card surface-card--soft">
-                <p className="meta-text">작성 전 체크</p>
-                <ul className="bullet-list">
-                  <li>한 해커톤에는 1개 팀만 참여할 수 있습니다.</li>
-                  <li>개인 참가도 1인 팀 생성으로 처리됩니다.</li>
-                  <li>연락 링크는 공개 범위를 고려해 입력해야 합니다.</li>
-                </ul>
-              </section>
-
-              <section className="surface-card">
-                <div className="form-grid">
-                  <label className="form-field">
-                    <span className="form-label">연결할 해커톤</span>
-                    <select
-                      className="form-control"
-                      name="hackathonId"
-                      value={createForm.hackathonId}
-                      onChange={handleCreateChange}
-                    >
-                      {availableHackathons.map((hackathon) => (
-                        <option key={hackathon.id} value={hackathon.id}>
-                          {hackathon.title}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="form-field">
-                    <span className="form-label">팀명</span>
-                    <input
-                      className="form-control"
-                      name="name"
-                      value={createForm.name}
-                      onChange={handleCreateChange}
-                      placeholder="예: NeuralNinjas"
-                    />
-                  </label>
-
-                  <label className="form-field form-field--full">
-                    <span className="form-label">팀 소개</span>
-                    <textarea
-                      className="form-control form-control--textarea"
-                      name="description"
-                      value={createForm.description}
-                      onChange={handleCreateChange}
-                      placeholder="무엇을 만들 팀인지, 어떤 팀원을 찾는지 적어주세요."
-                    />
-                  </label>
-
-                  <label className="form-field">
-                    <span className="form-label">모집 상태</span>
-                    <select
-                      className="form-control"
-                      name="isOpen"
-                      value={createForm.isOpen}
-                      onChange={handleCreateChange}
-                    >
-                      <option value="true">모집 중</option>
-                      <option value="false">마감</option>
-                    </select>
-                  </label>
-                </div>
-              </section>
-            </div>
-
-            <div className="team-create-drawer__footer">
-              {createMessage ? <p className="meta-text">{createMessage}</p> : null}
-              <button
-                type="button"
-                className="team-secondary-button team-secondary-button--muted"
-                onClick={() => setIsCreateDrawerOpen(false)}
-              >
-                취소
-              </button>
-              <button type="button" className="team-primary-button" onClick={handleCreateSubmit}>
-                {isCreating ? '생성 중...' : '팀 생성 완료'}
-              </button>
-            </div>
-          </aside>
         </div>
       )}
 
