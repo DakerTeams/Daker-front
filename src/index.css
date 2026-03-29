@@ -453,7 +453,7 @@ h2 {
 
 .banner-label {
   margin: 0 0 18px;
-  color: #17d4ad;
+  color: #6fa4ff;
   font-size: 0.76rem;
   letter-spacing: 0.16em;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -469,15 +469,17 @@ h2 {
 }
 
 .banner-title__accent {
-  color: #09d2a5;
+  color: #5fa0ff;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-shadow: 0 0 18px rgba(95, 160, 255, 0.22);
 }
 
 .banner-type-cursor {
   display: inline-block;
-  color: #09d2a5;
+  color: #5fa0ff;
   font-weight: 300;
   margin-left: 2px;
+  text-shadow: 0 0 14px rgba(95, 160, 255, 0.28);
   animation: blink 0.8s step-end infinite;
 }
 
