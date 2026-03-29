@@ -25,9 +25,14 @@ function normalizeTeam(item) {
       : [],
     isOpen:
       item.isOpen ?? item.open ?? item.status === 'open' ?? false,
+    leaderId:
+      item.leader?.userId ??
+      item.owner?.userId ??
+      item.ownerUser?.userId ??
+      null,
     leader:
-      item.leader ??
       item.leader?.nickname ??
+      (typeof item.leader === 'string' ? item.leader : undefined) ??
       item.ownerNickname ??
       item.owner?.nickname ??
       item.ownerUser?.nickname ??

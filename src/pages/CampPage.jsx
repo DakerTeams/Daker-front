@@ -188,14 +188,11 @@ function CampPage() {
   const isMySelectedTeam = selectedTeam
     ? myTeams.some((team) => String(team.id) === String(selectedTeam.id))
     : false
-  const selectedLeaderName =
-    typeof selectedTeam?.leader === 'object'
-      ? selectedTeam?.leader?.nickname
-      : selectedTeam?.leader ?? ''
+  const selectedLeaderName = selectedTeam?.leader ?? ''
   const isSelectedTeamLeader =
     isMySelectedTeam &&
     Boolean(currentUser) &&
-    ((selectedTeam?.leader?.userId && selectedTeam.leader.userId === currentUser.userId) ||
+    ((selectedTeam?.leaderId && selectedTeam.leaderId === currentUser.userId) ||
       (currentUser?.nickname && selectedLeaderName === currentUser.nickname))
   const hasAppliedToSelectedTeam = selectedTeam
     ? appliedTeamIds.includes(selectedTeam.id)

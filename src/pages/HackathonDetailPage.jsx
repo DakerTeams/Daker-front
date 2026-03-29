@@ -180,11 +180,8 @@ function HackathonDetailPage() {
     [mockParticipantTeams, remoteTeams],
   )
 
-  const currentLeaderId = myTeamDetail?.leader?.userId ?? null
-  const currentLeaderName =
-    typeof myTeamDetail?.leader === 'object'
-      ? myTeamDetail?.leader?.nickname
-      : myTeamDetail?.leader ?? registrationStatus?.teamName ?? ''
+  const currentLeaderId = myTeamDetail?.leaderId ?? null
+  const currentLeaderName = myTeamDetail?.leader ?? registrationStatus?.teamName ?? ''
   const isCurrentUserLeader =
     Boolean(currentUser?.userId) &&
     ((currentLeaderId && currentLeaderId === currentUser.userId) ||
