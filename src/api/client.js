@@ -44,16 +44,23 @@ export async function apiRequest(path, options = {}) {
 export function extractArray(payload) {
   if (Array.isArray(payload)) return payload
   if (Array.isArray(payload?.data)) return payload.data
+  if (Array.isArray(payload?.data?.items)) return payload.data.items
   if (Array.isArray(payload?.items)) return payload.items
   if (Array.isArray(payload?.content)) return payload.content
   return []
 }
 
 export function extractObject(payload) {
+  if (
+    payload?.data &&
+    typeof payload.data === 'object' &&
+    !Array.isArray(payload.data)
+  ) {
+    return payload.data
+  }
+
   if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-    return payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)
-      ? payload.data
-      : payload
+    return payload
   }
 
   return {}
