@@ -1,6 +1,81 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { fetchHackathons } from '../api/hackathons.js'
+import { createTeam } from '../api/teams.js'
+import { hackathons } from '../mock/hackathons.js'
+import { getStoredUser } from '../lib/auth.js'
 
 function TeamCreatePage() {
+  const navigate = useNavigate()
+  const [availableHackathons, setAvailableHackathons] = useState(hackathons)
+  const [form, setForm] = useState({
+    hackathonId: '1',
+    name: '',
+    description: '',
+    isOpen: 'true',
+  })
+  const [message, setMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadHackathons() {
+      try {
+        const items = await fetchHackathons()
+        if (!isMounted || items.length === 0) return
+
+        setAvailableHackathons(items)
+        setForm((current) => ({
+          ...current,
+          hackathonId: String(items[0].id),
+        }))
+      } catch {
+        if (!isMounted) return
+        setAvailableHackathons(hackathons)
+      }
+    }
+
+    loadHackathons()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }))
+  }
+
+  const handleSubmit = async () => {
+    if (!getStoredUser()) {
+      setMessage('로그인 후 팀을 생성할 수 있습니다.')
+      return
+    }
+
+    setIsSubmitting(true)
+    setMessage('')
+
+    try {
+      await createTeam({
+        hackathonId: Number(form.hackathonId),
+        name: form.name,
+        description: form.description,
+        isOpen: form.isOpen === 'true',
+      })
+
+      navigate(`/hackathons/${form.hackathonId}`)
+    } catch {
+      setMessage('팀 생성에 실패했습니다. 등록 기간과 입력값을 확인해주세요.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <section className="page-section">
       <div>
@@ -51,58 +126,53 @@ function TeamCreatePage() {
               <div className="form-grid">
                 <label className="form-field">
                   <span className="form-label">연결할 해커톤</span>
-                  <select className="form-control" defaultValue="ai-summit-2026">
-                    <option value="ai-summit-2026">AI Summit 2026</option>
-                    <option value="mobile-craft-day">Mobile Craft Day</option>
-                    <option value="independent">해커톤 없이 팀만 만들기</option>
+                  <select
+                    className="form-control"
+                    name="hackathonId"
+                    value={form.hackathonId}
+                    onChange={handleChange}
+                  >
+                    {availableHackathons.map((hackathon) => (
+                      <option key={hackathon.id} value={hackathon.id}>
+                        {hackathon.title}
+                      </option>
+                    ))}
                   </select>
                 </label>
 
                 <label className="form-field">
                   <span className="form-label">팀명</span>
-                  <input className="form-control" placeholder="예: Neural Ninjas" />
+                  <input
+                    className="form-control"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="예: Neural Ninjas"
+                  />
                 </label>
 
                 <label className="form-field form-field--full">
                   <span className="form-label">팀 소개</span>
                   <textarea
                     className="form-control form-control--textarea"
+                    name="description"
+                    value={form.description}
+                    onChange={handleChange}
                     placeholder="팀 목표, 만들고 싶은 결과물, 원하는 협업 분위기를 적어주세요."
                   />
                 </label>
 
                 <label className="form-field">
-                  <span className="form-label">최대 팀원 수</span>
-                  <select className="form-control" defaultValue="5">
-                    <option value="2">2명</option>
-                    <option value="3">3명</option>
-                    <option value="4">4명</option>
-                    <option value="5">5명</option>
-                  </select>
-                </label>
-
-                <label className="form-field">
                   <span className="form-label">팀원 모집 여부</span>
-                  <select className="form-control" defaultValue="open">
-                    <option value="open">모집중</option>
-                    <option value="closed">모집 안 함</option>
+                  <select
+                    className="form-control"
+                    name="isOpen"
+                    value={form.isOpen}
+                    onChange={handleChange}
+                  >
+                    <option value="true">모집중</option>
+                    <option value="false">모집 안 함</option>
                   </select>
-                </label>
-
-                <label className="form-field form-field--full">
-                  <span className="form-label">모집 포지션</span>
-                  <input
-                    className="form-control"
-                    placeholder="예: 백엔드, AI/ML, 디자이너"
-                  />
-                </label>
-
-                <label className="form-field form-field--full">
-                  <span className="form-label">연락 링크</span>
-                  <input
-                    className="form-control"
-                    placeholder="오픈채팅, 구글 폼 등 외부 연락 링크"
-                  />
                 </label>
               </div>
             </section>
@@ -111,23 +181,20 @@ function TeamCreatePage() {
           <aside className="stack-list">
             <section className="surface-card">
               <p className="meta-text">입력 확인</p>
-              <h2>NeuralNinjas</h2>
+              <h2>{form.name || '팀 이름을 입력하세요'}</h2>
               <div className="stack-list stack-list--compact">
                 <div className="info-row">
                   <span>연결 해커톤</span>
-                  <span>AI Summit 2026</span>
-                </div>
-                <div className="info-row">
-                  <span>최대 인원</span>
-                  <span>5명</span>
-                </div>
-                <div className="info-row">
-                  <span>모집 포지션</span>
-                  <span>백엔드, AI/ML</span>
+                  <span>
+                    {availableHackathons.find((item) => String(item.id) === form.hackathonId)?.title ??
+                      '-'}
+                  </span>
                 </div>
                 <div className="info-row">
                   <span>모집 상태</span>
-                  <span className="status-pill status-pill--open">모집중</span>
+                  <span className="status-pill status-pill--open">
+                    {form.isOpen === 'true' ? '모집중' : '모집 안 함'}
+                  </span>
                 </div>
               </div>
             </section>
@@ -136,8 +203,8 @@ function TeamCreatePage() {
               <p className="meta-text">생성 후 흐름</p>
               <ul className="bullet-list">
                 <li>팀 생성 완료</li>
+                <li>해커톤 참가가 자동으로 처리됨</li>
                 <li>해커톤 상세 팀 탭으로 복귀</li>
-                <li>필요하면 팀 신청 관리 페이지로 이동</li>
               </ul>
             </section>
 
@@ -145,8 +212,11 @@ function TeamCreatePage() {
               <Link to="/camp" className="button-link button-link--ghost">
                 모집글 목록으로
               </Link>
-              <span className="button-link button-link--soft">팀 생성 완료</span>
+              <button type="button" className="button-link button-link--soft" onClick={handleSubmit}>
+                {isSubmitting ? '생성 중...' : '팀 생성 완료'}
+              </button>
             </div>
+            {message ? <p className="meta-text">{message}</p> : null}
           </aside>
         </div>
       </div>

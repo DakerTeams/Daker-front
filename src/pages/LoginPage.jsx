@@ -1,25 +1,38 @@
-import { Link, useNavigate } from 'react-router-dom'
-
-const AUTH_STORAGE_KEY = 'hackhub-demo-user'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { login } from '../api/auth.js'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+  })
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const loginDemoUser = () => {
-    window.localStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify({
-        nickname: 'jinwoo_k',
-        email: 'jinwoo@example.com',
-      }),
-    )
-    window.dispatchEvent(new Event('mock-auth-change'))
-    navigate('/')
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    loginDemoUser()
+    setIsSubmitting(true)
+    setErrorMessage('')
+
+    try {
+      await login(form)
+      navigate(location.state?.from || '/', { replace: true })
+    } catch {
+      setErrorMessage('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -35,7 +48,7 @@ function LoginPage() {
           <p>해커톤 플랫폼에 로그인하세요.</p>
         </div>
 
-        <button type="button" className="auth-social-button" onClick={loginDemoUser}>
+        <button type="button" className="auth-social-button" disabled>
           <span className="auth-social-button__icon">◔</span>
           GitHub으로 로그인
         </button>
@@ -53,8 +66,11 @@ function LoginPage() {
             </span>
             <input
               type="email"
+              name="email"
               className="auth-input"
               placeholder="jinwoo@example.com"
+              value={form.email}
+              onChange={handleChange}
             />
           </label>
 
@@ -64,20 +80,20 @@ function LoginPage() {
             </span>
             <input
               type="password"
+              name="password"
               className="auth-input"
               placeholder="비밀번호를 입력하세요"
+              value={form.password}
+              onChange={handleChange}
             />
           </label>
 
           <button type="submit" className="auth-submit-button">
-            로그인
+            {isSubmitting ? '로그인 중...' : '로그인'}
           </button>
         </form>
 
-        <div className="auth-demo-note">
-          <p>💡 데모: 아무 값이나 입력하고 로그인하면</p>
-          <strong>jinwoo_k로 접속됩니다.</strong>
-        </div>
+        {errorMessage ? <div className="auth-demo-note">{errorMessage}</div> : null}
 
         <p className="auth-footer">
           계정이 없으신가요? <Link to="/signup">회원가입</Link>

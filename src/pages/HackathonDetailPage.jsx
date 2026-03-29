@@ -1,10 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
+  cancelRegistration,
   fetchHackathonDetail,
   fetchHackathonLeaderboard,
+  fetchHackathonTeams,
+  fetchRegistrationStatus,
 } from '../api/hackathons.js'
-import { fetchTeams } from '../api/teams.js'
+import {
+  decideTeamApplication,
+  deleteTeam,
+  fetchMyTeams,
+  fetchTeamApplications,
+  fetchTeamDetail,
+  updateTeam,
+} from '../api/teams.js'
+import { getStoredUser } from '../lib/auth.js'
 import { hackathons } from '../mock/hackathons.js'
 import { teams } from '../mock/teams.js'
 
@@ -26,6 +37,23 @@ function HackathonDetailPage() {
   const [remoteHackathon, setRemoteHackathon] = useState(null)
   const [remoteTeams, setRemoteTeams] = useState(null)
   const [remoteLeaderboard, setRemoteLeaderboard] = useState(null)
+  const [registrationStatus, setRegistrationStatus] = useState(null)
+  const [registrationMessage, setRegistrationMessage] = useState('')
+  const [isRegisteringTeam, setIsRegisteringTeam] = useState(false)
+  const [myTeamDetail, setMyTeamDetail] = useState(null)
+  const [applications, setApplications] = useState([])
+  const [isApplicationsOpen, setIsApplicationsOpen] = useState(false)
+  const [applicationMessage, setApplicationMessage] = useState('')
+  const [isEditTeamOpen, setIsEditTeamOpen] = useState(false)
+  const [teamEditForm, setTeamEditForm] = useState({
+    name: '',
+    description: '',
+    isOpen: true,
+  })
+  const [teamEditMessage, setTeamEditMessage] = useState('')
+  const [isSavingTeam, setIsSavingTeam] = useState(false)
+  const [isDeletingTeam, setIsDeletingTeam] = useState(false)
+  const currentUser = getStoredUser()
 
   const mockHackathon = useMemo(
     () => hackathons.find((item) => String(item.id) === String(id)),
@@ -44,7 +72,7 @@ function HackathonDetailPage() {
       try {
         const [detail, participantTeams, leaderboard] = await Promise.all([
           fetchHackathonDetail(id),
-          fetchTeams({ hackathonId: id }),
+          fetchHackathonTeams(id),
           fetchHackathonLeaderboard(id),
         ])
 
@@ -59,6 +87,49 @@ function HackathonDetailPage() {
         setRemoteHackathon(null)
         setRemoteTeams(null)
         setRemoteLeaderboard(null)
+      }
+
+      if (getStoredUser()) {
+        try {
+          const [status, myTeams] = await Promise.all([
+            fetchRegistrationStatus(id),
+            fetchMyTeams(),
+          ])
+
+          if (!isMounted) return
+
+          setRegistrationStatus(status)
+          setTeamState(status?.teamId ? 'hasTeam' : 'notRegistered')
+
+          const matchedTeam = myTeams.find((team) => String(team.id) === String(status?.teamId))
+          if (matchedTeam) {
+            try {
+              const [detail, applicationRows] = await Promise.all([
+                fetchTeamDetail(matchedTeam.id),
+                fetchTeamApplications(matchedTeam.id),
+              ])
+
+              if (!isMounted) return
+              setMyTeamDetail(detail)
+              setApplications(applicationRows)
+            } catch {
+              if (!isMounted) return
+              setMyTeamDetail(matchedTeam)
+              setApplications([])
+            }
+
+            setRemoteTeams((current) => {
+              const others = (current ?? participantTeams ?? []).filter(
+                (team) => String(team.id) !== String(matchedTeam.id),
+              )
+              return [matchedTeam, ...others]
+            })
+          }
+        } catch {
+          if (!isMounted) return
+          setRegistrationStatus(null)
+          setTeamState('notRegistered')
+        }
       }
     }
 
@@ -108,6 +179,51 @@ function HackathonDetailPage() {
     () => (remoteTeams && remoteTeams.length > 0 ? remoteTeams : mockParticipantTeams),
     [mockParticipantTeams, remoteTeams],
   )
+
+  const currentLeaderId = myTeamDetail?.leader?.userId ?? null
+  const currentLeaderName =
+    typeof myTeamDetail?.leader === 'object'
+      ? myTeamDetail?.leader?.nickname
+      : myTeamDetail?.leader ?? registrationStatus?.teamName ?? ''
+  const isCurrentUserLeader =
+    Boolean(currentUser?.userId) &&
+    ((currentLeaderId && currentLeaderId === currentUser.userId) ||
+      (currentUser?.nickname && currentLeaderName === currentUser.nickname))
+
+  useEffect(() => {
+    if (!myTeamDetail) return
+
+    setTeamEditForm({
+      name: myTeamDetail.name ?? '',
+      description: myTeamDetail.description ?? '',
+      isOpen: myTeamDetail.isOpen ?? true,
+    })
+  }, [myTeamDetail])
+
+  const refreshParticipantTeams = async () => {
+    try {
+      const rows = await fetchHackathonTeams(id)
+      setRemoteTeams(rows)
+      return rows
+    } catch {
+      return null
+    }
+  }
+
+  const refreshMyTeamState = async (teamId) => {
+    try {
+      const [detail, applicationRows] = await Promise.all([
+        fetchTeamDetail(teamId),
+        fetchTeamApplications(teamId),
+      ])
+
+      setMyTeamDetail(detail)
+      setApplications(applicationRows)
+      return detail
+    } catch {
+      return null
+    }
+  }
 
   const scheduleSections = useMemo(() => {
     if (!hackathon) {
@@ -338,9 +454,9 @@ function HackathonDetailPage() {
               <button
                 type="button"
                 className="team-primary-button"
-                onClick={() => setTeamState('noTeam')}
+                onClick={() => setIsTeamNoticeOpen(true)}
               >
-                지금 참가 신청하기
+                팀 만들고 참가하기
               </button>
             </div>
           )}
@@ -378,52 +494,90 @@ function HackathonDetailPage() {
               <section className="my-team-panel">
                 <div className="my-team-panel__header">
                   <div>
-                    <h2 className="my-team-panel__title">NeuralNinjas</h2>
-                    <p className="my-team-panel__meta">내 팀 · 팀장</p>
+                    <h2 className="my-team-panel__title">
+                      {myTeamDetail?.name ?? registrationStatus?.teamName ?? participantTeams[0]?.name ?? '내 팀'}
+                    </h2>
+                    <p className="my-team-panel__meta">
+                      내 팀 · {isCurrentUserLeader ? '팀장' : '팀원'}
+                    </p>
                   </div>
                   <div className="my-team-panel__badges">
                     <span className="status-outline status-outline--open">
-                      모집 중
+                      {myTeamDetail?.isOpen ?? true ? '모집 중' : '마감'}
                     </span>
-                    <button type="button" className="team-primary-button team-primary-button--small">
-                      신청 관리 (3)
-                    </button>
+                    {isCurrentUserLeader ? (
+                      <button
+                        type="button"
+                        className="team-primary-button team-primary-button--small"
+                        onClick={() => setIsApplicationsOpen(true)}
+                      >
+                        신청 관리 ({applications.length})
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 
                 <div className="my-team-panel__section">
-                  <p className="my-team-panel__label">팀원 4명</p>
+                  <p className="my-team-panel__label">
+                    팀원 {myTeamDetail?.members?.length ?? participantTeams[0]?.currentMembers ?? 0}명
+                  </p>
                   <ul className="my-team-members">
-                    <li className="my-team-member">
-                      <span className="my-team-member__dot my-team-member__dot--active" />
-                      <strong>jinwoo_k</strong>
-                      <span className="team-role-badge">팀장</span>
-                    </li>
-                    <li className="my-team-member">
-                      <span className="my-team-member__dot" />
-                      <strong>minhyun99</strong>
-                      <span className="my-team-member__role">디자이너</span>
-                    </li>
-                    <li className="my-team-member">
-                      <span className="my-team-member__dot" />
-                      <strong>dart_joon</strong>
-                      <span className="my-team-member__role">프론트엔드</span>
-                    </li>
-                    <li className="my-team-member">
-                      <span className="my-team-member__dot" />
-                      <strong>ethereal_dev</strong>
-                      <span className="my-team-member__role">백엔드</span>
-                    </li>
+                    {(myTeamDetail?.members ?? []).map((member) => (
+                      <li key={member.userId} className="my-team-member">
+                        <span
+                          className={`my-team-member__dot${
+                            currentLeaderId === member.userId
+                              ? ' my-team-member__dot--active'
+                              : ''
+                          }`}
+                        />
+                        <strong>{member.nickname}</strong>
+                        {currentLeaderId === member.userId ? (
+                          <span className="team-role-badge">팀장</span>
+                        ) : null}
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
                 <div className="my-team-panel__actions">
-                  <button type="button" className="team-secondary-button team-secondary-button--muted">
-                    팀 정보 수정
-                  </button>
-                  <button type="button" className="team-danger-button">
-                    모집 마감
-                  </button>
+                  {isCurrentUserLeader ? (
+                    <button
+                      type="button"
+                      className="team-secondary-button team-secondary-button--muted"
+                      onClick={() => {
+                        setTeamEditMessage('')
+                        setIsEditTeamOpen(true)
+                      }}
+                    >
+                      팀 정보 수정
+                    </button>
+                  ) : null}
+                  {isCurrentUserLeader ? (
+                    <button
+                      type="button"
+                      className="team-danger-button"
+                      onClick={async () => {
+                        if (!myTeamDetail?.id) return
+                        try {
+                          setIsDeletingTeam(true)
+                          await deleteTeam(myTeamDetail.id)
+                          setMyTeamDetail(null)
+                          setApplications([])
+                          setRegistrationStatus(null)
+                          setTeamState('notRegistered')
+                          await refreshParticipantTeams()
+                          setRegistrationMessage('팀이 삭제되었습니다.')
+                        } catch {
+                          setRegistrationMessage('팀 삭제에 실패했습니다.')
+                        } finally {
+                          setIsDeletingTeam(false)
+                        }
+                      }}
+                    >
+                      {isDeletingTeam ? '삭제 중...' : '팀 삭제'}
+                    </button>
+                  ) : null}
                 </div>
               </section>
 
@@ -440,7 +594,7 @@ function HackathonDetailPage() {
                     <div key={team.id} className="participant-team-table__row">
                       <div className="participant-team-table__team">
                         <strong>{team.name}</strong>
-                        {team.name === 'Neural Ninjas' && (
+                        {String(team.id) === String(registrationStatus?.teamId) && (
                           <span className="team-role-badge">내 팀</span>
                         )}
                       </div>
@@ -678,9 +832,33 @@ function HackathonDetailPage() {
               <span>상태</span>
               <span>{hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}</span>
             </div>
-            <button type="button" className="detail-apply-button">
-              지금 참가 신청
-            </button>
+            {teamState === 'hasTeam' ? (
+              <button
+                type="button"
+                className="detail-apply-button detail-apply-button--secondary"
+                onClick={async () => {
+                  try {
+                    await cancelRegistration(id)
+                    setRegistrationStatus(null)
+                    setTeamState('notRegistered')
+                    setRegistrationMessage('참가가 취소되었습니다.')
+                  } catch {
+                    setRegistrationMessage('참가 취소에 실패했습니다.')
+                  }
+                }}
+              >
+                참가 취소
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="detail-apply-button"
+                onClick={() => setIsTeamNoticeOpen(true)}
+              >
+                팀 만들고 참가하기
+              </button>
+            )}
+            {registrationMessage ? <p className="meta-text">{registrationMessage}</p> : null}
           </div>
 
           <div className="sidebar-card">
@@ -735,6 +913,204 @@ function HackathonDetailPage() {
           </div>
         </div>
       )}
+
+      {isApplicationsOpen && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setIsApplicationsOpen(false)}
+        >
+          <div
+            className="team-notice-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="team-applications-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="team-applications-title">팀 합류 신청 관리</h2>
+            <div className="team-applications-list">
+              {applications.length === 0 ? (
+                <p className="team-notice-copy">현재 대기 중인 신청이 없습니다.</p>
+              ) : (
+                applications.map((application) => (
+                  <div key={application.applicationId} className="team-application-item">
+                    <div>
+                      <strong>{application.nickname}</strong>
+                      <p className="meta-text">
+                        상태: {application.status} · 신청 ID: {application.applicationId}
+                      </p>
+                    </div>
+                    <div className="team-application-item__actions">
+                      <button
+                        type="button"
+                        className="team-secondary-button team-secondary-button--muted"
+                        onClick={async () => {
+                          try {
+                            await decideTeamApplication(
+                              registrationStatus.teamId,
+                              application.applicationId,
+                              'REJECTED',
+                            )
+                            await refreshMyTeamState(registrationStatus.teamId)
+                            await refreshParticipantTeams()
+                            setApplicationMessage('신청을 거절했습니다.')
+                          } catch {
+                            setApplicationMessage('신청 거절에 실패했습니다.')
+                          }
+                        }}
+                      >
+                        거절
+                      </button>
+                      <button
+                        type="button"
+                        className="team-primary-button team-primary-button--small"
+                        onClick={async () => {
+                          try {
+                            await decideTeamApplication(
+                              registrationStatus.teamId,
+                              application.applicationId,
+                              'ACCEPTED',
+                            )
+                            await refreshMyTeamState(registrationStatus.teamId)
+                            await refreshParticipantTeams()
+                            setApplicationMessage('신청을 수락했습니다.')
+                          } catch {
+                            setApplicationMessage('신청 수락에 실패했습니다.')
+                          }
+                        }}
+                      >
+                        수락
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {applicationMessage ? <p className="team-notice-copy">{applicationMessage}</p> : null}
+            <div className="team-notice-actions">
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => setIsApplicationsOpen(false)}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEditTeamOpen && myTeamDetail ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setIsEditTeamOpen(false)}
+        >
+          <div
+            className="team-notice-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="team-edit-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="team-edit-title">팀 정보 수정</h2>
+            <div className="stack-list stack-list--compact">
+              <label className="form-field">
+                <span className="form-label">팀명</span>
+                <input
+                  className="form-control"
+                  value={teamEditForm.name}
+                  onChange={(event) =>
+                    setTeamEditForm((current) => ({
+                      ...current,
+                      name: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+
+              <label className="form-field">
+                <span className="form-label">팀 소개</span>
+                <textarea
+                  className="form-control form-control--textarea"
+                  value={teamEditForm.description}
+                  onChange={(event) =>
+                    setTeamEditForm((current) => ({
+                      ...current,
+                      description: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+
+              <label className="form-field">
+                <span className="form-label">모집 상태</span>
+                <select
+                  className="form-control"
+                  value={String(teamEditForm.isOpen)}
+                  onChange={(event) =>
+                    setTeamEditForm((current) => ({
+                      ...current,
+                      isOpen: event.target.value === 'true',
+                    }))
+                  }
+                >
+                  <option value="true">모집중</option>
+                  <option value="false">마감</option>
+                </select>
+              </label>
+            </div>
+
+            {teamEditMessage ? <p className="team-notice-copy">{teamEditMessage}</p> : null}
+
+            <div className="team-notice-actions">
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => setIsEditTeamOpen(false)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="team-primary-button"
+                onClick={async () => {
+                  try {
+                    setIsSavingTeam(true)
+                    setTeamEditMessage('')
+
+                    const updated = await updateTeam(myTeamDetail.id, {
+                      name: teamEditForm.name,
+                      description: teamEditForm.description,
+                      isOpen: teamEditForm.isOpen,
+                    })
+
+                    const refreshedDetail = await fetchTeamDetail(myTeamDetail.id).catch(
+                      () => ({
+                        ...myTeamDetail,
+                        ...updated,
+                        description: teamEditForm.description,
+                        isOpen: teamEditForm.isOpen,
+                      }),
+                    )
+
+                    setMyTeamDetail(refreshedDetail)
+                    await refreshParticipantTeams()
+                    setTeamEditMessage('팀 정보가 수정되었습니다.')
+                    setIsEditTeamOpen(false)
+                  } catch {
+                    setTeamEditMessage('팀 정보 수정에 실패했습니다.')
+                  } finally {
+                    setIsSavingTeam(false)
+                  }
+                }}
+              >
+                {isSavingTeam ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }

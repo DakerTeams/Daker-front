@@ -23,11 +23,16 @@ function HackathonsPage() {
       setIsLoading(true)
 
       try {
-        const data = await fetchHackathons()
+        const data = await fetchHackathons({
+          status: statusFilter === 'all' ? undefined : statusFilter === 'upcoming' ? 'open' : statusFilter,
+          q: query.trim() || undefined,
+        })
         if (!isMounted) return
 
         if (data.length > 0) {
           setItems(data)
+        } else {
+          setItems([])
         }
       } catch {
         if (!isMounted) return
@@ -44,9 +49,13 @@ function HackathonsPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [query, statusFilter])
 
   const filteredHackathons = useMemo(() => {
+    if (items !== hackathons) {
+      return items
+    }
+
     const normalizedQuery = query.trim().toLowerCase()
 
     return items.filter((hackathon) => {

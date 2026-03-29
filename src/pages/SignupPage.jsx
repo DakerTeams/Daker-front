@@ -1,25 +1,38 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-
-const AUTH_STORAGE_KEY = 'hackhub-demo-user'
+import { signup } from '../api/auth.js'
 
 function SignupPage() {
   const navigate = useNavigate()
+  const [form, setForm] = useState({
+    nickname: '',
+    email: '',
+    password: '',
+  })
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const signupDemoUser = () => {
-    window.localStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify({
-        nickname: 'jinwoo_k',
-        email: 'jinwoo@example.com',
-      }),
-    )
-    window.dispatchEvent(new Event('mock-auth-change'))
-    navigate('/')
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    signupDemoUser()
+    setIsSubmitting(true)
+    setErrorMessage('')
+
+    try {
+      await signup(form)
+      navigate('/login')
+    } catch {
+      setErrorMessage('회원가입에 실패했습니다. 입력값을 다시 확인해주세요.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -35,7 +48,7 @@ function SignupPage() {
           <p>계정을 만들고 첫 해커톤에 참가해보세요.</p>
         </div>
 
-        <button type="button" className="auth-social-button" onClick={signupDemoUser}>
+        <button type="button" className="auth-social-button" disabled>
           <span className="auth-social-button__icon">◔</span>
           GitHub으로 가입 (추천)
         </button>
@@ -54,7 +67,14 @@ function SignupPage() {
             <span className="auth-field__label">
               닉네임 <strong>*</strong>
             </span>
-            <input type="text" className="auth-input" placeholder="jinwoo_k" />
+            <input
+              type="text"
+              name="nickname"
+              className="auth-input"
+              placeholder="jinwoo_k"
+              value={form.nickname}
+              onChange={handleChange}
+            />
             <small className="auth-field__hint">
               영문, 숫자, 언더스코어 사용 가능 (2~20자)
             </small>
@@ -66,8 +86,11 @@ function SignupPage() {
             </span>
             <input
               type="email"
+              name="email"
               className="auth-input"
               placeholder="jinwoo@example.com"
+              value={form.email}
+              onChange={handleChange}
             />
           </label>
 
@@ -77,15 +100,20 @@ function SignupPage() {
             </span>
             <input
               type="password"
+              name="password"
               className="auth-input"
               placeholder="8자 이상, 특수문자 포함"
+              value={form.password}
+              onChange={handleChange}
             />
           </label>
 
           <button type="submit" className="auth-submit-button">
-            회원가입
+            {isSubmitting ? '가입 중...' : '회원가입'}
           </button>
         </form>
+
+        {errorMessage ? <div className="auth-demo-note">{errorMessage}</div> : null}
 
         <p className="auth-footer">
           이미 계정이 있으신가요? <Link to="/login">로그인</Link>

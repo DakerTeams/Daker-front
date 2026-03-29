@@ -1,5 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
+import ProtectedRoute from '../components/auth/ProtectedRoute.jsx'
 import MainLayout from '../layouts/MainLayout.jsx'
+import AccessDeniedPage from '../pages/AccessDeniedPage.jsx'
 import CampPage from '../pages/CampPage.jsx'
 import AdminPage from '../pages/AdminPage.jsx'
 import HackathonDetailPage from '../pages/HackathonDetailPage.jsx'
@@ -9,6 +11,7 @@ import LoginPage from '../pages/LoginPage.jsx'
 import MainPage from '../pages/MainPage.jsx'
 import MyPage from '../pages/MyPage.jsx'
 import RankingsPage from '../pages/RankingsPage.jsx'
+import RouteErrorPage from '../pages/RouteErrorPage.jsx'
 import SignupPage from '../pages/SignupPage.jsx'
 import TeamCreatePage from '../pages/TeamCreatePage.jsx'
 
@@ -16,6 +19,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <MainLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
         index: true,
@@ -51,15 +55,31 @@ export const router = createBrowserRouter([
       },
       {
         path: 'me',
-        element: <MyPage />,
+        element: (
+          <ProtectedRoute>
+            <MyPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'admin',
-        element: <AdminPage />,
+        element: (
+          <ProtectedRoute allowRoles={['admin']}>
+            <AdminPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'judge',
-        element: <JudgePage />,
+        element: (
+          <ProtectedRoute allowRoles={['judge', 'admin']}>
+            <JudgePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'access-denied',
+        element: <AccessDeniedPage />,
       },
     ],
   },

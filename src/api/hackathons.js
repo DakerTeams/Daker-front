@@ -1,4 +1,10 @@
-import { apiRequest, createQueryString, extractArray } from './client.js'
+import {
+  apiRequest,
+  createQueryString,
+  extractArray,
+  extractObject,
+} from './client.js'
+import { getAccessToken } from '../lib/auth.js'
 
 const hackathonStatusLabels = {
   draft: '임시저장',
@@ -66,19 +72,96 @@ export async function fetchHackathons(params = {}) {
   return extractArray(payload).map(normalizeHackathon)
 }
 
+export async function fetchHackathonTeams(id, params = {}) {
+  const query = createQueryString(params)
+  const payload = await apiRequest(`/hackathons/${id}/teams${query}`)
+  return extractArray(payload).map((item) => ({
+    id: item.id,
+    hackathonId: item.hackathonId ?? id,
+    name: item.name ?? '이름 없는 팀',
+    hackathonName: item.hackathonName ?? `해커톤 #${id}`,
+    isOpen: item.isOpen ?? true,
+    leader: item.leader?.nickname ?? '-',
+    currentMembers: item.memberCount ?? 1,
+    maxMembers: item.maxMemberCount ?? item.maxTeamSize ?? 1,
+    description: item.description ?? '',
+    positions: [],
+    raw: item,
+  }))
+}
+
 export async function fetchHackathonDetail(id) {
   const payload = await apiRequest(`/hackathons/${id}`)
-  return normalizeHackathon(payload?.data ?? payload)
+  const detail = extractObject(payload)
+
+  const normalized = normalizeHackathon(detail)
+
+  return {
+    ...normalized,
+    overview: detail.description ?? '',
+    schedules: Array.isArray(detail.milestones)
+      ? detail.milestones.map((item) => ({
+          label: item.title ?? '일정',
+          at: formatDate(item.date),
+          description: item.description ?? '',
+        }))
+      : [],
+    prizes: Array.isArray(detail.prizes)
+      ? detail.prizes.map((item) => ({
+          label: `${item.ranking}등`,
+          value:
+            typeof item.amount === 'number'
+              ? new Intl.NumberFormat('ko-KR', {
+                  style: 'currency',
+                  currency: 'KRW',
+                  maximumFractionDigits: 0,
+                }).format(item.amount)
+              : String(item.amount ?? '-'),
+          description: item.description ?? '',
+        }))
+      : [],
+    evaluations: Array.isArray(detail.criteria)
+      ? detail.criteria.map((item) => ({
+          label: item.name ?? '평가 항목',
+          value: item.maxScore ? `${item.maxScore}점` : '',
+          description: item.description ?? '',
+        }))
+      : [],
+    registrationStartDate: detail.registrationStartDate ?? '',
+    registrationEndDate: detail.registrationEndDate ?? '',
+    maxTeamSize: detail.maxTeamSize ?? 1,
+  }
 }
 
 export async function fetchHackathonLeaderboard(id) {
   const payload = await apiRequest(`/hackathons/${id}/leaderboard`)
-  const rows = extractArray(payload)
+  const rows = extractObject(payload).teams ?? []
 
   return rows.map((item, index) => ({
-    rank: item.rank ?? item.rankNo ?? index + 1,
+    rank: index + 1,
+    teamId: item.teamId ?? index + 1,
     teamName: item.teamName ?? item.name ?? item.team?.name ?? `team_${index + 1}`,
-    score: item.score ?? item.totalScore ?? null,
-    submitted: item.submitted ?? item.isSubmitted ?? item.score !== undefined,
+    memberCount: item.memberCount ?? 0,
+    score: item.totalScore ?? null,
+    submitted: item.totalScore !== null && item.totalScore !== undefined,
   }))
+}
+
+export async function fetchRegistrationStatus(id) {
+  const payload = await apiRequest(`/hackathons/${id}/register`, {
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+
+  return extractObject(payload)
+}
+
+export async function cancelRegistration(id) {
+  return apiRequest(`/hackathons/${id}/register`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
 }
