@@ -8,6 +8,7 @@ import {
 } from '../api/hackathons.js'
 import {
   decideTeamApplication,
+  deleteTeam,
   fetchMyTeams,
   fetchTeamApplications,
   fetchTeamDetail,
@@ -51,6 +52,7 @@ function HackathonDetailPage() {
   })
   const [teamEditMessage, setTeamEditMessage] = useState('')
   const [isSavingTeam, setIsSavingTeam] = useState(false)
+  const [isDeletingTeam, setIsDeletingTeam] = useState(false)
   const currentUser = getStoredUser()
 
   const mockHackathon = useMemo(
@@ -524,6 +526,35 @@ function HackathonDetailPage() {
                       }}
                     >
                       팀 정보 수정
+                    </button>
+                  ) : null}
+                  {isCurrentUserLeader ? (
+                    <button
+                      type="button"
+                      className="team-danger-button"
+                      onClick={async () => {
+                        if (!myTeamDetail?.id) return
+                        try {
+                          setIsDeletingTeam(true)
+                          await deleteTeam(myTeamDetail.id)
+                          setMyTeamDetail(null)
+                          setApplications([])
+                          setRegistrationStatus(null)
+                          setTeamState('notRegistered')
+                          setRemoteTeams((current) =>
+                            (current ?? []).filter(
+                              (team) => String(team.id) !== String(myTeamDetail.id),
+                            ),
+                          )
+                          setRegistrationMessage('팀이 삭제되었습니다.')
+                        } catch {
+                          setRegistrationMessage('팀 삭제에 실패했습니다.')
+                        } finally {
+                          setIsDeletingTeam(false)
+                        }
+                      }}
+                    >
+                      {isDeletingTeam ? '삭제 중...' : '팀 삭제'}
                     </button>
                   ) : null}
                 </div>

@@ -85,6 +85,15 @@ export async function updateTeam(id, payload) {
   return normalizeTeam(extractObject(response))
 }
 
+export async function deleteTeam(id) {
+  return apiRequest(`/teams/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+}
+
 export async function fetchTeamDetail(id) {
   const payload = await apiRequest(`/teams/${id}`)
   const data = extractObject(payload)
