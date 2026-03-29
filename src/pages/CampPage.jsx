@@ -36,6 +36,7 @@ function CampPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [myTeams, setMyTeams] = useState([])
+  const [appliedTeamIds, setAppliedTeamIds] = useState([])
   const [teamDetailMessage, setTeamDetailMessage] = useState('')
   const [isApplying, setIsApplying] = useState(false)
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
@@ -126,6 +127,8 @@ function CampPage() {
       })
 
       setItems((current) => [created, ...current])
+      setMyTeams((current) => [created, ...current])
+      setSelectedTeam(created)
       setCreateMessage('팀이 생성되었습니다. 해커톤 참가도 함께 처리되었습니다.')
       setCreateForm((current) => ({
         ...current,
@@ -133,6 +136,7 @@ function CampPage() {
         description: '',
         isOpen: 'true',
       }))
+      setIsCreateDrawerOpen(false)
     } catch {
       setCreateMessage('팀 생성에 실패했습니다. 등록 기간과 입력값을 확인해주세요.')
     } finally {
@@ -169,6 +173,9 @@ function CampPage() {
 
     try {
       await applyToTeam(selectedTeam.id)
+      setAppliedTeamIds((current) =>
+        current.includes(selectedTeam.id) ? current : [...current, selectedTeam.id],
+      )
       setTeamDetailMessage('합류 신청이 완료되었습니다.')
     } catch {
       setTeamDetailMessage('합류 신청에 실패했습니다. 이미 신청했거나 팀 정원이 찼을 수 있습니다.')
@@ -190,6 +197,9 @@ function CampPage() {
     Boolean(currentUser) &&
     ((selectedTeam?.leader?.userId && selectedTeam.leader.userId === currentUser.userId) ||
       (currentUser?.nickname && selectedLeaderName === currentUser.nickname))
+  const hasAppliedToSelectedTeam = selectedTeam
+    ? appliedTeamIds.includes(selectedTeam.id)
+    : false
 
   const filteredTeams = useMemo(() => {
     if (items !== teams) {
@@ -589,13 +599,15 @@ function CampPage() {
                   type="button"
                   className="team-primary-button"
                   onClick={handleApply}
-                  disabled={!selectedTeam.isOpen || isApplying}
+                  disabled={!selectedTeam.isOpen || isApplying || hasAppliedToSelectedTeam}
                 >
-                  {selectedTeam.isOpen
-                    ? isApplying
-                      ? '신청 중...'
-                      : '합류 신청'
-                    : '모집 마감'}
+                  {hasAppliedToSelectedTeam
+                    ? '신청 완료'
+                    : selectedTeam.isOpen
+                  ? isApplying
+                    ? '신청 중...'
+                    : '합류 신청'
+                  : '모집 마감'}
                 </button>
               )}
             </div>

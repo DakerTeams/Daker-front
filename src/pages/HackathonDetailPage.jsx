@@ -200,6 +200,31 @@ function HackathonDetailPage() {
     })
   }, [myTeamDetail])
 
+  const refreshParticipantTeams = async () => {
+    try {
+      const rows = await fetchHackathonTeams(id)
+      setRemoteTeams(rows)
+      return rows
+    } catch {
+      return null
+    }
+  }
+
+  const refreshMyTeamState = async (teamId) => {
+    try {
+      const [detail, applicationRows] = await Promise.all([
+        fetchTeamDetail(teamId),
+        fetchTeamApplications(teamId),
+      ])
+
+      setMyTeamDetail(detail)
+      setApplications(applicationRows)
+      return detail
+    } catch {
+      return null
+    }
+  }
+
   const scheduleSections = useMemo(() => {
     if (!hackathon) {
       return []
@@ -541,11 +566,7 @@ function HackathonDetailPage() {
                           setApplications([])
                           setRegistrationStatus(null)
                           setTeamState('notRegistered')
-                          setRemoteTeams((current) =>
-                            (current ?? []).filter(
-                              (team) => String(team.id) !== String(myTeamDetail.id),
-                            ),
-                          )
+                          await refreshParticipantTeams()
                           setRegistrationMessage('팀이 삭제되었습니다.')
                         } catch {
                           setRegistrationMessage('팀 삭제에 실패했습니다.')
@@ -930,11 +951,8 @@ function HackathonDetailPage() {
                               application.applicationId,
                               'REJECTED',
                             )
-                            setApplications((current) =>
-                              current.filter(
-                                (item) => item.applicationId !== application.applicationId,
-                              ),
-                            )
+                            await refreshMyTeamState(registrationStatus.teamId)
+                            await refreshParticipantTeams()
                             setApplicationMessage('신청을 거절했습니다.')
                           } catch {
                             setApplicationMessage('신청 거절에 실패했습니다.')
@@ -953,11 +971,8 @@ function HackathonDetailPage() {
                               application.applicationId,
                               'ACCEPTED',
                             )
-                            setApplications((current) =>
-                              current.filter(
-                                (item) => item.applicationId !== application.applicationId,
-                              ),
-                            )
+                            await refreshMyTeamState(registrationStatus.teamId)
+                            await refreshParticipantTeams()
                             setApplicationMessage('신청을 수락했습니다.')
                           } catch {
                             setApplicationMessage('신청 수락에 실패했습니다.')
@@ -1080,18 +1095,7 @@ function HackathonDetailPage() {
                     )
 
                     setMyTeamDetail(refreshedDetail)
-                    setRemoteTeams((current) =>
-                      (current ?? []).map((team) =>
-                        String(team.id) === String(myTeamDetail.id)
-                          ? {
-                              ...team,
-                              ...updated,
-                              description: teamEditForm.description,
-                              isOpen: teamEditForm.isOpen,
-                            }
-                          : team,
-                      ),
-                    )
+                    await refreshParticipantTeams()
                     setTeamEditMessage('팀 정보가 수정되었습니다.')
                     setIsEditTeamOpen(false)
                   } catch {
