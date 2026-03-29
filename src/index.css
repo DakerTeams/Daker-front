@@ -234,6 +234,11 @@ select {
   gap: 10px;
 }
 
+.page-header h1 {
+  margin-bottom: 12px;
+  font-size: 2.4rem;
+}
+
 .page-header--center {
   align-items: center;
   text-align: center;
@@ -310,6 +315,7 @@ h2 {
 
 .search-input {
   flex: 1 1 320px;
+  width: 100%;
   min-width: 0;
   padding: 14px 16px;
   border: 1px solid #e5e7eb;
@@ -324,10 +330,9 @@ h2 {
 }
 
 .camp-search-input {
-  flex: 0 1 620px;
   display: block;
   align-self: flex-start;
-  width: min(100%, 620px);
+  width: 100%;
   height: 52px;
   min-height: 52px;
   max-height: 52px;
@@ -339,7 +344,7 @@ h2 {
 
 .camp-toolbar {
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 16px;
 }
 
@@ -1546,7 +1551,7 @@ h2 {
 }
 
 .team-card-head h2 {
-  font-size: 2rem;
+  font-size: 1.5rem;
   letter-spacing: -0.05em;
 }
 
