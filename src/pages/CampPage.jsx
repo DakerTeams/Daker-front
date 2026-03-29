@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchHackathons } from '../api/hackathons.js'
-import { applyToTeam, createTeam, fetchTeamDetail, fetchTeams } from '../api/teams.js'
+import {
+  applyToTeam,
+  createTeam,
+  deleteTeam,
+  fetchMyTeams,
+  fetchTeamDetail,
+  fetchTeams,
+  updateTeam,
+} from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
 import { teams } from '../mock/teams.js'
 import { hackathons } from '../mock/hackathons.js'
@@ -27,8 +35,18 @@ function CampPage() {
   const [createMessage, setCreateMessage] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState(null)
+  const [myTeams, setMyTeams] = useState([])
   const [teamDetailMessage, setTeamDetailMessage] = useState('')
   const [isApplying, setIsApplying] = useState(false)
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    isOpen: 'true',
+  })
+  const [editMessage, setEditMessage] = useState('')
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -37,9 +55,10 @@ function CampPage() {
       setIsLoading(true)
 
       try {
-        const [teamData, hackathonData] = await Promise.all([
+        const [teamData, hackathonData, myTeamData] = await Promise.all([
           fetchTeams(),
           fetchHackathons(),
+          getStoredUser() ? fetchMyTeams().catch(() => []) : Promise.resolve([]),
         ])
         if (!isMounted) return
 
@@ -54,10 +73,13 @@ function CampPage() {
             hackathonId: String(hackathonData[0].id),
           }))
         }
+
+        setMyTeams(myTeamData)
       } catch {
         if (!isMounted) return
         setItems(teams)
         setAvailableHackathons(hackathons)
+        setMyTeams([])
       } finally {
         if (isMounted) {
           setIsLoading(false)
@@ -148,6 +170,20 @@ function CampPage() {
       setIsApplying(false)
     }
   }
+
+  const currentUser = getStoredUser()
+  const isMySelectedTeam = selectedTeam
+    ? myTeams.some((team) => String(team.id) === String(selectedTeam.id))
+    : false
+  const selectedLeaderName =
+    typeof selectedTeam?.leader === 'object'
+      ? selectedTeam?.leader?.nickname
+      : selectedTeam?.leader ?? ''
+  const isSelectedTeamLeader =
+    isMySelectedTeam &&
+    Boolean(currentUser) &&
+    ((selectedTeam?.leader?.userId && selectedTeam.leader.userId === currentUser.userId) ||
+      (currentUser?.nickname && selectedLeaderName === currentUser.nickname))
 
   const filteredTeams = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -497,22 +533,198 @@ function CampPage() {
               >
                 닫기
               </button>
-              <button
-                type="button"
-                className="team-primary-button"
-                onClick={handleApply}
-                disabled={!selectedTeam.isOpen || isApplying}
-              >
-                {selectedTeam.isOpen
-                  ? isApplying
-                    ? '신청 중...'
-                    : '합류 신청'
-                  : '모집 마감'}
-              </button>
+              {isSelectedTeamLeader ? (
+                <>
+                  <button
+                    type="button"
+                    className="team-secondary-button team-secondary-button--muted"
+                    onClick={() => {
+                      setEditForm({
+                        name: selectedTeam.name ?? '',
+                        description: selectedTeam.description ?? '',
+                        isOpen: String(selectedTeam.isOpen ?? true),
+                      })
+                      setEditMessage('')
+                      setIsEditDrawerOpen(true)
+                    }}
+                  >
+                    팀 수정
+                  </button>
+                  <button
+                    type="button"
+                    className="team-danger-button"
+                    onClick={async () => {
+                      try {
+                        setIsDeleting(true)
+                        await deleteTeam(selectedTeam.id)
+                        setItems((current) =>
+                          current.filter((team) => String(team.id) !== String(selectedTeam.id)),
+                        )
+                        setMyTeams((current) =>
+                          current.filter((team) => String(team.id) !== String(selectedTeam.id)),
+                        )
+                        setSelectedTeam(null)
+                      } catch {
+                        setTeamDetailMessage('팀 삭제에 실패했습니다.')
+                      } finally {
+                        setIsDeleting(false)
+                      }
+                    }}
+                  >
+                    {isDeleting ? '삭제 중...' : '팀 삭제'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="team-primary-button"
+                  onClick={handleApply}
+                  disabled={!selectedTeam.isOpen || isApplying}
+                >
+                  {selectedTeam.isOpen
+                    ? isApplying
+                      ? '신청 중...'
+                      : '합류 신청'
+                    : '모집 마감'}
+                </button>
+              )}
             </div>
           </aside>
         </div>
       )}
+
+      {isEditDrawerOpen && selectedTeam ? (
+        <div
+          className="drawer-backdrop"
+          role="presentation"
+          onClick={() => setIsEditDrawerOpen(false)}
+        >
+          <aside
+            className="team-create-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="team-edit-drawer-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="team-create-drawer__header">
+              <div>
+                <p className="eyebrow">edit team</p>
+                <h2 id="team-edit-drawer-title">팀 정보 수정</h2>
+              </div>
+              <button
+                type="button"
+                className="drawer-close-button"
+                onClick={() => setIsEditDrawerOpen(false)}
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="team-create-drawer__body">
+              <section className="surface-card">
+                <div className="form-grid">
+                  <label className="form-field">
+                    <span className="form-label">팀명</span>
+                    <input
+                      className="form-control"
+                      value={editForm.name}
+                      onChange={(event) =>
+                        setEditForm((current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="form-field form-field--full">
+                    <span className="form-label">팀 소개</span>
+                    <textarea
+                      className="form-control form-control--textarea"
+                      value={editForm.description}
+                      onChange={(event) =>
+                        setEditForm((current) => ({
+                          ...current,
+                          description: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span className="form-label">모집 상태</span>
+                    <select
+                      className="form-control"
+                      value={editForm.isOpen}
+                      onChange={(event) =>
+                        setEditForm((current) => ({
+                          ...current,
+                          isOpen: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="true">모집 중</option>
+                      <option value="false">마감</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            <div className="team-create-drawer__footer">
+              {editMessage ? <p className="meta-text">{editMessage}</p> : null}
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => setIsEditDrawerOpen(false)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="team-primary-button"
+                onClick={async () => {
+                  try {
+                    setIsSavingEdit(true)
+                    setEditMessage('')
+                    const updated = await updateTeam(selectedTeam.id, {
+                      name: editForm.name,
+                      description: editForm.description,
+                      isOpen: editForm.isOpen === 'true',
+                    })
+
+                    const nextSelectedTeam = {
+                      ...selectedTeam,
+                      ...updated,
+                      description: editForm.description,
+                      isOpen: editForm.isOpen === 'true',
+                    }
+
+                    setSelectedTeam(nextSelectedTeam)
+                    setItems((current) =>
+                      current.map((team) =>
+                        String(team.id) === String(selectedTeam.id) ? nextSelectedTeam : team,
+                      ),
+                    )
+                    setMyTeams((current) =>
+                      current.map((team) =>
+                        String(team.id) === String(selectedTeam.id) ? nextSelectedTeam : team,
+                      ),
+                    )
+                    setIsEditDrawerOpen(false)
+                  } catch {
+                    setEditMessage('팀 수정에 실패했습니다.')
+                  } finally {
+                    setIsSavingEdit(false)
+                  }
+                }}
+              >
+                {isSavingEdit ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </section>
   )
 }
