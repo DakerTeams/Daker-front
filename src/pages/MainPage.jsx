@@ -187,25 +187,42 @@ function MainPage() {
           </p>
         </div>
 
-        <div className="hero-cards">
-          <Link to="/hackathons" className="hero-card">
-            <div className="hero-card__icon">🏆</div>
-            <h2>해커톤 보러가기</h2>
-            <p>진행 중이거나 예정된 해커톤을 확인하고 지금 바로 참가하세요.</p>
-            <span className="hero-card__arrow">목록 보기 →</span>
+        <div className="hero-editorial">
+          <Link to="/hackathons" className="hero-editorial__feature">
+            <span className="hero-editorial__index">01</span>
+            <span className="hero-editorial__label">EXPLORE HACKATHONS</span>
+            <h2>진행 중인 해커톤을 빠르게 탐색하세요</h2>
+            <p>
+              현재 모집 중이거나 곧 시작될 해커톤을 확인하고, 일정과 규칙을 비교한 뒤 바로
+              참가할 수 있습니다.
+            </p>
+            <div className="hero-editorial__meta">
+              <span>{visibleHackathons.length || 4}개의 활성 해커톤</span>
+              <span>상세 일정 확인 가능</span>
+            </div>
+            <span className="hero-editorial__cta">해커톤 목록 열기 →</span>
+            <span className="hero-editorial__watermark">01</span>
           </Link>
-          <Link to="/camp" className="hero-card">
-            <div className="hero-card__icon">🤝</div>
-            <h2>팀 찾기</h2>
-            <p>함께할 팀원을 모집하거나, 마음에 드는 팀에 지원해 보세요.</p>
-            <span className="hero-card__arrow">팀 탐색하기 →</span>
-          </Link>
-          <Link to="/rankings" className="hero-card">
-            <div className="hero-card__icon">📊</div>
-            <h2>랭킹 보기</h2>
-            <p>전체 참가자 중 나의 위치는 어디인지 지금 바로 확인해보세요.</p>
-            <span className="hero-card__arrow">랭킹 확인 →</span>
-          </Link>
+
+          <div className="hero-editorial__stack">
+            <Link to="/camp" className="hero-editorial__card">
+              <span className="hero-editorial__index">02</span>
+              <span className="hero-editorial__label">FIND YOUR TEAM</span>
+              <h2>지금 팀이 필요한 사람과 연결되세요</h2>
+              <p>모집 중인 팀을 둘러보거나, 직접 팀을 만들어 팀원을 기다릴 수 있습니다.</p>
+              <span className="hero-editorial__cta">팀 모집 둘러보기 →</span>
+              <span className="hero-editorial__watermark hero-editorial__watermark--small">02</span>
+            </Link>
+
+            <Link to="/rankings" className="hero-editorial__card">
+              <span className="hero-editorial__index">03</span>
+              <span className="hero-editorial__label">CHECK THE BOARD</span>
+              <h2>랭킹 흐름을 보고 다음 전략을 세우세요</h2>
+              <p>누가 앞서 있는지, 내 위치가 어디인지 확인하면서 다음 해커톤 목표를 잡아보세요.</p>
+              <span className="hero-editorial__cta">전체 랭킹 확인 →</span>
+              <span className="hero-editorial__watermark hero-editorial__watermark--small">03</span>
+            </Link>
+          </div>
         </div>
       </section>
 
