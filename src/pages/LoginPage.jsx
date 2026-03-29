@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { login } from '../api/auth.js'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -26,7 +27,7 @@ function LoginPage() {
 
     try {
       await login(form)
-      navigate('/')
+      navigate(location.state?.from || '/', { replace: true })
     } catch {
       setErrorMessage('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
     } finally {

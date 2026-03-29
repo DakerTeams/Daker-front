@@ -11,6 +11,7 @@ import LoginPage from '../pages/LoginPage.jsx'
 import MainPage from '../pages/MainPage.jsx'
 import MyPage from '../pages/MyPage.jsx'
 import RankingsPage from '../pages/RankingsPage.jsx'
+import RouteErrorPage from '../pages/RouteErrorPage.jsx'
 import SignupPage from '../pages/SignupPage.jsx'
 import TeamCreatePage from '../pages/TeamCreatePage.jsx'
 
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <MainLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
         index: true,
