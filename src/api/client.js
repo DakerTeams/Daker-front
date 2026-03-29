@@ -30,12 +30,13 @@ function createQueryString(params = {}) {
 }
 
 export async function apiRequest(path, options = {}) {
+  const { headers: optionHeaders, ...restOptions } = options
   const response = await fetch(buildUrl(path), {
     headers: {
       'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
+      ...(optionHeaders ?? {}),
     },
-    ...options,
+    ...restOptions,
   })
 
   if (
