@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import { fetchMe, logout } from '../../api/auth.js'
+import { getStoredUser, subscribeAuthChange } from '../../lib/auth.js'
 
 const navItems = [
   { to: '/hackathons', label: '해커톤' },
@@ -7,29 +9,35 @@ const navItems = [
   { to: '/rankings', label: '랭킹' },
 ]
 
-const AUTH_STORAGE_KEY = 'hackhub-demo-user'
-
 function Navbar() {
   const location = useLocation()
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const syncUser = () => {
-      const storedUser = window.localStorage.getItem(AUTH_STORAGE_KEY)
-      setUser(storedUser ? JSON.parse(storedUser) : null)
+    const syncUser = async () => {
+      const storedUser = getStoredUser()
+      setUser(storedUser)
+
+      if (storedUser && !storedUser.role) {
+        try {
+          const me = await fetchMe()
+          setUser(me)
+        } catch {
+          setUser(storedUser)
+        }
+      }
     }
 
     syncUser()
-    window.addEventListener('mock-auth-change', syncUser)
+    const unsubscribe = subscribeAuthChange(syncUser)
 
     return () => {
-      window.removeEventListener('mock-auth-change', syncUser)
+      unsubscribe()
     }
   }, [])
 
-  const handleLogout = () => {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY)
-    window.dispatchEvent(new Event('mock-auth-change'))
+  const handleLogout = async () => {
+    await logout()
   }
 
   const isAdminView = location.pathname.startsWith('/admin')

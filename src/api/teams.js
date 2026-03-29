@@ -1,4 +1,5 @@
 import { apiRequest, createQueryString, extractArray } from './client.js'
+import { getAccessToken } from '../lib/auth.js'
 
 function normalizeTeam(item) {
   return {
@@ -42,5 +43,15 @@ function normalizeTeam(item) {
 export async function fetchTeams(params = {}) {
   const query = createQueryString(params)
   const payload = await apiRequest(`/teams${query}`)
+  return extractArray(payload).map(normalizeTeam)
+}
+
+export async function fetchMyTeams() {
+  const payload = await apiRequest('/teams/me', {
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+
   return extractArray(payload).map(normalizeTeam)
 }

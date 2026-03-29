@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { fetchMe } from '../api/auth.js'
+import { fetchMyTeams } from '../api/teams.js'
+import { getStoredUser } from '../lib/auth.js'
 import { rankings } from '../mock/rankings.js'
 import { teams } from '../mock/teams.js'
-
-const authStorageKey = 'hackhub-demo-user'
 
 const participationHistory = [
   {
@@ -32,19 +34,46 @@ const participationHistory = [
 ]
 
 function MyPage() {
-  const storedUser =
-    typeof window !== 'undefined'
-      ? window.localStorage.getItem(authStorageKey)
-      : null
+  const [user, setUser] = useState(getStoredUser() ?? {
+    nickname: 'jinwoo_k',
+    email: 'jinwoo@example.com',
+    role: 'user',
+  })
+  const [myTeams, setMyTeams] = useState(teams)
 
-  const user = storedUser
-    ? JSON.parse(storedUser)
-    : { nickname: 'jinwoo_k', email: 'jinwoo@example.com' }
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadMyPage() {
+      try {
+        const [me, teamList] = await Promise.all([fetchMe(), fetchMyTeams()])
+
+        if (!isMounted) return
+
+        if (me) {
+          setUser(me)
+        }
+
+        if (teamList.length > 0) {
+          setMyTeams(teamList)
+        }
+      } catch {
+        if (!isMounted) return
+
+        setMyTeams(
+          teams.filter((team) => ['jinwoo_k', 'dart_joon'].includes(team.leader)),
+        )
+      }
+    }
+
+    loadMyPage()
+
+    return () => {
+      isMounted = false
+    }
+  }, [user.nickname])
 
   const myScore = rankings.find((item) => item.nickname === user.nickname) ?? rankings[0]
-  const myTeams = teams.filter((team) =>
-    ['jinwoo_k', 'dart_joon'].includes(team.leader),
-  )
 
   return (
     <section className="page-section">
