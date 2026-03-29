@@ -1,4 +1,9 @@
-import { apiRequest, createQueryString, extractArray } from './client.js'
+import {
+  apiRequest,
+  createQueryString,
+  extractArray,
+  extractObject,
+} from './client.js'
 import { getAccessToken } from '../lib/auth.js'
 
 function normalizeTeam(item) {
@@ -68,6 +73,18 @@ export async function createTeam(payload) {
   return normalizeTeam(extractObject(response))
 }
 
+export async function updateTeam(id, payload) {
+  const response = await apiRequest(`/teams/${id}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  return normalizeTeam(extractObject(response))
+}
+
 export async function fetchTeamDetail(id) {
   const payload = await apiRequest(`/teams/${id}`)
   const data = extractObject(payload)
@@ -90,4 +107,32 @@ export async function applyToTeam(id) {
       Authorization: `Bearer ${getAccessToken()}`,
     },
   })
+}
+
+export async function fetchTeamApplications(id) {
+  const payload = await apiRequest(`/teams/${id}/applications`, {
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+
+  return extractArray(payload).map((item) => ({
+    applicationId: item.applicationId,
+    userId: item.userId,
+    nickname: item.nickname,
+    status: item.status,
+    createdAt: item.createdAt,
+  }))
+}
+
+export async function decideTeamApplication(teamId, appId, status) {
+  const payload = await apiRequest(`/teams/${teamId}/applications/${appId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+    body: JSON.stringify({ status }),
+  })
+
+  return extractObject(payload)
 }
