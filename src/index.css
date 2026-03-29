@@ -1857,10 +1857,9 @@ h2 {
 }
 
 .schedule-card__item {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 20px;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .schedule-card__item-date {
@@ -1908,7 +1907,6 @@ h2 {
   margin: 0 0 14px;
   font-size: 0.88rem;
   color: #4b5563;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding-bottom: 10px;
@@ -1952,7 +1950,7 @@ h2 {
 
 .detail-prize-card strong {
   display: block;
-  font-size: 3rem;
+  font-size: 2rem;
   line-height: 1;
   letter-spacing: -0.06em;
   color: #3f7fe8;
@@ -3588,8 +3586,7 @@ h2 {
     justify-content: stretch;
   }
 
-  .schedule-card__head,
-  .schedule-card__item {
+  .schedule-card__head {
     grid-template-columns: 1fr;
     display: grid;
   }

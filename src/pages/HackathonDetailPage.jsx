@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
   cancelRegistration,
   fetchHackathonDetail,
   fetchHackathonLeaderboard,
   fetchHackathonTeams,
   fetchRegistrationStatus,
-} from '../api/hackathons.js'
+} from "../api/hackathons.js";
 import {
   decideTeamApplication,
   deleteTeam,
@@ -14,59 +14,59 @@ import {
   fetchTeamApplications,
   fetchTeamDetail,
   updateTeam,
-} from '../api/teams.js'
-import { getStoredUser } from '../lib/auth.js'
-import { hackathons } from '../mock/hackathons.js'
-import { teams } from '../mock/teams.js'
+} from "../api/teams.js";
+import { getStoredUser } from "../lib/auth.js";
+import { hackathons } from "../mock/hackathons.js";
+import { teams } from "../mock/teams.js";
 
 const detailTabs = [
-  { key: 'overview', label: '개요' },
-  { key: 'schedule', label: '일정' },
-  { key: 'prize', label: '상금' },
-  { key: 'team', label: '팀' },
-  { key: 'submit', label: '제출' },
-  { key: 'leaderboard', label: '리더보드' },
-]
+  { key: "overview", label: "개요" },
+  { key: "schedule", label: "일정" },
+  { key: "prize", label: "상금" },
+  { key: "team", label: "팀" },
+  { key: "submit", label: "제출" },
+  { key: "leaderboard", label: "리더보드" },
+];
 
 function HackathonDetailPage() {
-  const { id } = useParams()
-  const [activeTab, setActiveTab] = useState('overview')
-  const [teamState, setTeamState] = useState('notRegistered')
-  const [submitState, setSubmitState] = useState('notRegistered')
-  const [isTeamNoticeOpen, setIsTeamNoticeOpen] = useState(false)
-  const [remoteHackathon, setRemoteHackathon] = useState(null)
-  const [remoteTeams, setRemoteTeams] = useState(null)
-  const [remoteLeaderboard, setRemoteLeaderboard] = useState(null)
-  const [registrationStatus, setRegistrationStatus] = useState(null)
-  const [registrationMessage, setRegistrationMessage] = useState('')
-  const [isRegisteringTeam, setIsRegisteringTeam] = useState(false)
-  const [myTeamDetail, setMyTeamDetail] = useState(null)
-  const [applications, setApplications] = useState([])
-  const [isApplicationsOpen, setIsApplicationsOpen] = useState(false)
-  const [applicationMessage, setApplicationMessage] = useState('')
-  const [isEditTeamOpen, setIsEditTeamOpen] = useState(false)
+  const { id } = useParams();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [teamState, setTeamState] = useState("notRegistered");
+  const [submitState, setSubmitState] = useState("notRegistered");
+  const [isTeamNoticeOpen, setIsTeamNoticeOpen] = useState(false);
+  const [remoteHackathon, setRemoteHackathon] = useState(null);
+  const [remoteTeams, setRemoteTeams] = useState(null);
+  const [remoteLeaderboard, setRemoteLeaderboard] = useState(null);
+  const [registrationStatus, setRegistrationStatus] = useState(null);
+  const [registrationMessage, setRegistrationMessage] = useState("");
+  const [isRegisteringTeam, setIsRegisteringTeam] = useState(false);
+  const [myTeamDetail, setMyTeamDetail] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [isApplicationsOpen, setIsApplicationsOpen] = useState(false);
+  const [applicationMessage, setApplicationMessage] = useState("");
+  const [isEditTeamOpen, setIsEditTeamOpen] = useState(false);
   const [teamEditForm, setTeamEditForm] = useState({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     isOpen: true,
-  })
-  const [teamEditMessage, setTeamEditMessage] = useState('')
-  const [isSavingTeam, setIsSavingTeam] = useState(false)
-  const [isDeletingTeam, setIsDeletingTeam] = useState(false)
-  const currentUser = getStoredUser()
+  });
+  const [teamEditMessage, setTeamEditMessage] = useState("");
+  const [isSavingTeam, setIsSavingTeam] = useState(false);
+  const [isDeletingTeam, setIsDeletingTeam] = useState(false);
+  const currentUser = getStoredUser();
 
   const mockHackathon = useMemo(
     () => hackathons.find((item) => String(item.id) === String(id)),
     [id],
-  )
+  );
 
   const mockParticipantTeams = useMemo(
     () => teams.filter((team) => String(team.hackathonId) === String(id)),
     [id],
-  )
+  );
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
 
     async function loadDetail() {
       try {
@@ -74,19 +74,19 @@ function HackathonDetailPage() {
           fetchHackathonDetail(id),
           fetchHackathonTeams(id),
           fetchHackathonLeaderboard(id),
-        ])
+        ]);
 
-        if (!isMounted) return
+        if (!isMounted) return;
 
-        setRemoteHackathon(detail)
-        setRemoteTeams(participantTeams)
-        setRemoteLeaderboard(leaderboard)
+        setRemoteHackathon(detail);
+        setRemoteTeams(participantTeams);
+        setRemoteLeaderboard(leaderboard);
       } catch {
-        if (!isMounted) return
+        if (!isMounted) return;
 
-        setRemoteHackathon(null)
-        setRemoteTeams(null)
-        setRemoteLeaderboard(null)
+        setRemoteHackathon(null);
+        setRemoteTeams(null);
+        setRemoteLeaderboard(null);
       }
 
       if (getStoredUser()) {
@@ -94,182 +94,176 @@ function HackathonDetailPage() {
           const [status, myTeams] = await Promise.all([
             fetchRegistrationStatus(id),
             fetchMyTeams(),
-          ])
+          ]);
 
-          if (!isMounted) return
+          if (!isMounted) return;
 
-          setRegistrationStatus(status)
-          setTeamState(status?.teamId ? 'hasTeam' : 'notRegistered')
+          setRegistrationStatus(status);
+          setTeamState(status?.teamId ? "hasTeam" : "notRegistered");
 
-          const matchedTeam = myTeams.find((team) => String(team.id) === String(status?.teamId))
+          const matchedTeam = myTeams.find(
+            (team) => String(team.id) === String(status?.teamId),
+          );
           if (matchedTeam) {
             try {
               const [detail, applicationRows] = await Promise.all([
                 fetchTeamDetail(matchedTeam.id),
                 fetchTeamApplications(matchedTeam.id),
-              ])
+              ]);
 
-              if (!isMounted) return
-              setMyTeamDetail(detail)
-              setApplications(applicationRows)
+              if (!isMounted) return;
+              setMyTeamDetail(detail);
+              setApplications(applicationRows);
             } catch {
-              if (!isMounted) return
-              setMyTeamDetail(matchedTeam)
-              setApplications([])
+              if (!isMounted) return;
+              setMyTeamDetail(matchedTeam);
+              setApplications([]);
             }
 
             setRemoteTeams((current) => {
               const others = (current ?? participantTeams ?? []).filter(
                 (team) => String(team.id) !== String(matchedTeam.id),
-              )
-              return [matchedTeam, ...others]
-            })
+              );
+              return [matchedTeam, ...others];
+            });
           }
         } catch {
-          if (!isMounted) return
-          setRegistrationStatus(null)
-          setTeamState('notRegistered')
+          if (!isMounted) return;
+          setRegistrationStatus(null);
+          setTeamState("notRegistered");
         }
       }
     }
 
-    loadDetail()
+    loadDetail();
 
     return () => {
-      isMounted = false
-    }
-  }, [id])
+      isMounted = false;
+    };
+  }, [id]);
 
   const hackathon = useMemo(() => {
     if (!mockHackathon && !remoteHackathon) {
-      return null
+      return null;
     }
 
     return {
       ...(mockHackathon ?? {}),
       ...(remoteHackathon ?? {}),
-      schedules:
-        mockHackathon?.schedules ??
-        remoteHackathon?.schedules ??
-        [],
+      schedules: mockHackathon?.schedules ?? remoteHackathon?.schedules ?? [],
       evaluations:
-        mockHackathon?.evaluations ??
-        remoteHackathon?.evaluations ??
-        [],
-      prizes:
-        mockHackathon?.prizes ??
-        remoteHackathon?.prizes ??
-        [],
+        mockHackathon?.evaluations ?? remoteHackathon?.evaluations ?? [],
+      prizes: mockHackathon?.prizes ?? remoteHackathon?.prizes ?? [],
       teamStates:
-        mockHackathon?.teamStates ??
-        remoteHackathon?.teamStates ??
-        {},
+        mockHackathon?.teamStates ?? remoteHackathon?.teamStates ?? {},
       submitStates:
-        mockHackathon?.submitStates ??
-        remoteHackathon?.submitStates ??
-        {},
+        mockHackathon?.submitStates ?? remoteHackathon?.submitStates ?? {},
       leaderboard:
         remoteLeaderboard && remoteLeaderboard.length > 0
           ? remoteLeaderboard
-          : mockHackathon?.leaderboard ?? [],
-    }
-  }, [mockHackathon, remoteHackathon, remoteLeaderboard])
+          : (mockHackathon?.leaderboard ?? []),
+    };
+  }, [mockHackathon, remoteHackathon, remoteLeaderboard]);
 
   const participantTeams = useMemo(
-    () => (remoteTeams && remoteTeams.length > 0 ? remoteTeams : mockParticipantTeams),
+    () =>
+      remoteTeams && remoteTeams.length > 0
+        ? remoteTeams
+        : mockParticipantTeams,
     [mockParticipantTeams, remoteTeams],
-  )
+  );
 
-  const currentLeaderId = myTeamDetail?.leaderId ?? null
-  const currentLeaderName = myTeamDetail?.leader ?? registrationStatus?.teamName ?? ''
+  const currentLeaderId = myTeamDetail?.leaderId ?? null;
+  const currentLeaderName =
+    myTeamDetail?.leader ?? registrationStatus?.teamName ?? "";
   const isCurrentUserLeader =
     Boolean(currentUser?.userId) &&
     ((currentLeaderId && currentLeaderId === currentUser.userId) ||
-      (currentUser?.nickname && currentLeaderName === currentUser.nickname))
+      (currentUser?.nickname && currentLeaderName === currentUser.nickname));
 
   useEffect(() => {
-    if (!myTeamDetail) return
+    if (!myTeamDetail) return;
 
     setTeamEditForm({
-      name: myTeamDetail.name ?? '',
-      description: myTeamDetail.description ?? '',
+      name: myTeamDetail.name ?? "",
+      description: myTeamDetail.description ?? "",
       isOpen: myTeamDetail.isOpen ?? true,
-    })
-  }, [myTeamDetail])
+    });
+  }, [myTeamDetail]);
 
   const refreshParticipantTeams = async () => {
     try {
-      const rows = await fetchHackathonTeams(id)
-      setRemoteTeams(rows)
-      return rows
+      const rows = await fetchHackathonTeams(id);
+      setRemoteTeams(rows);
+      return rows;
     } catch {
-      return null
+      return null;
     }
-  }
+  };
 
   const refreshMyTeamState = async (teamId) => {
     try {
       const [detail, applicationRows] = await Promise.all([
         fetchTeamDetail(teamId),
         fetchTeamApplications(teamId),
-      ])
+      ]);
 
-      setMyTeamDetail(detail)
-      setApplications(applicationRows)
-      return detail
+      setMyTeamDetail(detail);
+      setApplications(applicationRows);
+      return detail;
     } catch {
-      return null
+      return null;
     }
-  }
+  };
 
   const scheduleSections = useMemo(() => {
     if (!hackathon) {
-      return []
+      return [];
     }
 
-    if (String(id) === '1') {
+    if (String(id) === "1") {
       return [
         {
-          title: '참가 신청',
-          status: 'done',
-          summaryDate: '2026-03-15',
+          title: "참가 신청",
+          status: "done",
+          summaryDate: "2026-03-15",
           expanded: true,
           items: [
-            { date: '2026-03-15', label: '참가 신청 오픈' },
-            { date: '2026-03-31', label: '참가 신청 마감' },
+            { date: "2026-03-15", label: "참가 신청 오픈" },
+            { date: "2026-03-31", label: "참가 신청 마감" },
           ],
         },
         {
-          title: '해커톤 진행',
-          status: 'upcoming',
-          summaryDate: '2026-04-01 09:00',
+          title: "해커톤 진행",
+          status: "upcoming",
+          summaryDate: "2026-04-01 09:00",
           expanded: false,
           items: [
-            { date: '2026-04-01 09:00', label: '오프닝 및 안내' },
-            { date: '2026-04-02 18:00', label: '중간 점검' },
+            { date: "2026-04-01 09:00", label: "오프닝 및 안내" },
+            { date: "2026-04-02 18:00", label: "중간 점검" },
           ],
         },
         {
-          title: '마감 및 시상',
-          status: 'upcoming',
-          summaryDate: '2026-04-03 20:00',
+          title: "마감 및 시상",
+          status: "upcoming",
+          summaryDate: "2026-04-03 20:00",
           expanded: false,
           items: [
-            { date: '2026-04-03 18:00', label: '최종 제출 마감' },
-            { date: '2026-04-03 20:00', label: '시상 및 클로징' },
+            { date: "2026-04-03 18:00", label: "최종 제출 마감" },
+            { date: "2026-04-03 20:00", label: "시상 및 클로징" },
           ],
         },
-      ]
+      ];
     }
 
     return hackathon.schedules.map((schedule, index) => ({
       title: schedule.label,
-      status: index === 0 ? 'done' : 'upcoming',
+      status: index === 0 ? "done" : "upcoming",
       summaryDate: schedule.at,
       expanded: index === 0,
-      items: [{ date: schedule.at.split(' ')[0], label: schedule.label }],
-    }))
-  }, [hackathon, id])
+      items: [{ date: schedule.at.split(" ")[0], label: schedule.label }],
+    }));
+  }, [hackathon, id]);
 
   if (!hackathon) {
     return (
@@ -285,11 +279,11 @@ function HackathonDetailPage() {
           해커톤 목록으로
         </Link>
       </section>
-    )
+    );
   }
 
   const renderTabContent = () => {
-    if (activeTab === 'overview') {
+    if (activeTab === "overview") {
       return (
         <div className="detail-section__content">
           <section className="detail-block">
@@ -313,15 +307,17 @@ function HackathonDetailPage() {
             </div>
           </section>
         </div>
-      )
+      );
     }
 
-    if (activeTab === 'schedule') {
+    if (activeTab === "schedule") {
       return (
         <div className="detail-section__content">
           <section className="detail-block">
             <div className="row-between row-between--wrap">
-              <h2 className="detail-block__title detail-block__title--plain">대회 일정</h2>
+              <h2 className="detail-block__title detail-block__title--plain">
+                대회 일정
+              </h2>
               <div className="schedule-legend">
                 <span className="schedule-legend__item">
                   <span className="schedule-legend__dot schedule-legend__dot--done" />
@@ -346,12 +342,14 @@ function HackathonDetailPage() {
                       <span
                         className={`schedule-card__dot schedule-card__dot--${section.status}`}
                       />
-                      <strong className="schedule-card__title">{section.title}</strong>
+                      <strong className="schedule-card__title">
+                        {section.title}
+                      </strong>
                     </div>
                     <div className="schedule-card__summary">
                       <span>{section.summaryDate}</span>
                       <span className="schedule-card__chevron">
-                        {section.expanded ? '▲' : '▼'}
+                        {section.expanded ? "▲" : "▼"}
                       </span>
                     </div>
                   </div>
@@ -359,9 +357,16 @@ function HackathonDetailPage() {
                   {section.expanded && (
                     <div className="schedule-card__body">
                       {section.items.map((item) => (
-                        <div key={`${section.title}-${item.label}`} className="schedule-card__item">
-                          <span className="schedule-card__item-date">{item.date}</span>
-                          <span className="schedule-card__item-label">{item.label}</span>
+                        <div
+                          key={`${section.title}-${item.label}`}
+                          className="schedule-card__item"
+                        >
+                          <span className="schedule-card__item-date">
+                            {item.date}
+                          </span>
+                          <span className="schedule-card__item-label">
+                            {item.label}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -371,10 +376,10 @@ function HackathonDetailPage() {
             </div>
           </section>
         </div>
-      )
+      );
     }
 
-    if (activeTab === 'evaluation') {
+    if (activeTab === "evaluation") {
       return (
         <div className="card-grid">
           {hackathon.evaluations.map((item) => (
@@ -384,10 +389,10 @@ function HackathonDetailPage() {
             </div>
           ))}
         </div>
-      )
+      );
     }
 
-    if (activeTab === 'prize') {
+    if (activeTab === "prize") {
       return (
         <div className="card-grid">
           {hackathon.prizes.map((prize) => (
@@ -397,10 +402,10 @@ function HackathonDetailPage() {
             </div>
           ))}
         </div>
-      )
+      );
     }
 
-    if (activeTab === 'team') {
+    if (activeTab === "team") {
       return (
         <div className="stack-list team-tab-layout">
           <div className="team-state-switcher" aria-label="팀 상태 미리보기">
@@ -409,34 +414,34 @@ function HackathonDetailPage() {
               <button
                 type="button"
                 className={`filter-chip${
-                  teamState === 'notRegistered' ? ' filter-chip--active' : ''
+                  teamState === "notRegistered" ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setTeamState('notRegistered')}
+                onClick={() => setTeamState("notRegistered")}
               >
                 미참가
               </button>
               <button
                 type="button"
                 className={`filter-chip${
-                  teamState === 'noTeam' ? ' filter-chip--active' : ''
+                  teamState === "noTeam" ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setTeamState('noTeam')}
+                onClick={() => setTeamState("noTeam")}
               >
                 참가 완료 · 팀 없음
               </button>
               <button
                 type="button"
                 className={`filter-chip${
-                  teamState === 'hasTeam' ? ' filter-chip--active' : ''
+                  teamState === "hasTeam" ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setTeamState('hasTeam')}
+                onClick={() => setTeamState("hasTeam")}
               >
                 팀 있음
               </button>
             </div>
           </div>
 
-          {teamState === 'notRegistered' && (
+          {teamState === "notRegistered" && (
             <div className="team-state-card team-state-card--locked">
               <div className="team-state-card__icon">🔒</div>
               <h2 className="team-state-card__title">
@@ -458,7 +463,7 @@ function HackathonDetailPage() {
             </div>
           )}
 
-          {teamState === 'noTeam' && (
+          {teamState === "noTeam" && (
             <div className="team-state-card team-state-card--ready">
               <div className="team-state-card__icon">🤝</div>
               <h2 className="team-state-card__title">
@@ -486,21 +491,24 @@ function HackathonDetailPage() {
             </div>
           )}
 
-          {teamState === 'hasTeam' && (
+          {teamState === "hasTeam" && (
             <>
               <section className="my-team-panel">
                 <div className="my-team-panel__header">
                   <div>
                     <h2 className="my-team-panel__title">
-                      {myTeamDetail?.name ?? registrationStatus?.teamName ?? participantTeams[0]?.name ?? '내 팀'}
+                      {myTeamDetail?.name ??
+                        registrationStatus?.teamName ??
+                        participantTeams[0]?.name ??
+                        "내 팀"}
                     </h2>
                     <p className="my-team-panel__meta">
-                      내 팀 · {isCurrentUserLeader ? '팀장' : '팀원'}
+                      내 팀 · {isCurrentUserLeader ? "팀장" : "팀원"}
                     </p>
                   </div>
                   <div className="my-team-panel__badges">
                     <span className="status-outline status-outline--open">
-                      {myTeamDetail?.isOpen ?? true ? '모집 중' : '마감'}
+                      {(myTeamDetail?.isOpen ?? true) ? "모집 중" : "마감"}
                     </span>
                     {isCurrentUserLeader ? (
                       <button
@@ -516,7 +524,11 @@ function HackathonDetailPage() {
 
                 <div className="my-team-panel__section">
                   <p className="my-team-panel__label">
-                    팀원 {myTeamDetail?.members?.length ?? participantTeams[0]?.currentMembers ?? 0}명
+                    팀원{" "}
+                    {myTeamDetail?.members?.length ??
+                      participantTeams[0]?.currentMembers ??
+                      0}
+                    명
                   </p>
                   <ul className="my-team-members">
                     {(myTeamDetail?.members ?? []).map((member) => (
@@ -524,8 +536,8 @@ function HackathonDetailPage() {
                         <span
                           className={`my-team-member__dot${
                             currentLeaderId === member.userId
-                              ? ' my-team-member__dot--active'
-                              : ''
+                              ? " my-team-member__dot--active"
+                              : ""
                           }`}
                         />
                         <strong>{member.nickname}</strong>
@@ -543,8 +555,8 @@ function HackathonDetailPage() {
                       type="button"
                       className="team-secondary-button team-secondary-button--muted"
                       onClick={() => {
-                        setTeamEditMessage('')
-                        setIsEditTeamOpen(true)
+                        setTeamEditMessage("");
+                        setIsEditTeamOpen(true);
                       }}
                     >
                       팀 정보 수정
@@ -555,24 +567,24 @@ function HackathonDetailPage() {
                       type="button"
                       className="team-danger-button"
                       onClick={async () => {
-                        if (!myTeamDetail?.id) return
+                        if (!myTeamDetail?.id) return;
                         try {
-                          setIsDeletingTeam(true)
-                          await deleteTeam(myTeamDetail.id)
-                          setMyTeamDetail(null)
-                          setApplications([])
-                          setRegistrationStatus(null)
-                          setTeamState('notRegistered')
-                          await refreshParticipantTeams()
-                          setRegistrationMessage('팀이 삭제되었습니다.')
+                          setIsDeletingTeam(true);
+                          await deleteTeam(myTeamDetail.id);
+                          setMyTeamDetail(null);
+                          setApplications([]);
+                          setRegistrationStatus(null);
+                          setTeamState("notRegistered");
+                          await refreshParticipantTeams();
+                          setRegistrationMessage("팀이 삭제되었습니다.");
                         } catch {
-                          setRegistrationMessage('팀 삭제에 실패했습니다.')
+                          setRegistrationMessage("팀 삭제에 실패했습니다.");
                         } finally {
-                          setIsDeletingTeam(false)
+                          setIsDeletingTeam(false);
                         }
                       }}
                     >
-                      {isDeletingTeam ? '삭제 중...' : '팀 삭제'}
+                      {isDeletingTeam ? "삭제 중..." : "팀 삭제"}
                     </button>
                   ) : null}
                 </div>
@@ -591,7 +603,8 @@ function HackathonDetailPage() {
                     <div key={team.id} className="participant-team-table__row">
                       <div className="participant-team-table__team">
                         <strong>{team.name}</strong>
-                        {String(team.id) === String(registrationStatus?.teamId) && (
+                        {String(team.id) ===
+                          String(registrationStatus?.teamId) && (
                           <span className="team-role-badge">내 팀</span>
                         )}
                       </div>
@@ -600,11 +613,11 @@ function HackathonDetailPage() {
                       <span
                         className={`status-outline ${
                           team.isOpen
-                            ? 'status-outline--open'
-                            : 'status-outline--closed'
+                            ? "status-outline--open"
+                            : "status-outline--closed"
                         }`}
                       >
-                        {team.isOpen ? '모집 중' : '마감'}
+                        {team.isOpen ? "모집 중" : "마감"}
                       </span>
                     </div>
                   ))}
@@ -613,11 +626,11 @@ function HackathonDetailPage() {
             </>
           )}
         </div>
-      )
+      );
     }
 
-    if (activeTab === 'submit') {
-      if (submitState === 'open') {
+    if (activeTab === "submit") {
+      if (submitState === "open") {
         return (
           <div className="stack-list">
             <section className="detail-block">
@@ -660,7 +673,10 @@ function HackathonDetailPage() {
                   </label>
 
                   <div>
-                    <button type="button" className="team-primary-button submit-button">
+                    <button
+                      type="button"
+                      className="team-primary-button submit-button"
+                    >
                       제출하기
                     </button>
                   </div>
@@ -668,7 +684,7 @@ function HackathonDetailPage() {
               </div>
             </section>
           </div>
-        )
+        );
       }
 
       return (
@@ -678,36 +694,36 @@ function HackathonDetailPage() {
               <button
                 type="button"
                 className={`filter-chip${
-                  submitState === 'notRegistered' ? ' filter-chip--active' : ''
+                  submitState === "notRegistered" ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setSubmitState('notRegistered')}
+                onClick={() => setSubmitState("notRegistered")}
               >
                 미참가
               </button>
               <button
                 type="button"
                 className={`filter-chip${
-                  submitState === 'noTeam' ? ' filter-chip--active' : ''
+                  submitState === "noTeam" ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setSubmitState('noTeam')}
+                onClick={() => setSubmitState("noTeam")}
               >
                 팀 없음
               </button>
               <button
                 type="button"
                 className={`filter-chip${
-                  submitState === 'open' ? ' filter-chip--active' : ''
+                  submitState === "open" ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setSubmitState('open')}
+                onClick={() => setSubmitState("open")}
               >
                 제출 가능
               </button>
               <button
                 type="button"
                 className={`filter-chip${
-                  submitState === 'closed' ? ' filter-chip--active' : ''
+                  submitState === "closed" ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setSubmitState('closed')}
+                onClick={() => setSubmitState("closed")}
               >
                 제출 마감
               </button>
@@ -728,10 +744,10 @@ function HackathonDetailPage() {
             </div>
           </div>
         </div>
-      )
+      );
     }
 
-    if (activeTab === 'leaderboard') {
+    if (activeTab === "leaderboard") {
       return (
         <div className="surface-card">
           {hackathon.leaderboard.length === 0 ? (
@@ -739,38 +755,37 @@ function HackathonDetailPage() {
           ) : (
             <div className="stack-list stack-list--compact">
               {hackathon.leaderboard.map((entry) => (
-                <div key={entry.teamName} className="detail-list-row row-between">
+                <div
+                  key={entry.teamName}
+                  className="detail-list-row row-between"
+                >
                   <strong>
                     #{entry.rank} {entry.teamName}
                   </strong>
                   <span className="meta-text">
-                    {entry.submitted
-                      ? `${entry.score}점`
-                      : '미제출'}
+                    {entry.submitted ? `${entry.score}점` : "미제출"}
                   </span>
                 </div>
               ))}
             </div>
           )}
         </div>
-      )
+      );
     }
 
-    return null
-  }
+    return null;
+  };
 
   return (
     <section className="page-section">
-      <div>
-        <Link to="/hackathons" className="button-back">
-          ← 목록으로
-        </Link>
-      </div>
-
       <div className="detail-header">
         <div className="tag-list">
-          <span className={`status-outline status-outline--${hackathon.status}`}>
-            {hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}
+          <span
+            className={`status-outline status-outline--${hackathon.status}`}
+          >
+            {hackathon.status === "upcoming"
+              ? "진행 중"
+              : hackathon.statusLabel}
           </span>
           {hackathon.tags.map((tag) => (
             <span key={tag} className="tag-chip tag-chip--blue">
@@ -778,23 +793,31 @@ function HackathonDetailPage() {
             </span>
           ))}
         </div>
-        <h1>{hackathon.title}</h1>
+        <div style={{ marginTop: "10px" }}>
+          <h1>{hackathon.title}</h1>
+        </div>
         <div className="detail-meta">
           <span>{hackathon.organizer}</span>
-          <span>{hackathon.startDate} ~ {hackathon.endDate}</span>
+          <span>
+            {hackathon.startDate} ~ {hackathon.endDate}
+          </span>
           <span>참가자 {hackathon.participantCount}명</span>
         </div>
       </div>
 
       <div className="detail-grid">
         <div className="stack-list">
-          <div className="detail-tabs" role="tablist" aria-label="해커톤 상세 탭">
+          <div
+            className="detail-tabs"
+            role="tablist"
+            aria-label="해커톤 상세 탭"
+          >
             {detailTabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 className={`detail-tab${
-                  activeTab === tab.key ? ' detail-tab--active' : ''
+                  activeTab === tab.key ? " detail-tab--active" : ""
                 }`}
                 onClick={() => setActiveTab(tab.key)}
               >
@@ -827,20 +850,24 @@ function HackathonDetailPage() {
             </div>
             <div className="info-row">
               <span>상태</span>
-              <span>{hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}</span>
+              <span>
+                {hackathon.status === "upcoming"
+                  ? "진행 중"
+                  : hackathon.statusLabel}
+              </span>
             </div>
-            {teamState === 'hasTeam' ? (
+            {teamState === "hasTeam" ? (
               <button
                 type="button"
                 className="detail-apply-button detail-apply-button--secondary"
                 onClick={async () => {
                   try {
-                    await cancelRegistration(id)
-                    setRegistrationStatus(null)
-                    setTeamState('notRegistered')
-                    setRegistrationMessage('참가가 취소되었습니다.')
+                    await cancelRegistration(id);
+                    setRegistrationStatus(null);
+                    setTeamState("notRegistered");
+                    setRegistrationMessage("참가가 취소되었습니다.");
                   } catch {
-                    setRegistrationMessage('참가 취소에 실패했습니다.')
+                    setRegistrationMessage("참가 취소에 실패했습니다.");
                   }
                 }}
               >
@@ -855,7 +882,9 @@ function HackathonDetailPage() {
                 팀 만들고 참가하기
               </button>
             )}
-            {registrationMessage ? <p className="meta-text">{registrationMessage}</p> : null}
+            {registrationMessage ? (
+              <p className="meta-text">{registrationMessage}</p>
+            ) : null}
           </div>
 
           <div className="sidebar-card">
@@ -884,7 +913,9 @@ function HackathonDetailPage() {
             <h2 id="team-notice-title">팀 구성 유의사항</h2>
             <ul className="team-notice-list">
               <li>한 해커톤에 1개 팀만 참여할 수 있습니다.</li>
-              <li>팀 생성 후 24시간 이내에 최소 2명 이상의 팀원이 필요합니다.</li>
+              <li>
+                팀 생성 후 24시간 이내에 최소 2명 이상의 팀원이 필요합니다.
+              </li>
               <li>팀 구성이 완료되면 팀원 변경이 제한될 수 있습니다.</li>
               <li>팀장만 제출 권한을 가집니다.</li>
             </ul>
@@ -927,14 +958,20 @@ function HackathonDetailPage() {
             <h2 id="team-applications-title">팀 합류 신청 관리</h2>
             <div className="team-applications-list">
               {applications.length === 0 ? (
-                <p className="team-notice-copy">현재 대기 중인 신청이 없습니다.</p>
+                <p className="team-notice-copy">
+                  현재 대기 중인 신청이 없습니다.
+                </p>
               ) : (
                 applications.map((application) => (
-                  <div key={application.applicationId} className="team-application-item">
+                  <div
+                    key={application.applicationId}
+                    className="team-application-item"
+                  >
                     <div>
                       <strong>{application.nickname}</strong>
                       <p className="meta-text">
-                        상태: {application.status} · 신청 ID: {application.applicationId}
+                        상태: {application.status} · 신청 ID:{" "}
+                        {application.applicationId}
                       </p>
                     </div>
                     <div className="team-application-item__actions">
@@ -946,13 +983,13 @@ function HackathonDetailPage() {
                             await decideTeamApplication(
                               registrationStatus.teamId,
                               application.applicationId,
-                              'REJECTED',
-                            )
-                            await refreshMyTeamState(registrationStatus.teamId)
-                            await refreshParticipantTeams()
-                            setApplicationMessage('신청을 거절했습니다.')
+                              "REJECTED",
+                            );
+                            await refreshMyTeamState(registrationStatus.teamId);
+                            await refreshParticipantTeams();
+                            setApplicationMessage("신청을 거절했습니다.");
                           } catch {
-                            setApplicationMessage('신청 거절에 실패했습니다.')
+                            setApplicationMessage("신청 거절에 실패했습니다.");
                           }
                         }}
                       >
@@ -966,13 +1003,13 @@ function HackathonDetailPage() {
                             await decideTeamApplication(
                               registrationStatus.teamId,
                               application.applicationId,
-                              'ACCEPTED',
-                            )
-                            await refreshMyTeamState(registrationStatus.teamId)
-                            await refreshParticipantTeams()
-                            setApplicationMessage('신청을 수락했습니다.')
+                              "ACCEPTED",
+                            );
+                            await refreshMyTeamState(registrationStatus.teamId);
+                            await refreshParticipantTeams();
+                            setApplicationMessage("신청을 수락했습니다.");
                           } catch {
-                            setApplicationMessage('신청 수락에 실패했습니다.')
+                            setApplicationMessage("신청 수락에 실패했습니다.");
                           }
                         }}
                       >
@@ -983,7 +1020,9 @@ function HackathonDetailPage() {
                 ))
               )}
             </div>
-            {applicationMessage ? <p className="team-notice-copy">{applicationMessage}</p> : null}
+            {applicationMessage ? (
+              <p className="team-notice-copy">{applicationMessage}</p>
+            ) : null}
             <div className="team-notice-actions">
               <button
                 type="button"
@@ -1048,7 +1087,7 @@ function HackathonDetailPage() {
                   onChange={(event) =>
                     setTeamEditForm((current) => ({
                       ...current,
-                      isOpen: event.target.value === 'true',
+                      isOpen: event.target.value === "true",
                     }))
                   }
                 >
@@ -1058,7 +1097,9 @@ function HackathonDetailPage() {
               </label>
             </div>
 
-            {teamEditMessage ? <p className="team-notice-copy">{teamEditMessage}</p> : null}
+            {teamEditMessage ? (
+              <p className="team-notice-copy">{teamEditMessage}</p>
+            ) : null}
 
             <div className="team-notice-actions">
               <button
@@ -1073,43 +1114,43 @@ function HackathonDetailPage() {
                 className="team-primary-button"
                 onClick={async () => {
                   try {
-                    setIsSavingTeam(true)
-                    setTeamEditMessage('')
+                    setIsSavingTeam(true);
+                    setTeamEditMessage("");
 
                     const updated = await updateTeam(myTeamDetail.id, {
                       name: teamEditForm.name,
                       description: teamEditForm.description,
                       isOpen: teamEditForm.isOpen,
-                    })
+                    });
 
-                    const refreshedDetail = await fetchTeamDetail(myTeamDetail.id).catch(
-                      () => ({
-                        ...myTeamDetail,
-                        ...updated,
-                        description: teamEditForm.description,
-                        isOpen: teamEditForm.isOpen,
-                      }),
-                    )
+                    const refreshedDetail = await fetchTeamDetail(
+                      myTeamDetail.id,
+                    ).catch(() => ({
+                      ...myTeamDetail,
+                      ...updated,
+                      description: teamEditForm.description,
+                      isOpen: teamEditForm.isOpen,
+                    }));
 
-                    setMyTeamDetail(refreshedDetail)
-                    await refreshParticipantTeams()
-                    setTeamEditMessage('팀 정보가 수정되었습니다.')
-                    setIsEditTeamOpen(false)
+                    setMyTeamDetail(refreshedDetail);
+                    await refreshParticipantTeams();
+                    setTeamEditMessage("팀 정보가 수정되었습니다.");
+                    setIsEditTeamOpen(false);
                   } catch {
-                    setTeamEditMessage('팀 정보 수정에 실패했습니다.')
+                    setTeamEditMessage("팀 정보 수정에 실패했습니다.");
                   } finally {
-                    setIsSavingTeam(false)
+                    setIsSavingTeam(false);
                   }
                 }}
               >
-                {isSavingTeam ? '저장 중...' : '저장'}
+                {isSavingTeam ? "저장 중..." : "저장"}
               </button>
             </div>
           </div>
         </div>
       ) : null}
     </section>
-  )
+  );
 }
 
-export default HackathonDetailPage
+export default HackathonDetailPage;
