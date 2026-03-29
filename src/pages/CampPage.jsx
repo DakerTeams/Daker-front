@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchTeams } from '../api/teams.js'
+import { fetchHackathons } from '../api/hackathons.js'
+import { createTeam, fetchTeams } from '../api/teams.js'
+import { getStoredUser } from '../lib/auth.js'
 import { teams } from '../mock/teams.js'
+import { hackathons } from '../mock/hackathons.js'
 
 const openFilters = [
   { key: 'all', label: '전체' },
@@ -14,23 +17,44 @@ function CampPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false)
   const [items, setItems] = useState(teams)
   const [isLoading, setIsLoading] = useState(false)
+  const [availableHackathons, setAvailableHackathons] = useState(hackathons)
+  const [createForm, setCreateForm] = useState({
+    hackathonId: '1',
+    name: '',
+    description: '',
+    isOpen: 'true',
+  })
+  const [createMessage, setCreateMessage] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
 
   useEffect(() => {
     let isMounted = true
 
-    async function loadTeams() {
+    async function loadTeamsAndHackathons() {
       setIsLoading(true)
 
       try {
-        const data = await fetchTeams()
+        const [teamData, hackathonData] = await Promise.all([
+          fetchTeams(),
+          fetchHackathons(),
+        ])
         if (!isMounted) return
 
-        if (data.length > 0) {
-          setItems(data)
+        if (teamData.length > 0) {
+          setItems(teamData)
+        }
+
+        if (hackathonData.length > 0) {
+          setAvailableHackathons(hackathonData)
+          setCreateForm((current) => ({
+            ...current,
+            hackathonId: String(hackathonData[0].id),
+          }))
         }
       } catch {
         if (!isMounted) return
         setItems(teams)
+        setAvailableHackathons(hackathons)
       } finally {
         if (isMounted) {
           setIsLoading(false)
@@ -38,12 +62,52 @@ function CampPage() {
       }
     }
 
-    loadTeams()
+    loadTeamsAndHackathons()
 
     return () => {
       isMounted = false
     }
   }, [])
+
+  const handleCreateChange = (event) => {
+    const { name, value } = event.target
+    setCreateForm((current) => ({
+      ...current,
+      [name]: value,
+    }))
+  }
+
+  const handleCreateSubmit = async () => {
+    if (!getStoredUser()) {
+      setCreateMessage('로그인 후 팀을 생성할 수 있습니다.')
+      return
+    }
+
+    setIsCreating(true)
+    setCreateMessage('')
+
+    try {
+      const created = await createTeam({
+        hackathonId: Number(createForm.hackathonId),
+        name: createForm.name,
+        description: createForm.description,
+        isOpen: createForm.isOpen === 'true',
+      })
+
+      setItems((current) => [created, ...current])
+      setCreateMessage('팀이 생성되었습니다. 해커톤 참가도 함께 처리되었습니다.')
+      setCreateForm((current) => ({
+        ...current,
+        name: '',
+        description: '',
+        isOpen: 'true',
+      }))
+    } catch {
+      setCreateMessage('팀 생성에 실패했습니다. 등록 기간과 입력값을 확인해주세요.')
+    } finally {
+      setIsCreating(false)
+    }
+  }
 
   const filteredTeams = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -218,49 +282,60 @@ function CampPage() {
                 <div className="form-grid">
                   <label className="form-field">
                     <span className="form-label">연결할 해커톤</span>
-                    <select className="form-control" defaultValue="ai-summit-2026">
-                      <option value="ai-summit-2026">AI Summit 2026</option>
-                      <option value="mobile-craft-day">Mobile CraftDay</option>
-                      <option value="web3-buildathon">Web3 Buildathon</option>
-                      <option value="independent">해커톤 미정</option>
+                    <select
+                      className="form-control"
+                      name="hackathonId"
+                      value={createForm.hackathonId}
+                      onChange={handleCreateChange}
+                    >
+                      {availableHackathons.map((hackathon) => (
+                        <option key={hackathon.id} value={hackathon.id}>
+                          {hackathon.title}
+                        </option>
+                      ))}
                     </select>
                   </label>
 
                   <label className="form-field">
                     <span className="form-label">팀명</span>
-                    <input className="form-control" placeholder="예: NeuralNinjas" />
+                    <input
+                      className="form-control"
+                      name="name"
+                      value={createForm.name}
+                      onChange={handleCreateChange}
+                      placeholder="예: NeuralNinjas"
+                    />
                   </label>
 
                   <label className="form-field form-field--full">
                     <span className="form-label">팀 소개</span>
                     <textarea
                       className="form-control form-control--textarea"
+                      name="description"
+                      value={createForm.description}
+                      onChange={handleCreateChange}
                       placeholder="무엇을 만들 팀인지, 어떤 팀원을 찾는지 적어주세요."
                     />
                   </label>
 
-                  <label className="form-field form-field--full">
-                    <span className="form-label">모집 포지션</span>
-                    <input className="form-control" placeholder="예: 백엔드, AI/ML" />
-                  </label>
-
                   <label className="form-field">
                     <span className="form-label">모집 상태</span>
-                    <select className="form-control" defaultValue="open">
-                      <option value="open">모집 중</option>
-                      <option value="closed">마감</option>
+                    <select
+                      className="form-control"
+                      name="isOpen"
+                      value={createForm.isOpen}
+                      onChange={handleCreateChange}
+                    >
+                      <option value="true">모집 중</option>
+                      <option value="false">마감</option>
                     </select>
-                  </label>
-
-                  <label className="form-field">
-                    <span className="form-label">연락 링크</span>
-                    <input className="form-control" placeholder="오픈채팅, 구글폼 등" />
                   </label>
                 </div>
               </section>
             </div>
 
             <div className="team-create-drawer__footer">
+              {createMessage ? <p className="meta-text">{createMessage}</p> : null}
               <button
                 type="button"
                 className="team-secondary-button team-secondary-button--muted"
@@ -268,8 +343,8 @@ function CampPage() {
               >
                 취소
               </button>
-              <button type="button" className="team-primary-button">
-                팀 생성 완료
+              <button type="button" className="team-primary-button" onClick={handleCreateSubmit}>
+                {isCreating ? '생성 중...' : '팀 생성 완료'}
               </button>
             </div>
           </aside>

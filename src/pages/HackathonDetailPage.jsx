@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
+  cancelRegistration,
   fetchHackathonDetail,
   fetchHackathonLeaderboard,
+  fetchRegistrationStatus,
 } from '../api/hackathons.js'
-import { fetchTeams } from '../api/teams.js'
+import { fetchMyTeams, fetchTeams } from '../api/teams.js'
+import { getStoredUser } from '../lib/auth.js'
 import { hackathons } from '../mock/hackathons.js'
 import { teams } from '../mock/teams.js'
 
@@ -26,6 +29,9 @@ function HackathonDetailPage() {
   const [remoteHackathon, setRemoteHackathon] = useState(null)
   const [remoteTeams, setRemoteTeams] = useState(null)
   const [remoteLeaderboard, setRemoteLeaderboard] = useState(null)
+  const [registrationStatus, setRegistrationStatus] = useState(null)
+  const [registrationMessage, setRegistrationMessage] = useState('')
+  const [isRegisteringTeam, setIsRegisteringTeam] = useState(false)
 
   const mockHackathon = useMemo(
     () => hackathons.find((item) => String(item.id) === String(id)),
@@ -59,6 +65,34 @@ function HackathonDetailPage() {
         setRemoteHackathon(null)
         setRemoteTeams(null)
         setRemoteLeaderboard(null)
+      }
+
+      if (getStoredUser()) {
+        try {
+          const [status, myTeams] = await Promise.all([
+            fetchRegistrationStatus(id),
+            fetchMyTeams(),
+          ])
+
+          if (!isMounted) return
+
+          setRegistrationStatus(status)
+          setTeamState(status?.teamId ? 'hasTeam' : 'notRegistered')
+
+          const matchedTeam = myTeams.find((team) => String(team.id) === String(status?.teamId))
+          if (matchedTeam) {
+            setRemoteTeams((current) => {
+              const others = (current ?? participantTeams ?? []).filter(
+                (team) => String(team.id) !== String(matchedTeam.id),
+              )
+              return [matchedTeam, ...others]
+            })
+          }
+        } catch {
+          if (!isMounted) return
+          setRegistrationStatus(null)
+          setTeamState('notRegistered')
+        }
       }
     }
 
@@ -338,9 +372,9 @@ function HackathonDetailPage() {
               <button
                 type="button"
                 className="team-primary-button"
-                onClick={() => setTeamState('noTeam')}
+                onClick={() => setIsTeamNoticeOpen(true)}
               >
-                지금 참가 신청하기
+                팀 만들고 참가하기
               </button>
             </div>
           )}
@@ -378,7 +412,9 @@ function HackathonDetailPage() {
               <section className="my-team-panel">
                 <div className="my-team-panel__header">
                   <div>
-                    <h2 className="my-team-panel__title">NeuralNinjas</h2>
+                    <h2 className="my-team-panel__title">
+                      {registrationStatus?.teamName ?? participantTeams[0]?.name ?? '내 팀'}
+                    </h2>
                     <p className="my-team-panel__meta">내 팀 · 팀장</p>
                   </div>
                   <div className="my-team-panel__badges">
@@ -422,7 +458,7 @@ function HackathonDetailPage() {
                     팀 정보 수정
                   </button>
                   <button type="button" className="team-danger-button">
-                    모집 마감
+                    참가 취소
                   </button>
                 </div>
               </section>
@@ -678,9 +714,33 @@ function HackathonDetailPage() {
               <span>상태</span>
               <span>{hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}</span>
             </div>
-            <button type="button" className="detail-apply-button">
-              지금 참가 신청
-            </button>
+            {teamState === 'hasTeam' ? (
+              <button
+                type="button"
+                className="detail-apply-button detail-apply-button--secondary"
+                onClick={async () => {
+                  try {
+                    await cancelRegistration(id)
+                    setRegistrationStatus(null)
+                    setTeamState('notRegistered')
+                    setRegistrationMessage('참가가 취소되었습니다.')
+                  } catch {
+                    setRegistrationMessage('참가 취소에 실패했습니다.')
+                  }
+                }}
+              >
+                참가 취소
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="detail-apply-button"
+                onClick={() => setIsTeamNoticeOpen(true)}
+              >
+                팀 만들고 참가하기
+              </button>
+            )}
+            {registrationMessage ? <p className="meta-text">{registrationMessage}</p> : null}
           </div>
 
           <div className="sidebar-card">

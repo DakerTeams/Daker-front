@@ -55,3 +55,15 @@ export async function fetchMyTeams() {
 
   return extractArray(payload).map(normalizeTeam)
 }
+
+export async function createTeam(payload) {
+  const response = await apiRequest('/teams', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  return normalizeTeam(extractObject(response))
+}

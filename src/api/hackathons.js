@@ -4,6 +4,7 @@ import {
   extractArray,
   extractObject,
 } from './client.js'
+import { getAccessToken } from '../lib/auth.js'
 
 const hackathonStatusLabels = {
   draft: '임시저장',
@@ -126,4 +127,23 @@ export async function fetchHackathonLeaderboard(id) {
     score: item.totalScore ?? null,
     submitted: item.totalScore !== null && item.totalScore !== undefined,
   }))
+}
+
+export async function fetchRegistrationStatus(id) {
+  const payload = await apiRequest(`/hackathons/${id}/register`, {
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+
+  return extractObject(payload)
+}
+
+export async function cancelRegistration(id) {
+  return apiRequest(`/hackathons/${id}/register`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
 }
