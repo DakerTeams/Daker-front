@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchHackathons } from '../api/hackathons.js'
-import { createTeam, fetchTeams } from '../api/teams.js'
+import { applyToTeam, createTeam, fetchTeamDetail, fetchTeams } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
 import { teams } from '../mock/teams.js'
 import { hackathons } from '../mock/hackathons.js'
@@ -26,6 +26,9 @@ function CampPage() {
   })
   const [createMessage, setCreateMessage] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+  const [selectedTeam, setSelectedTeam] = useState(null)
+  const [teamDetailMessage, setTeamDetailMessage] = useState('')
+  const [isApplying, setIsApplying] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -106,6 +109,43 @@ function CampPage() {
       setCreateMessage('팀 생성에 실패했습니다. 등록 기간과 입력값을 확인해주세요.')
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const handleOpenTeam = async (teamId) => {
+    setTeamDetailMessage('')
+
+    try {
+      const detail = await fetchTeamDetail(teamId)
+      setSelectedTeam(detail)
+    } catch {
+      const fallbackTeam = items.find((item) => item.id === teamId) ?? null
+      setSelectedTeam({
+        ...fallbackTeam,
+        members: [],
+      })
+      setTeamDetailMessage('팀 상세 정보를 불러오지 못해 기본 정보만 표시합니다.')
+    }
+  }
+
+  const handleApply = async () => {
+    if (!selectedTeam) return
+
+    if (!getStoredUser()) {
+      setTeamDetailMessage('로그인 후 팀 합류 신청을 할 수 있습니다.')
+      return
+    }
+
+    setIsApplying(true)
+    setTeamDetailMessage('')
+
+    try {
+      await applyToTeam(selectedTeam.id)
+      setTeamDetailMessage('합류 신청이 완료되었습니다.')
+    } catch {
+      setTeamDetailMessage('합류 신청에 실패했습니다. 이미 신청했거나 팀 정원이 찼을 수 있습니다.')
+    } finally {
+      setIsApplying(false)
     }
   }
 
@@ -201,7 +241,19 @@ function CampPage() {
       ) : (
         <div className="camp-grid">
           {filteredTeams.map((team) => (
-            <article key={team.id} className="team-card">
+            <article
+              key={team.id}
+              className="team-card"
+              role="button"
+              tabIndex={0}
+              onClick={() => handleOpenTeam(team.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  handleOpenTeam(team.id)
+                }
+              }}
+            >
               <div className="team-card-head">
                 <div>
                   <h2>{team.name}</h2>
@@ -233,7 +285,7 @@ function CampPage() {
                     team.isOpen ? 'camp-contact-button--open' : 'camp-contact-button--closed'
                   }`}
                 >
-                  {team.isOpen ? '연락하기' : '마감'}
+                  {team.isOpen ? '팀 보기' : '마감'}
                 </span>
               </div>
             </article>
@@ -345,6 +397,117 @@ function CampPage() {
               </button>
               <button type="button" className="team-primary-button" onClick={handleCreateSubmit}>
                 {isCreating ? '생성 중...' : '팀 생성 완료'}
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {selectedTeam && (
+        <div
+          className="drawer-backdrop"
+          role="presentation"
+          onClick={() => setSelectedTeam(null)}
+        >
+          <aside
+            className="team-create-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="team-detail-drawer-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="team-create-drawer__header">
+              <div>
+                <p className="eyebrow">team detail</p>
+                <h2 id="team-detail-drawer-title">{selectedTeam.name}</h2>
+              </div>
+              <button
+                type="button"
+                className="drawer-close-button"
+                onClick={() => setSelectedTeam(null)}
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="team-create-drawer__body">
+              <section className="surface-card">
+                <div className="stack-list stack-list--compact">
+                  <p className="meta-text">🏆 {selectedTeam.hackathonName}</p>
+                  <p>{selectedTeam.description || '팀 소개가 아직 없습니다.'}</p>
+                </div>
+              </section>
+
+              <section className="surface-card">
+                <div className="stack-list stack-list--compact">
+                  <div className="info-row">
+                    <span>팀장</span>
+                    <span>{selectedTeam.leader}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>모집 상태</span>
+                    <span>{selectedTeam.isOpen ? '모집 중' : '마감'}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>현재 인원</span>
+                    <span>
+                      {selectedTeam.currentMembers}/{selectedTeam.maxMembers}
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <section className="surface-card">
+                <p className="meta-text">모집 포지션</p>
+                <div className="team-positions">
+                  {selectedTeam.positions.length > 0 ? (
+                    selectedTeam.positions.map((position) => (
+                      <span key={position} className="tag-chip">
+                        {position}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="meta-text">현재 별도 포지션 정보가 없습니다.</span>
+                  )}
+                </div>
+              </section>
+
+              <section className="surface-card">
+                <p className="meta-text">팀원</p>
+                <div className="stack-list stack-list--compact">
+                  {selectedTeam.members?.length > 0 ? (
+                    selectedTeam.members.map((member) => (
+                      <div key={member.userId} className="info-row">
+                        <span>{member.nickname}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="meta-text">팀원 상세 정보는 아직 없습니다.</p>
+                  )}
+                </div>
+              </section>
+            </div>
+
+            <div className="team-create-drawer__footer">
+              {teamDetailMessage ? <p className="meta-text">{teamDetailMessage}</p> : null}
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => setSelectedTeam(null)}
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                className="team-primary-button"
+                onClick={handleApply}
+                disabled={!selectedTeam.isOpen || isApplying}
+              >
+                {selectedTeam.isOpen
+                  ? isApplying
+                    ? '신청 중...'
+                    : '합류 신청'
+                  : '모집 마감'}
               </button>
             </div>
           </aside>

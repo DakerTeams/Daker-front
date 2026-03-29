@@ -67,3 +67,27 @@ export async function createTeam(payload) {
 
   return normalizeTeam(extractObject(response))
 }
+
+export async function fetchTeamDetail(id) {
+  const payload = await apiRequest(`/teams/${id}`)
+  const data = extractObject(payload)
+
+  return {
+    ...normalizeTeam(data),
+    members: Array.isArray(data.members)
+      ? data.members.map((member) => ({
+          userId: member.userId,
+          nickname: member.nickname,
+        }))
+      : [],
+  }
+}
+
+export async function applyToTeam(id) {
+  return apiRequest(`/teams/${id}/applications`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+}
