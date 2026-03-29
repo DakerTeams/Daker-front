@@ -232,6 +232,7 @@ select {
 .page-header--center {
   align-items: center;
   text-align: center;
+  gap: 18px;
 }
 
 .eyebrow {
@@ -579,7 +580,7 @@ h2 {
 .code-string { color: #f6b65e; }
 
 .main-hero {
-  padding-top: 8px;
+  padding: 36px 0 28px;
 }
 
 .headline-accent {
