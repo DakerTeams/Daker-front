@@ -15,6 +15,7 @@ function MainPage() {
   const totalLength = cumulativeLengths[cumulativeLengths.length - 1]
   const [displayedLength, setDisplayedLength] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [brandTilt, setBrandTilt] = useState({ x: 0, y: 0 })
   const [visibleHackathons, setVisibleHackathons] = useState(
     hackathons.filter((item) => item.status === 'open'),
   )
@@ -102,9 +103,28 @@ function MainPage() {
     }
   }, [])
 
+  function handleBannerMouseMove(event) {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const ratioX = (event.clientX - bounds.left) / bounds.width - 0.5
+    const ratioY = (event.clientY - bounds.top) / bounds.height - 0.5
+
+    setBrandTilt({
+      x: ratioY * -8,
+      y: ratioX * 10,
+    })
+  }
+
+  function handleBannerMouseLeave() {
+    setBrandTilt({ x: 0, y: 0 })
+  }
+
   return (
     <section className="page-section">
-      <div className="main-banner">
+      <div
+        className="main-banner"
+        onMouseMove={handleBannerMouseMove}
+        onMouseLeave={handleBannerMouseLeave}
+      >
         <div className="main-banner__content">
           <div className="main-banner__left">
             <p className="banner-label">// HACKATHON PLATFORM v2.0</p>
@@ -146,31 +166,42 @@ function MainPage() {
               </div>
             </div>
           </div>
-
-          <div className="code-window">
-            <div className="code-window__header">
-              <span />
-              <span />
-              <span />
+          <div
+            className="main-banner__brand"
+            style={{
+              '--brand-rotate-x': `${brandTilt.x}deg`,
+              '--brand-rotate-y': `${brandTilt.y}deg`,
+            }}
+          >
+            <div className="brand-wordmark__ambient" />
+            <div className="brand-wordmark" aria-hidden="true">
+              {['D', 'A', 'K', 'E', 'R'].map((letter, rowIndex) => (
+                <span
+                  key={`${letter}-${rowIndex}`}
+                  className="brand-wordmark__row"
+                  style={{ '--row-index': rowIndex }}
+                >
+                  <span
+                    className="brand-wordmark__glyph brand-wordmark__glyph--deep"
+                    style={{ '--layer-index': 0 }}
+                  >
+                    {letter}
+                  </span>
+                  <span
+                    className="brand-wordmark__glyph brand-wordmark__glyph--mid"
+                    style={{ '--layer-index': 1 }}
+                  >
+                    {letter}
+                  </span>
+                  <span
+                    className="brand-wordmark__glyph brand-wordmark__glyph--face"
+                    style={{ '--layer-index': 2 }}
+                  >
+                    {letter}
+                  </span>
+                </span>
+              ))}
             </div>
-            <code className="code-window__body">
-              <span className="code-comment">// hackathon.config.ts</span>
-              <span>
-                <span className="code-keyword">export const</span>{' '}
-                <span className="code-function">config</span> = {'{'}
-              </span>
-              <span>  name: <span className="code-string">"AI Summit 2026"</span>,</span>
-              <span>  status: <span className="code-string">"open"</span>,</span>
-              <span>  prize: <span className="code-string">"₩3,000,000"</span>,</span>
-              <span>  tags: [<span className="code-string">"AI/ML"</span>, <span className="code-string">"Web"</span>],</span>
-              <span>  maxTeamSize: 4,</span>
-              <span>{'}'}</span>
-              <span />
-              <span>
-                <span className="code-keyword">await</span>{' '}
-                <span className="code-function">hackathon</span>.join(config)
-              </span>
-            </code>
           </div>
         </div>
       </div>
@@ -187,25 +218,51 @@ function MainPage() {
           </p>
         </div>
 
-        <div className="hero-cards">
-          <Link to="/hackathons" className="hero-card">
-            <div className="hero-card__icon">🏆</div>
-            <h2>해커톤 보러가기</h2>
-            <p>진행 중이거나 예정된 해커톤을 확인하고 지금 바로 참가하세요.</p>
-            <span className="hero-card__arrow">목록 보기 →</span>
+        <div className="hero-editorial">
+          <Link to="/hackathons" className="hero-editorial__feature">
+            <span className="hero-editorial__status">LIVE</span>
+            <span className="hero-editorial__index">01</span>
+            <span className="hero-editorial__label">EXPLORE HACKATHONS</span>
+            <h2>진행 중인 해커톤을 빠르게 탐색하세요</h2>
+            <p>현재 모집 중이거나 곧 시작될 해커톤을 확인하고 바로 참가해보세요.</p>
+            <div className="hero-editorial__meta">
+              <span>{visibleHackathons.length || 4}개의 활성 해커톤</span>
+              <span>상세 일정 확인 가능</span>
+              <span>AI/ML 인기</span>
+            </div>
+            <span className="hero-editorial__cta">해커톤 목록 열기 →</span>
+            <span className="hero-editorial__watermark">01</span>
           </Link>
-          <Link to="/camp" className="hero-card">
-            <div className="hero-card__icon">🤝</div>
-            <h2>팀 찾기</h2>
-            <p>함께할 팀원을 모집하거나, 마음에 드는 팀에 지원해 보세요.</p>
-            <span className="hero-card__arrow">팀 탐색하기 →</span>
-          </Link>
-          <Link to="/rankings" className="hero-card">
-            <div className="hero-card__icon">📊</div>
-            <h2>랭킹 보기</h2>
-            <p>전체 참가자 중 나의 위치는 어디인지 지금 바로 확인해보세요.</p>
-            <span className="hero-card__arrow">랭킹 확인 →</span>
-          </Link>
+
+          <div className="hero-editorial__stack">
+            <Link to="/camp" className="hero-editorial__card">
+              <span className="hero-editorial__status hero-editorial__status--soft">HOT</span>
+              <span className="hero-editorial__index">02</span>
+              <span className="hero-editorial__label">FIND YOUR TEAM</span>
+              <h2>지금 팀이 필요한 사람과 연결되세요</h2>
+              <p>모집 중인 팀을 둘러보거나 직접 팀을 만들어 팀원을 기다릴 수 있습니다.</p>
+              <div className="hero-editorial__mini-meta">
+                <span>신규 팀 모집</span>
+                <span>포지션 탐색</span>
+              </div>
+              <span className="hero-editorial__cta">팀 모집 둘러보기 →</span>
+              <span className="hero-editorial__watermark hero-editorial__watermark--small">02</span>
+            </Link>
+
+            <Link to="/rankings" className="hero-editorial__card">
+              <span className="hero-editorial__status hero-editorial__status--soft">WEEKLY</span>
+              <span className="hero-editorial__index">03</span>
+              <span className="hero-editorial__label">CHECK THE BOARD</span>
+              <h2>랭킹 흐름을 보고 다음 전략을 세우세요</h2>
+              <p>내 위치와 상위권 흐름을 확인하고 다음 목표를 잡아보세요.</p>
+              <div className="hero-editorial__mini-meta">
+                <span>Top 10 업데이트</span>
+                <span>순위 변동 확인</span>
+              </div>
+              <span className="hero-editorial__cta">전체 랭킹 확인 →</span>
+              <span className="hero-editorial__watermark hero-editorial__watermark--small">03</span>
+            </Link>
+          </div>
         </div>
       </section>
 
