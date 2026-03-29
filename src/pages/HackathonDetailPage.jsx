@@ -4,6 +4,7 @@ import {
   cancelRegistration,
   fetchHackathonDetail,
   fetchHackathonLeaderboard,
+  fetchHackathonTeams,
   fetchRegistrationStatus,
 } from '../api/hackathons.js'
 import {
@@ -12,7 +13,6 @@ import {
   fetchMyTeams,
   fetchTeamApplications,
   fetchTeamDetail,
-  fetchTeams,
   updateTeam,
 } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
@@ -72,7 +72,7 @@ function HackathonDetailPage() {
       try {
         const [detail, participantTeams, leaderboard] = await Promise.all([
           fetchHackathonDetail(id),
-          fetchTeams({ hackathonId: id }),
+          fetchHackathonTeams(id),
           fetchHackathonLeaderboard(id),
         ])
 

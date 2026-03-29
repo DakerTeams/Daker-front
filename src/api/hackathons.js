@@ -72,6 +72,24 @@ export async function fetchHackathons(params = {}) {
   return extractArray(payload).map(normalizeHackathon)
 }
 
+export async function fetchHackathonTeams(id, params = {}) {
+  const query = createQueryString(params)
+  const payload = await apiRequest(`/hackathons/${id}/teams${query}`)
+  return extractArray(payload).map((item) => ({
+    id: item.id,
+    hackathonId: item.hackathonId ?? id,
+    name: item.name ?? '이름 없는 팀',
+    hackathonName: item.hackathonName ?? `해커톤 #${id}`,
+    isOpen: item.isOpen ?? true,
+    leader: item.leader?.nickname ?? '-',
+    currentMembers: item.memberCount ?? 1,
+    maxMembers: item.maxMemberCount ?? item.maxTeamSize ?? 1,
+    description: item.description ?? '',
+    positions: [],
+    raw: item,
+  }))
+}
+
 export async function fetchHackathonDetail(id) {
   const payload = await apiRequest(`/hackathons/${id}`)
   const detail = extractObject(payload)

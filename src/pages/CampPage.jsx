@@ -56,7 +56,13 @@ function CampPage() {
 
       try {
         const [teamData, hackathonData, myTeamData] = await Promise.all([
-          fetchTeams(),
+          fetchTeams({
+            isOpen:
+              openFilter === 'all'
+                ? undefined
+                : openFilter === 'open',
+            q: query.trim() || undefined,
+          }),
           fetchHackathons(),
           getStoredUser() ? fetchMyTeams().catch(() => []) : Promise.resolve([]),
         ])
@@ -92,7 +98,7 @@ function CampPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [openFilter, query])
 
   const handleCreateChange = (event) => {
     const { name, value } = event.target
@@ -186,6 +192,10 @@ function CampPage() {
       (currentUser?.nickname && selectedLeaderName === currentUser.nickname))
 
   const filteredTeams = useMemo(() => {
+    if (items !== teams) {
+      return items
+    }
+
     const normalizedQuery = query.trim().toLowerCase()
 
     return items.filter((team) => {
