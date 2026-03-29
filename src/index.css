@@ -610,6 +610,19 @@ h2 {
     box-shadow 0.2s ease;
 }
 
+.hero-editorial__feature::after,
+.hero-editorial__card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(63, 127, 232, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(63, 127, 232, 0.04), transparent 56%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
 .hero-editorial__feature {
   min-height: 360px;
   padding: 34px 34px 30px;
@@ -642,6 +655,17 @@ h2 {
   transform: translateY(-4px);
   border-color: #b8cdf8;
   box-shadow: var(--shadow-md);
+}
+
+.hero-editorial__feature:hover::after,
+.hero-editorial__card:hover::after {
+  opacity: 1;
+}
+
+.hero-editorial__feature:hover::before,
+.hero-editorial__card:hover::before {
+  background: linear-gradient(180deg, #88b0ff 0%, #3f7fe8 100%);
+  box-shadow: 0 0 18px rgba(63, 127, 232, 0.22);
 }
 
 .hero-editorial__stack {
