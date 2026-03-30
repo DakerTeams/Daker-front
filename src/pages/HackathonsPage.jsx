@@ -148,7 +148,23 @@ function HackathonsPage() {
                     <span key={tag} className="tag-chip tag-chip--blue">
                       {tag}
                     </span>
+<<<<<<< Updated upstream
                   ))}
+=======
+                    <h2>
+                      {hackathon.title}&nbsp;&nbsp;&nbsp;
+                      {hackathon.tags.map((tag) => (
+                        <span key={tag} className="tag-chip tag-chip--blue">
+                          {tag}
+                        </span>
+                      ))}
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="hackathon-card__meta hackathon-card__meta--right">
+                  <span className="button-action">상세 보기</span>
+>>>>>>> Stashed changes
                 </div>
               </div>
 
