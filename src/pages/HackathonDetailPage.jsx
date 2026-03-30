@@ -54,6 +54,7 @@ function HackathonDetailPage() {
   const [isSavingTeam, setIsSavingTeam] = useState(false)
   const [isDeletingTeam, setIsDeletingTeam] = useState(false)
   const currentUser = getStoredUser()
+  const isSignedIn = Boolean(currentUser)
 
   const mockHackathon = useMemo(
     () => hackathons.find((item) => String(item.id) === String(id)),
@@ -149,16 +150,16 @@ function HackathonDetailPage() {
       ...(mockHackathon ?? {}),
       ...(remoteHackathon ?? {}),
       schedules:
-        mockHackathon?.schedules ??
         remoteHackathon?.schedules ??
+        mockHackathon?.schedules ??
         [],
       evaluations:
-        mockHackathon?.evaluations ??
         remoteHackathon?.evaluations ??
+        mockHackathon?.evaluations ??
         [],
       prizes:
-        mockHackathon?.prizes ??
         remoteHackathon?.prizes ??
+        mockHackathon?.prizes ??
         [],
       teamStates:
         mockHackathon?.teamStates ??
@@ -169,14 +170,14 @@ function HackathonDetailPage() {
         remoteHackathon?.submitStates ??
         {},
       leaderboard:
-        remoteLeaderboard && remoteLeaderboard.length > 0
-          ? remoteLeaderboard
-          : mockHackathon?.leaderboard ?? [],
+        remoteLeaderboard ??
+        mockHackathon?.leaderboard ??
+        [],
     }
   }, [mockHackathon, remoteHackathon, remoteLeaderboard])
 
   const participantTeams = useMemo(
-    () => (remoteTeams && remoteTeams.length > 0 ? remoteTeams : mockParticipantTeams),
+    () => (remoteTeams ?? mockParticipantTeams),
     [mockParticipantTeams, remoteTeams],
   )
 
@@ -406,40 +407,22 @@ function HackathonDetailPage() {
     if (activeTab === 'team') {
       return (
         <div className="stack-list team-tab-layout">
-          <div className="team-state-switcher" aria-label="팀 상태 미리보기">
-            <span className="team-state-switcher__label">데모 상태 :</span>
-            <div className="filter-group">
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === 'notRegistered' ? ' filter-chip--active' : ''
-                }`}
-                onClick={() => setTeamState('notRegistered')}
-              >
-                미참가
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === 'noTeam' ? ' filter-chip--active' : ''
-                }`}
-                onClick={() => setTeamState('noTeam')}
-              >
-                참가 완료 · 팀 없음
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === 'hasTeam' ? ' filter-chip--active' : ''
-                }`}
-                onClick={() => setTeamState('hasTeam')}
-              >
-                팀 있음
-              </button>
+          {!isSignedIn ? (
+            <div className="team-state-card team-state-card--locked">
+              <div className="team-state-card__icon">👀</div>
+              <h2 className="team-state-card__title">
+                참가 팀 현황은 바로 볼 수 있습니다
+              </h2>
+              <p className="team-state-card__description">
+                로그인하면 참가 신청과 내 팀 관리 기능을 사용할 수 있습니다.
+              </p>
+              <Link to="/login" className="team-primary-button">
+                로그인하기
+              </Link>
             </div>
-          </div>
+          ) : null}
 
-          {teamState === 'notRegistered' && (
+          {isSignedIn && teamState === 'notRegistered' && (
             <div className="team-state-card team-state-card--locked">
               <div className="team-state-card__icon">🔒</div>
               <h2 className="team-state-card__title">
@@ -461,7 +444,7 @@ function HackathonDetailPage() {
             </div>
           )}
 
-          {teamState === 'noTeam' && (
+          {isSignedIn && teamState === 'noTeam' && (
             <div className="team-state-card team-state-card--ready">
               <div className="team-state-card__icon">🤝</div>
               <h2 className="team-state-card__title">
@@ -489,7 +472,7 @@ function HackathonDetailPage() {
             </div>
           )}
 
-          {teamState === 'hasTeam' && (
+          {isSignedIn && teamState === 'hasTeam' && (
             <>
               <section className="my-team-panel">
                 <div className="my-team-panel__header">
@@ -581,40 +564,47 @@ function HackathonDetailPage() {
                 </div>
               </section>
 
-              <section className="detail-block">
-                <h2 className="detail-block__title">참가 팀 현황</h2>
-                <div className="participant-team-table">
-                  <div className="participant-team-table__head">
-                    <span>팀명</span>
-                    <span>팀장</span>
-                    <span>팀원 수</span>
-                    <span>상태</span>
-                  </div>
-                  {participantTeams.map((team) => (
-                    <div key={team.id} className="participant-team-table__row">
-                      <div className="participant-team-table__team">
-                        <strong>{team.name}</strong>
-                        {String(team.id) === String(registrationStatus?.teamId) && (
-                          <span className="team-role-badge">내 팀</span>
-                        )}
-                      </div>
-                      <span>{team.leader}</span>
-                      <span>{team.currentMembers}명</span>
-                      <span
-                        className={`status-outline ${
-                          team.isOpen
-                            ? 'status-outline--open'
-                            : 'status-outline--closed'
-                        }`}
-                      >
-                        {team.isOpen ? '모집 중' : '마감'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
             </>
           )}
+
+          <section className="detail-block">
+            <h2 className="detail-block__title">참가 팀 현황</h2>
+            {participantTeams.length === 0 ? (
+              <div className="surface-card surface-card--soft">
+                <p className="meta-text">아직 공개된 참가 팀이 없습니다.</p>
+              </div>
+            ) : (
+              <div className="participant-team-table">
+                <div className="participant-team-table__head">
+                  <span>팀명</span>
+                  <span>팀장</span>
+                  <span>팀원 수</span>
+                  <span>상태</span>
+                </div>
+                {participantTeams.map((team) => (
+                  <div key={team.id} className="participant-team-table__row">
+                    <div className="participant-team-table__team">
+                      <strong>{team.name}</strong>
+                      {String(team.id) === String(registrationStatus?.teamId) && (
+                        <span className="team-role-badge">내 팀</span>
+                      )}
+                    </div>
+                    <span>{team.leader}</span>
+                    <span>{team.currentMembers}명</span>
+                    <span
+                      className={`status-outline ${
+                        team.isOpen
+                          ? 'status-outline--open'
+                          : 'status-outline--closed'
+                      }`}
+                    >
+                      {team.isOpen ? '모집 중' : '마감'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       )
     }
@@ -773,7 +763,7 @@ function HackathonDetailPage() {
       <div className="detail-header">
         <div className="tag-list">
           <span className={`status-outline status-outline--${hackathon.status}`}>
-            {hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}
+            {hackathon.statusLabel}
           </span>
           {hackathon.tags.map((tag) => (
             <span key={tag} className="tag-chip tag-chip--blue">
@@ -830,7 +820,7 @@ function HackathonDetailPage() {
             </div>
             <div className="info-row">
               <span>상태</span>
-              <span>{hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}</span>
+              <span>{hackathon.statusLabel}</span>
             </div>
             {teamState === 'hasTeam' ? (
               <button
