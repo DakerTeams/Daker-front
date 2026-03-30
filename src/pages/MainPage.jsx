@@ -73,10 +73,10 @@ function MainPage() {
     let isMounted = true
 
     async function loadPublicData() {
-      try {
-        const [hackathonResponse, statsResponse] = await Promise.all([
+      const [hackathonResult, statsResult] = await Promise.allSettled([
           fetchHackathons(),
           fetchPlatformStats(),
+<<<<<<< Updated upstream
         ])
 
         if (!isMounted) return
@@ -92,6 +92,24 @@ function MainPage() {
         if (!isMounted) return
 
         setVisibleHackathons(hackathons.filter((item) => item.status === 'open'))
+=======
+      ]);
+
+      if (!isMounted) return;
+
+      if (hackathonResult.status === "fulfilled") {
+        setVisibleHackathons(
+          hackathonResult.value.filter((item) => item.status === "open"),
+        );
+      } else {
+        setVisibleHackathons(
+          hackathons.filter((item) => item.status === "open"),
+        );
+>>>>>>> Stashed changes
+      }
+
+      if (statsResult.status === "fulfilled") {
+        setStats(statsResult.value);
       }
     }
 
