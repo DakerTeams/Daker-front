@@ -5,9 +5,10 @@ import { hackathons } from '../mock/hackathons.js'
 
 const statusFilters = [
   { key: 'all', label: '전체' },
+  { key: 'upcoming', label: '오픈예정' },
   { key: 'open', label: '모집중' },
-  { key: 'upcoming', label: '진행중' },
-  { key: 'closed', label: '종료' },
+  { key: 'closed', label: '마감' },
+  { key: 'ended', label: '종료' },
 ]
 
 function HackathonsPage() {
@@ -24,7 +25,7 @@ function HackathonsPage() {
 
       try {
         const data = await fetchHackathons({
-          status: statusFilter === 'all' ? undefined : statusFilter === 'upcoming' ? 'open' : statusFilter,
+          status: statusFilter === 'all' ? undefined : statusFilter,
           q: query.trim() || undefined,
         })
         if (!isMounted) return
@@ -138,7 +139,7 @@ function HackathonsPage() {
                   <span
                     className={`status-outline status-outline--${hackathon.status}`}
                   >
-                    {hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}
+                    {hackathon.statusLabel}
                   </span>
                   <h2>{hackathon.title}</h2>
                 </div>

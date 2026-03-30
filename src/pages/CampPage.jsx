@@ -19,6 +19,22 @@ const openFilters = [
   { key: 'closed', label: '마감' },
 ]
 
+function enrichTeam(team, hackathonList) {
+  const matchedHackathon = hackathonList.find(
+    (hackathon) => String(hackathon.id) === String(team.hackathonId),
+  )
+
+  return {
+    ...team,
+    hackathonName: team.hackathonName ?? matchedHackathon?.title ?? '해커톤 미정',
+    maxMembers: team.maxMembers ?? matchedHackathon?.maxTeamSize ?? 1,
+  }
+}
+
+function enrichTeams(teamList, hackathonList) {
+  return teamList.map((team) => enrichTeam(team, hackathonList))
+}
+
 function CampPage() {
   const [query, setQuery] = useState('')
   const [openFilter, setOpenFilter] = useState('all')
@@ -69,10 +85,6 @@ function CampPage() {
         ])
         if (!isMounted) return
 
-        if (teamData.length > 0) {
-          setItems(teamData)
-        }
-
         if (hackathonData.length > 0) {
           setAvailableHackathons(hackathonData)
           setCreateForm((current) => ({
@@ -81,7 +93,8 @@ function CampPage() {
           }))
         }
 
-        setMyTeams(myTeamData)
+        setItems(enrichTeams(teamData, hackathonData))
+        setMyTeams(enrichTeams(myTeamData, hackathonData))
       } catch {
         if (!isMounted) return
         setItems(teams)
@@ -125,10 +138,11 @@ function CampPage() {
         description: createForm.description,
         isOpen: createForm.isOpen === 'true',
       })
+      const enrichedCreated = enrichTeam(created, availableHackathons)
 
-      setItems((current) => [created, ...current])
-      setMyTeams((current) => [created, ...current])
-      setSelectedTeam(created)
+      setItems((current) => [enrichedCreated, ...current])
+      setMyTeams((current) => [enrichedCreated, ...current])
+      setSelectedTeam(enrichedCreated)
       setCreateMessage('팀이 생성되었습니다. 해커톤 참가도 함께 처리되었습니다.')
       setCreateForm((current) => ({
         ...current,
@@ -149,7 +163,7 @@ function CampPage() {
 
     try {
       const detail = await fetchTeamDetail(teamId)
-      setSelectedTeam(detail)
+      setSelectedTeam(enrichTeam(detail, availableHackathons))
     } catch {
       const fallbackTeam = items.find((item) => item.id === teamId) ?? null
       setSelectedTeam({
