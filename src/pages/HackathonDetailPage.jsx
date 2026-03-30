@@ -439,7 +439,7 @@ function HackathonDetailPage() {
                 팀 있음
               </button>
             </div>
-          </div>
+          ) : null}
 
           {teamState === "notRegistered" && (
             <div className="team-state-card team-state-card--locked">
@@ -625,6 +625,45 @@ function HackathonDetailPage() {
               </section>
             </>
           )}
+
+          <section className="detail-block">
+            <h2 className="detail-block__title">참가 팀 현황</h2>
+            {participantTeams.length === 0 ? (
+              <div className="surface-card surface-card--soft">
+                <p className="meta-text">아직 공개된 참가 팀이 없습니다.</p>
+              </div>
+            ) : (
+              <div className="participant-team-table">
+                <div className="participant-team-table__head">
+                  <span>팀명</span>
+                  <span>팀장</span>
+                  <span>팀원 수</span>
+                  <span>상태</span>
+                </div>
+                {participantTeams.map((team) => (
+                  <div key={team.id} className="participant-team-table__row">
+                    <div className="participant-team-table__team">
+                      <strong>{team.name}</strong>
+                      {String(team.id) === String(registrationStatus?.teamId) && (
+                        <span className="team-role-badge">내 팀</span>
+                      )}
+                    </div>
+                    <span>{team.leader}</span>
+                    <span>{team.currentMembers}명</span>
+                    <span
+                      className={`status-outline ${
+                        team.isOpen
+                          ? 'status-outline--open'
+                          : 'status-outline--closed'
+                      }`}
+                    >
+                      {team.isOpen ? '모집 중' : '마감'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       );
     }

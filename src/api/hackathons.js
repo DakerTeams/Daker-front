@@ -39,7 +39,7 @@ function normalizeTags(tags) {
 }
 
 function normalizeHackathon(item) {
-  const status = item.status ?? 'upcoming'
+  const status = String(item.status ?? 'upcoming').toLowerCase()
   const startDate = formatDate(item.startAt ?? item.startDate)
   const endDate = formatDate(item.endAt ?? item.endDate)
 
@@ -57,6 +57,7 @@ function normalizeHackathon(item) {
     participantCount:
       item.participantCount ??
       item.participantsCount ??
+      item.participants ??
       item.registrationCount ??
       item.registrationsCount ??
       0,
@@ -135,15 +136,21 @@ export async function fetchHackathonDetail(id) {
 
 export async function fetchHackathonLeaderboard(id) {
   const payload = await apiRequest(`/hackathons/${id}/leaderboard`)
-  const rows = extractObject(payload).teams ?? []
+  const data = extractObject(payload)
+  const rows = data.items ?? data.teams ?? []
 
   return rows.map((item, index) => ({
-    rank: index + 1,
+    rank: item.rank ?? index + 1,
     teamId: item.teamId ?? index + 1,
     teamName: item.teamName ?? item.name ?? item.team?.name ?? `team_${index + 1}`,
     memberCount: item.memberCount ?? 0,
-    score: item.totalScore ?? null,
-    submitted: item.totalScore !== null && item.totalScore !== undefined,
+    score: item.score ?? item.totalScore ?? null,
+    submitted:
+      typeof item.submitted === 'boolean'
+        ? item.submitted
+        : item.score !== null && item.score !== undefined
+          ? true
+          : item.totalScore !== null && item.totalScore !== undefined,
   }))
 }
 

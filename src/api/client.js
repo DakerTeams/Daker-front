@@ -5,13 +5,24 @@ import {
   saveAuthSession,
 } from '../lib/auth.js'
 
-const DEFAULT_API_BASE_URL = 'http://localhost:8080'
+const DEFAULT_API_BASE_URL = '/api'
 
 let refreshPromise = null
 
 function buildUrl(path) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL
-  return `${baseUrl}${path}`
+  const configuredBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  if (!configuredBaseUrl) {
+    return normalizedPath
+  }
+
+  const normalizedBaseUrl = configuredBaseUrl.endsWith('/')
+    ? configuredBaseUrl.slice(0, -1)
+    : configuredBaseUrl
+
+  return `${normalizedBaseUrl}${normalizedPath}`
 }
 
 function createQueryString(params = {}) {
