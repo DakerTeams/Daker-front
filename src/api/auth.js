@@ -27,6 +27,7 @@ export async function login(payload) {
 
   const data = extractObject(response)
   const sessionUser = normalizeUser(data.user)
+  // role, accountStatus, createdAt은 로그인 응답에 없으므로 /auth/me 호출 시 갱신됨
 
   saveAuthSession({
     accessToken: data.accessToken,

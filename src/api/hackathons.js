@@ -99,17 +99,17 @@ export async function fetchHackathonDetail(id) {
 
   return {
     ...normalized,
-    overview: detail.description ?? '',
-    schedules: Array.isArray(detail.milestones)
-      ? detail.milestones.map((item) => ({
-          label: item.title ?? '일정',
+    overview: detail.desc ?? detail.description ?? '',
+    schedules: Array.isArray(detail.timeline ?? detail.milestones)
+      ? (detail.timeline ?? detail.milestones).map((item) => ({
+          label: item.label ?? item.title ?? '일정',
           at: formatDate(item.date),
           description: item.description ?? '',
         }))
       : [],
     prizes: Array.isArray(detail.prizes)
       ? detail.prizes.map((item) => ({
-          label: `${item.ranking}등`,
+          label: item.label ?? `${item.rank ?? item.ranking}등`,
           value:
             typeof item.amount === 'number'
               ? new Intl.NumberFormat('ko-KR', {
@@ -123,8 +123,8 @@ export async function fetchHackathonDetail(id) {
       : [],
     evaluations: Array.isArray(detail.criteria)
       ? detail.criteria.map((item) => ({
-          label: item.name ?? '평가 항목',
-          value: item.maxScore ? `${item.maxScore}점` : '',
+          label: item.label ?? item.name ?? '평가 항목',
+          value: item.weight ?? (item.maxScore ? `${item.maxScore}점` : ''),
           description: item.description ?? '',
         }))
       : [],

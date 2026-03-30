@@ -439,7 +439,7 @@ function HackathonDetailPage() {
                 팀 있음
               </button>
             </div>
-          ) : null}
+          </div>
 
           {teamState === "notRegistered" && (
             <div className="team-state-card team-state-card--locked">
