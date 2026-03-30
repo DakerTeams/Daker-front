@@ -56,7 +56,7 @@ function Navbar() {
       <div className="navbar__inner">
         <NavLink to="/" className="navbar__logo">
           <span className="navbar__logo-prefix">&gt;</span>
-          <span className="navbar__logo-text">HackHub</span>
+          <span className="navbar__logo-text">DAKER</span>
           <span className="navbar__logo-cursor" />
         </NavLink>
 
