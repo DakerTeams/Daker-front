@@ -3,7 +3,6 @@ import {
   fetchParticipationRankings,
   fetchScoreRankings,
 } from '../api/rankings.js'
-import { rankings } from '../mock/rankings.js'
 
 const periodFilters = [
   { key: 'all', label: '전체 기간' },
@@ -14,8 +13,8 @@ const periodFilters = [
 function RankingsPage() {
   const [activeTab, setActiveTab] = useState('score')
   const [period, setPeriod] = useState('all')
-  const [scoreRows, setScoreRows] = useState(rankings)
-  const [participationRows, setParticipationRows] = useState(rankings)
+  const [scoreRows, setScoreRows] = useState([])
+  const [participationRows, setParticipationRows] = useState([])
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -32,21 +31,12 @@ function RankingsPage() {
 
         if (!isMounted) return
 
-        if (scoreData.length > 0) {
-          setScoreRows(scoreData)
-        } else {
-          setScoreRows(rankings)
-        }
-
-        if (participationData.length > 0) {
-          setParticipationRows(participationData)
-        } else {
-          setParticipationRows(rankings)
-        }
+        setScoreRows(scoreData)
+        setParticipationRows(participationData)
       } catch {
         if (!isMounted) return
-        setScoreRows(rankings)
-        setParticipationRows(rankings)
+        setScoreRows([])
+        setParticipationRows([])
       } finally {
         if (isMounted) {
           setIsLoading(false)
@@ -152,59 +142,71 @@ function RankingsPage() {
         </div>
 
         {activeTab === 'score' ? (
-          <div className="ranking-table ranking-table--board">
-            <div className="ranking-table__head ranking-table__head--board">
-              <span>순위</span>
-              <span>닉네임</span>
-              <span>참여 횟수</span>
-              <span>최고 순위</span>
-              <span>포인트</span>
+          scoredRows.length > 0 ? (
+            <div className="ranking-table ranking-table--board">
+              <div className="ranking-table__head ranking-table__head--board">
+                <span>순위</span>
+                <span>닉네임</span>
+                <span>참여 횟수</span>
+                <span>최고 순위</span>
+                <span>포인트</span>
+              </div>
+              <div className="ranking-table__rows">
+                {scoredRows.map((ranking) => (
+                  <div
+                    key={ranking.userId}
+                    className={`ranking-row ranking-row--board${
+                      ranking.isMe ? ' ranking-row--me' : ''
+                    }`}
+                  >
+                    <strong>{rankIcon(ranking.rank)}</strong>
+                    <strong>{ranking.nickname}</strong>
+                    <span>{ranking.participationCount}회</span>
+                    <span>{ranking.bestRank}</span>
+                    <strong className="ranking-points">
+                      {ranking.visibleScore.toLocaleString()}
+                    </strong>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="ranking-table__rows">
-              {scoredRows.map((ranking) => (
-                <div
-                  key={ranking.userId}
-                  className={`ranking-row ranking-row--board${
-                    ranking.isMe ? ' ranking-row--me' : ''
-                  }`}
-                >
-                  <strong>{rankIcon(ranking.rank)}</strong>
-                  <strong>{ranking.nickname}</strong>
-                  <span>{ranking.participationCount}회</span>
-                  <span>{ranking.bestRank}</span>
-                  <strong className="ranking-points">
-                    {ranking.visibleScore.toLocaleString()}
-                  </strong>
-                </div>
-              ))}
-            </div>
-          </div>
+          ) : (
+            <section className="surface-card empty-panel">
+              <p className="empty-panel__title">표시할 점수 랭킹이 없습니다.</p>
+            </section>
+          )
         ) : (
-          <div className="ranking-table ranking-table--board">
-            <div className="ranking-table__head ranking-table__head--board ranking-table__head--participation">
-              <span>순위</span>
-              <span>닉네임</span>
-              <span>참여 횟수</span>
-              <span>완료</span>
-              <span>제출률</span>
+          votingRows.length > 0 ? (
+            <div className="ranking-table ranking-table--board">
+              <div className="ranking-table__head ranking-table__head--board ranking-table__head--participation">
+                <span>순위</span>
+                <span>닉네임</span>
+                <span>참여 횟수</span>
+                <span>완료</span>
+                <span>제출률</span>
+              </div>
+              <div className="ranking-table__rows">
+                {votingRows.map((ranking) => (
+                  <div
+                    key={ranking.userId}
+                    className={`ranking-row ranking-row--board ranking-row--participation${
+                      ranking.isMe ? ' ranking-row--me' : ''
+                    }`}
+                  >
+                    <strong>{rankIcon(ranking.rank)}</strong>
+                    <strong>{ranking.nickname}</strong>
+                    <span>{ranking.participationCount}회</span>
+                    <span>{ranking.completedCount}회</span>
+                    <strong>{ranking.submitRate}</strong>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="ranking-table__rows">
-              {votingRows.map((ranking) => (
-                <div
-                  key={ranking.userId}
-                  className={`ranking-row ranking-row--board ranking-row--participation${
-                    ranking.isMe ? ' ranking-row--me' : ''
-                  }`}
-                >
-                  <strong>{rankIcon(ranking.rank)}</strong>
-                  <strong>{ranking.nickname}</strong>
-                  <span>{ranking.participationCount}회</span>
-                  <span>{ranking.completedCount}회</span>
-                  <strong>{ranking.submitRate}</strong>
-                </div>
-              ))}
-            </div>
-          </div>
+          ) : (
+            <section className="surface-card empty-panel">
+              <p className="empty-panel__title">표시할 참여 랭킹이 없습니다.</p>
+            </section>
+          )
         )}
       </section>
     </section>
