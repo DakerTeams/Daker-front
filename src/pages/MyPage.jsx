@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchMe } from '../api/auth.js'
+import {
+  fetchParticipationRankings,
+  fetchScoreRankings,
+} from '../api/rankings.js'
 import { fetchMyTeams } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
-import { rankings } from '../mock/rankings.js'
 import { teams } from '../mock/teams.js'
 
 const participationHistory = [
@@ -34,35 +37,72 @@ const participationHistory = [
 ]
 
 function MyPage() {
+  const defaultScore = {
+    userId: null,
+    rank: '-',
+    nickname: 'guest',
+    score: 0,
+    participationCount: 0,
+    completedCount: 0,
+    submitRate: '0%',
+    bestRank: '-',
+    isMe: false,
+  }
+
   const [user, setUser] = useState(getStoredUser() ?? {
     nickname: 'jinwoo_k',
     email: 'jinwoo@example.com',
     role: 'user',
   })
   const [myTeams, setMyTeams] = useState(teams)
+  const [myScore, setMyScore] = useState(defaultScore)
+  const [myParticipationRank, setMyParticipationRank] = useState('-')
+  const [scoreRankingTotal, setScoreRankingTotal] = useState(0)
 
   useEffect(() => {
     let isMounted = true
 
     async function loadMyPage() {
       try {
-        const [me, teamList] = await Promise.all([fetchMe(), fetchMyTeams()])
+        const [me, teamList, scoreRankings, participationRankings] = await Promise.all([
+          fetchMe(),
+          fetchMyTeams(),
+          fetchScoreRankings(),
+          fetchParticipationRankings(),
+        ])
 
         if (!isMounted) return
 
-        if (me) {
-          setUser(me)
-        }
+        const resolvedUser = me ?? getStoredUser() ?? user
+
+        if (me) setUser(me)
 
         if (teamList.length > 0) {
           setMyTeams(teamList)
         }
+
+        const resolvedScore =
+          scoreRankings.find((item) => item.isMe) ??
+          scoreRankings.find((item) => item.nickname === resolvedUser.nickname) ??
+          defaultScore
+
+        const resolvedParticipation =
+          participationRankings.find((item) => item.isMe) ??
+          participationRankings.find((item) => item.nickname === resolvedUser.nickname) ??
+          null
+
+        setMyScore(resolvedScore)
+        setMyParticipationRank(resolvedParticipation?.rank ?? '-')
+        setScoreRankingTotal(scoreRankings.length)
       } catch {
         if (!isMounted) return
 
         setMyTeams(
           teams.filter((team) => ['jinwoo_k', 'dart_joon'].includes(team.leader)),
         )
+        setMyScore(defaultScore)
+        setMyParticipationRank('-')
+        setScoreRankingTotal(0)
       }
     }
 
@@ -71,9 +111,7 @@ function MyPage() {
     return () => {
       isMounted = false
     }
-  }, [user.nickname])
-
-  const myScore = rankings.find((item) => item.nickname === user.nickname) ?? rankings[0]
+  }, [])
 
   return (
     <section className="page-section">
@@ -147,16 +185,20 @@ function MyPage() {
           <h2 className="mypage-card__title">나의 랭킹</h2>
           <div className="mypage-ranking">
             <strong>#{myScore.rank}</strong>
-            <p>점수 기준 · 전체 478명 중</p>
+            <p>점수 기준 · 전체 {scoreRankingTotal}명 중</p>
           </div>
           <div className="mypage-ranking-meta">
             <div className="info-row">
               <span>참여 기준 순위</span>
-              <strong>#3</strong>
+              <strong>#{myParticipationRank}</strong>
             </div>
             <div className="info-row">
               <span>백분위</span>
-              <strong className="ranking-points">상위 0.2%</strong>
+              <strong className="ranking-points">
+                {scoreRankingTotal > 0 && typeof myScore.rank === 'number'
+                  ? `상위 ${(((myScore.rank / scoreRankingTotal) * 100).toFixed(1))}%`
+                  : '-'}
+              </strong>
             </div>
             <div className="info-row">
               <span>제출률</span>
