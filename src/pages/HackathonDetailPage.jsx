@@ -5,7 +5,10 @@ import {
   fetchHackathonDetail,
   fetchHackathonLeaderboard,
   fetchHackathonTeams,
+  fetchMySubmissions,
   fetchRegistrationStatus,
+  registerHackathon,
+  submitResult,
 } from "../api/hackathons.js";
 import {
   decideTeamApplication,
@@ -16,8 +19,6 @@ import {
   updateTeam,
 } from "../api/teams.js";
 import { getStoredUser } from "../lib/auth.js";
-import { hackathons } from "../mock/hackathons.js";
-import { teams } from "../mock/teams.js";
 
 const detailTabs = [
   { key: "overview", label: "개요" },
@@ -53,17 +54,11 @@ function HackathonDetailPage() {
   const [teamEditMessage, setTeamEditMessage] = useState("");
   const [isSavingTeam, setIsSavingTeam] = useState(false);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
+  const [submitMemo, setSubmitMemo] = useState("");
+  const [submitFile, setSubmitFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
   const currentUser = getStoredUser();
-
-  const mockHackathon = useMemo(
-    () => hackathons.find((item) => String(item.id) === String(id)),
-    [id],
-  );
-
-  const mockParticipantTeams = useMemo(
-    () => teams.filter((team) => String(team.hackathonId) === String(id)),
-    [id],
-  );
 
   useEffect(() => {
     let isMounted = true;
@@ -143,35 +138,20 @@ function HackathonDetailPage() {
   }, [id]);
 
   const hackathon = useMemo(() => {
-    if (!mockHackathon && !remoteHackathon) {
-      return null;
-    }
+    if (!remoteHackathon) return null;
 
     return {
-      ...(mockHackathon ?? {}),
-      ...(remoteHackathon ?? {}),
-      schedules: mockHackathon?.schedules ?? remoteHackathon?.schedules ?? [],
-      evaluations:
-        mockHackathon?.evaluations ?? remoteHackathon?.evaluations ?? [],
-      prizes: mockHackathon?.prizes ?? remoteHackathon?.prizes ?? [],
-      teamStates:
-        mockHackathon?.teamStates ?? remoteHackathon?.teamStates ?? {},
-      submitStates:
-        mockHackathon?.submitStates ?? remoteHackathon?.submitStates ?? {},
-      leaderboard:
-        remoteLeaderboard && remoteLeaderboard.length > 0
-          ? remoteLeaderboard
-          : (mockHackathon?.leaderboard ?? []),
+      ...remoteHackathon,
+      schedules: remoteHackathon.schedules ?? [],
+      evaluations: remoteHackathon.evaluations ?? [],
+      prizes: remoteHackathon.prizes ?? [],
+      teamStates: remoteHackathon.teamStates ?? {},
+      submitStates: remoteHackathon.submitStates ?? {},
+      leaderboard: remoteLeaderboard ?? [],
     };
-  }, [mockHackathon, remoteHackathon, remoteLeaderboard]);
+  }, [remoteHackathon, remoteLeaderboard]);
 
-  const participantTeams = useMemo(
-    () =>
-      remoteTeams && remoteTeams.length > 0
-        ? remoteTeams
-        : mockParticipantTeams,
-    [mockParticipantTeams, remoteTeams],
-  );
+  const participantTeams = remoteTeams ?? [];
 
   const currentLeaderId = myTeamDetail?.leaderId ?? null;
   const currentLeaderName =
@@ -695,6 +675,8 @@ function HackathonDetailPage() {
                     <textarea
                       className="form-control form-control--textarea submit-textarea"
                       placeholder="팀원 소개, 프로젝트 설명, 사용 기술 스택 등을 입력하세요."
+                      value={submitMemo}
+                      onChange={(e) => setSubmitMemo(e.target.value)}
                     />
                   </label>
 
@@ -703,20 +685,47 @@ function HackathonDetailPage() {
                       파일 첨부 <span className="submit-required">*</span>
                     </span>
                     <div className="submit-dropzone">
-                      <p>ZIP, PDF, CSV 파일을 끌어다 놓거나</p>
-                      <button type="button" className="submit-file-button">
+                      <p>{submitFile ? submitFile.name : "ZIP, PDF 파일을 끌어다 놓거나"}</p>
+                      <label className="submit-file-button" style={{ cursor: "pointer" }}>
                         파일 선택
-                      </button>
-                      <span>최대 50MB · ZIP / PDF / CSV</span>
+                        <input
+                          type="file"
+                          accept=".zip,.pdf"
+                          style={{ display: "none" }}
+                          onChange={(e) => setSubmitFile(e.target.files[0] ?? null)}
+                        />
+                      </label>
+                      <span>최대 50MB · ZIP / PDF</span>
                     </div>
                   </label>
+
+                  {submitMessage && <p style={{ color: submitMessage.includes("실패") ? "red" : "green" }}>{submitMessage}</p>}
 
                   <div>
                     <button
                       type="button"
                       className="team-primary-button submit-button"
+                      disabled={isSubmitting || !submitFile || !submitMemo.trim()}
+                      onClick={async () => {
+                        if (!submitFile || !submitMemo.trim()) return;
+                        setIsSubmitting(true);
+                        setSubmitMessage("");
+                        try {
+                          const formData = new FormData();
+                          formData.append("file", submitFile);
+                          formData.append("memo", submitMemo);
+                          await submitResult(id, formData);
+                          setSubmitMessage("제출이 완료되었습니다.");
+                          setSubmitFile(null);
+                          setSubmitMemo("");
+                        } catch {
+                          setSubmitMessage("제출에 실패했습니다. 다시 시도해주세요.");
+                        } finally {
+                          setIsSubmitting(false);
+                        }
+                      }}
                     >
-                      제출하기
+                      {isSubmitting ? "제출 중..." : "제출하기"}
                     </button>
                   </div>
                 </div>

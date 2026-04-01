@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchHackathons } from "../api/hackathons.js";
 import { fetchPlatformStats } from "../api/stats.js";
-import { hackathons } from "../mock/hackathons.js";
 
 const typewriterWords = ["Build.", "Compete.", "Win."];
 const cumulativeLengths = typewriterWords.reduce((accumulator, word, index) => {
@@ -16,14 +15,8 @@ function MainPage() {
   const [displayedLength, setDisplayedLength] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [brandTilt, setBrandTilt] = useState({ x: 0, y: 0 });
-  const [visibleHackathons, setVisibleHackathons] = useState(
-    hackathons.filter((item) => item.status === "open"),
-  );
-  const [stats, setStats] = useState({
-    participants: 478,
-    activeHackathons: 4,
-    totalPrize: "₩11,000,000",
-  });
+  const [visibleHackathons, setVisibleHackathons] = useState([]);
+  const [stats, setStats] = useState({ participants: 0, activeHackathons: 0, totalPrize: '-' });
 
   const renderedWords = useMemo(
     () =>
@@ -82,19 +75,12 @@ function MainPage() {
 
         if (!isMounted) return;
 
-        if (hackathonResponse.length > 0) {
-          setVisibleHackathons(
-            hackathonResponse.filter((item) => item.status === "open"),
-          );
-        }
-
+        setVisibleHackathons(
+          hackathonResponse.filter((item) => item.status === "open"),
+        );
         setStats(statsResponse);
       } catch {
         if (!isMounted) return;
-
-        setVisibleHackathons(
-          hackathons.filter((item) => item.status === "open"),
-        );
       }
     }
 

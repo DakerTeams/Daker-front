@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchHackathons } from "../api/hackathons.js";
-import { hackathons } from "../mock/hackathons.js";
 
 const statusFilters = [
   { key: "all", label: "전체" },
@@ -13,7 +12,7 @@ const statusFilters = [
 function HackathonsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [items, setItems] = useState(hackathons);
+  const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -34,14 +33,10 @@ function HackathonsPage() {
         });
         if (!isMounted) return;
 
-        if (data.length > 0) {
-          setItems(data);
-        } else {
-          setItems([]);
-        }
+        setItems(data);
       } catch {
         if (!isMounted) return;
-        setItems(hackathons);
+        setItems([]);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -56,28 +51,7 @@ function HackathonsPage() {
     };
   }, [query, statusFilter]);
 
-  const filteredHackathons = useMemo(() => {
-    if (items !== hackathons) {
-      return items;
-    }
-
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return items.filter((hackathon) => {
-      const matchesStatus =
-        statusFilter === "all" || hackathon.status === statusFilter;
-
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        hackathon.title.toLowerCase().includes(normalizedQuery) ||
-        hackathon.summary.toLowerCase().includes(normalizedQuery) ||
-        hackathon.tags.some((tag) =>
-          tag.toLowerCase().includes(normalizedQuery),
-        );
-
-      return matchesStatus && matchesQuery;
-    });
-  }, [items, query, statusFilter]);
+  const filteredHackathons = items;
 
   return (
     <section className="page-section">

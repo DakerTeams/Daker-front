@@ -83,3 +83,29 @@ export async function logout() {
     clearAuthSession()
   }
 }
+
+export async function requestGithubDevice() {
+  const response = await apiRequest('/auth/github/device', {
+    method: 'POST',
+  })
+  return extractObject(response)
+}
+
+export async function pollGithubToken(deviceCode) {
+  const response = await apiRequest('/auth/github/token', {
+    method: 'POST',
+    body: JSON.stringify({ deviceCode }),
+  })
+
+  const data = extractObject(response)
+  if (data.accessToken) {
+    const sessionUser = normalizeUser(data.user)
+    saveAuthSession({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      user: sessionUser,
+    })
+  }
+
+  return data
+}

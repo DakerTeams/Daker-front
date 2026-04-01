@@ -1,4 +1,5 @@
-import { apiRequest, createQueryString, extractArray } from './client.js'
+import { apiRequest, createQueryString, extractArray, extractObject } from './client.js'
+import { getAccessToken } from '../lib/auth.js'
 
 const periodMap = {
   all: 'all',
@@ -38,4 +39,17 @@ export async function fetchParticipationRankings(period = 'all') {
   const query = createQueryString({ period: periodMap[period] ?? period })
   const payload = await apiRequest(`/rankings/participation${query}`)
   return extractArray(payload).map(normalizeRanking)
+}
+
+export async function fetchMyRanking() {
+  const payload = await apiRequest('/rankings/me', {
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+  const data = extractObject(payload)
+  return {
+    score: data.score ?? null,
+    participation: data.participation ?? null,
+  }
 }

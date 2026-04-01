@@ -83,7 +83,7 @@ export async function fetchHackathonTeams(id, params = {}) {
     hackathonName: item.hackathonName ?? `해커톤 #${id}`,
     isOpen: item.isOpen ?? true,
     leader: item.leader?.nickname ?? '-',
-    currentMembers: item.memberCount ?? 1,
+    currentMembers: item.memberCount ?? item.currentMemberCount ?? 1,
     maxMembers: item.maxMemberCount ?? item.maxTeamSize ?? 1,
     description: item.description ?? '',
     positions: [],
@@ -171,4 +171,32 @@ export async function cancelRegistration(id) {
       Authorization: `Bearer ${getAccessToken()}`,
     },
   })
+}
+
+export async function registerHackathon(id) {
+  return apiRequest(`/hackathons/${id}/register`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+}
+
+export async function submitResult(id, formData) {
+  return apiRequest(`/hackathons/${id}/submit`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+    body: formData,
+  })
+}
+
+export async function fetchMySubmissions(id) {
+  const payload = await apiRequest(`/hackathons/${id}/submissions/me`, {
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+  })
+  return extractObject(payload)
 }

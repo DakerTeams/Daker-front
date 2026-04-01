@@ -42,9 +42,10 @@ function createQueryString(params = {}) {
 
 export async function apiRequest(path, options = {}) {
   const { headers: optionHeaders, ...restOptions } = options
+  const isFormData = restOptions.body instanceof FormData
   const response = await fetch(buildUrl(path), {
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(optionHeaders ?? {}),
     },
     ...restOptions,

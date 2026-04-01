@@ -9,7 +9,6 @@ import {
   updateTeam,
 } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
-import { teams } from '../mock/teams.js'
 
 const openFilters = [
   { key: 'all', label: '전체' },
@@ -37,7 +36,7 @@ function CampPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [openFilter, setOpenFilter] = useState('all')
-  const [items, setItems] = useState(teams)
+  const [items, setItems] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [myTeams, setMyTeams] = useState([])
@@ -80,7 +79,7 @@ function CampPage() {
         setMyTeams(myTeamData)
       } catch {
         if (!isMounted) return
-        setItems(teams)
+        setItems([])
         setMyTeams([])
       } finally {
         if (isMounted) {
@@ -151,10 +150,6 @@ function CampPage() {
     : false
 
   const filteredTeams = useMemo(() => {
-    if (items !== teams) {
-      return items
-    }
-
     const normalizedQuery = query.trim().toLowerCase()
 
     return items.filter((team) => {

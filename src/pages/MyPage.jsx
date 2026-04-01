@@ -7,34 +7,6 @@ import {
 } from '../api/rankings.js'
 import { fetchMyTeams } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
-import { teams } from '../mock/teams.js'
-
-const participationHistory = [
-  {
-    title: 'AI Summit 2026',
-    period: '2026-04-01 ~ 04-03',
-    teamName: 'NeuralNinjas',
-    status: '모집 중',
-    statusType: 'open',
-    rank: '-',
-  },
-  {
-    title: 'Web3 Buildathon',
-    period: '2026-03-10 ~ 03-20',
-    teamName: 'ChainCrafters',
-    status: '진행 중',
-    statusType: 'upcoming',
-    rank: '2위',
-  },
-  {
-    title: 'Data Quest 2025',
-    period: '2025-11-15 ~ 11-17',
-    teamName: 'InsightHunters',
-    status: '종료',
-    statusType: 'closed',
-    rank: '1위',
-  },
-]
 
 function MyPage() {
   const defaultScore = {
@@ -49,12 +21,8 @@ function MyPage() {
     isMe: false,
   }
 
-  const [user, setUser] = useState(getStoredUser() ?? {
-    nickname: 'jinwoo_k',
-    email: 'jinwoo@example.com',
-    role: 'user',
-  })
-  const [myTeams, setMyTeams] = useState(teams)
+  const [user, setUser] = useState(getStoredUser() ?? null)
+  const [myTeams, setMyTeams] = useState([])
   const [myScore, setMyScore] = useState(defaultScore)
   const [myParticipationRank, setMyParticipationRank] = useState('-')
   const [scoreRankingTotal, setScoreRankingTotal] = useState(0)
@@ -96,10 +64,6 @@ function MyPage() {
         setScoreRankingTotal(scoreRankings.length)
       } catch {
         if (!isMounted) return
-
-        setMyTeams(
-          teams.filter((team) => ['jinwoo_k', 'dart_joon'].includes(team.leader)),
-        )
         setMyScore(defaultScore)
         setMyParticipationRank('-')
         setScoreRankingTotal(0)
@@ -214,26 +178,26 @@ function MyPage() {
       <section className="mypage-card">
         <h2 className="mypage-card__title">참가 이력</h2>
         <div className="mypage-history-list">
-          {participationHistory.map((item) => (
-            <article key={item.title} className="mypage-history-item">
-              <div className="mypage-history-item__left">
-                <div className="mypage-history-item__icon">🏆</div>
-                <div>
-                  <h3>{item.title}</h3>
-                  <p>
-                    {item.period} · {item.teamName}
-                  </p>
+          {myTeams.length === 0 ? (
+            <p className="page-description">참가한 해커톤이 없습니다.</p>
+          ) : (
+            myTeams.map((team) => (
+              <article key={team.id} className="mypage-history-item">
+                <div className="mypage-history-item__left">
+                  <div className="mypage-history-item__icon">🏆</div>
+                  <div>
+                    <h3>{team.hackathonName}</h3>
+                    <p>{team.name}</p>
+                  </div>
                 </div>
-              </div>
-
-              <div className="mypage-history-item__right">
-                <span className={`status-outline status-outline--${item.statusType}`}>
-                  {item.status}
-                </span>
-                <strong>{item.rank}</strong>
-              </div>
-            </article>
-          ))}
+                <div className="mypage-history-item__right">
+                  <span className={`status-outline status-outline--${team.raw?.hackathonStatus ?? 'closed'}`}>
+                    {team.raw?.hackathonStatusLabel ?? '참가'}
+                  </span>
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </section>
     </section>
