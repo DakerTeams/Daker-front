@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchHackathons } from '../api/hackathons.js'
 import { createTeam } from '../api/teams.js'
-import { hackathons } from '../mock/hackathons.js'
 import { getStoredUser } from '../lib/auth.js'
 
 function TeamCreatePage() {
   const navigate = useNavigate()
-  const [availableHackathons, setAvailableHackathons] = useState(hackathons)
+  const [availableHackathons, setAvailableHackathons] = useState([])
   const [form, setForm] = useState({
     hackathonId: '1',
     name: '',
@@ -32,7 +31,6 @@ function TeamCreatePage() {
         }))
       } catch {
         if (!isMounted) return
-        setAvailableHackathons(hackathons)
       }
     }
 
