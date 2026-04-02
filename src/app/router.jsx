@@ -39,7 +39,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'team-create',
-        element: <TeamCreatePage />,
+        element: (
+          <ProtectedRoute>
+            <TeamCreatePage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'rankings',

@@ -29,6 +29,13 @@ const detailTabs = [
   { key: "leaderboard", label: "리더보드" },
 ];
 
+function createEmptyPosition() {
+  return {
+    positionName: "",
+    requiredCount: "1",
+  };
+}
+
 function HackathonDetailPage() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
@@ -50,6 +57,8 @@ function HackathonDetailPage() {
     name: "",
     description: "",
     isOpen: true,
+    maxMembers: "5",
+    positions: [createEmptyPosition()],
   });
   const [teamEditMessage, setTeamEditMessage] = useState("");
   const [isSavingTeam, setIsSavingTeam] = useState(false);
@@ -168,6 +177,14 @@ function HackathonDetailPage() {
       name: myTeamDetail.name ?? "",
       description: myTeamDetail.description ?? "",
       isOpen: myTeamDetail.isOpen ?? true,
+      maxMembers: String(myTeamDetail.maxMembers ?? 5),
+      positions:
+        myTeamDetail.positionDetails?.length > 0
+          ? myTeamDetail.positionDetails.map((position) => ({
+              positionName: position.positionName,
+              requiredCount: String(position.requiredCount ?? 1),
+            }))
+          : [createEmptyPosition()],
     });
   }, [myTeamDetail]);
 
@@ -1143,6 +1160,99 @@ function HackathonDetailPage() {
                   <option value="false">마감</option>
                 </select>
               </label>
+
+              <label className="form-field">
+                <span className="form-label">최대 팀원 수</span>
+                <input
+                  className="form-control"
+                  type="number"
+                  min="1"
+                  value={teamEditForm.maxMembers}
+                  onChange={(event) =>
+                    setTeamEditForm((current) => ({
+                      ...current,
+                      maxMembers: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+
+              <div className="info-row">
+                <span className="form-label">모집 역할</span>
+                <button
+                  type="button"
+                  className="button-link button-link--ghost"
+                  onClick={() =>
+                    setTeamEditForm((current) => ({
+                      ...current,
+                      positions: [...current.positions, createEmptyPosition()],
+                    }))
+                  }
+                >
+                  역할 추가
+                </button>
+              </div>
+
+              {teamEditForm.positions.map((position, index) => (
+                <div key={`detail-edit-position-${index}`} className="form-grid">
+                  <label className="form-field">
+                    <span className="form-label">역할명</span>
+                    <input
+                      className="form-control"
+                      value={position.positionName}
+                      onChange={(event) =>
+                        setTeamEditForm((current) => ({
+                          ...current,
+                          positions: current.positions.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, positionName: event.target.value }
+                              : item,
+                          ),
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span className="form-label">인원</span>
+                    <input
+                      className="form-control"
+                      type="number"
+                      min="1"
+                      value={position.requiredCount}
+                      onChange={(event) =>
+                        setTeamEditForm((current) => ({
+                          ...current,
+                          positions: current.positions.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, requiredCount: event.target.value }
+                              : item,
+                          ),
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <div className="form-field">
+                    <span className="form-label">관리</span>
+                    <button
+                      type="button"
+                      className="button-link button-link--ghost"
+                      onClick={() =>
+                        setTeamEditForm((current) => ({
+                          ...current,
+                          positions:
+                            current.positions.length === 1
+                              ? [createEmptyPosition()]
+                              : current.positions.filter((_, itemIndex) => itemIndex !== index),
+                        }))
+                      }
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {teamEditMessage ? (
@@ -1169,6 +1279,13 @@ function HackathonDetailPage() {
                       name: teamEditForm.name,
                       description: teamEditForm.description,
                       isOpen: teamEditForm.isOpen,
+                      maxMemberCount: Number(teamEditForm.maxMembers) || 1,
+                      positions: teamEditForm.positions
+                        .map((position) => ({
+                          positionName: position.positionName.trim(),
+                          requiredCount: Number(position.requiredCount) || 1,
+                        }))
+                        .filter((position) => position.positionName),
                     });
 
                     const refreshedDetail = await fetchTeamDetail(

@@ -4,14 +4,23 @@ import { fetchHackathons } from '../api/hackathons.js'
 import { createTeam } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
 
+function createEmptyPosition() {
+  return {
+    positionName: '',
+    requiredCount: '1',
+  }
+}
+
 function TeamCreatePage() {
   const navigate = useNavigate()
   const [availableHackathons, setAvailableHackathons] = useState([])
   const [form, setForm] = useState({
-    hackathonId: '1',
+    hackathonId: '',
     name: '',
     description: '',
     isOpen: 'true',
+    maxMemberCount: '5',
+    positions: [createEmptyPosition()],
   })
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -22,13 +31,9 @@ function TeamCreatePage() {
     async function loadHackathons() {
       try {
         const items = await fetchHackathons()
-        if (!isMounted || items.length === 0) return
+        if (!isMounted) return
 
         setAvailableHackathons(items)
-        setForm((current) => ({
-          ...current,
-          hackathonId: String(items[0].id),
-        }))
       } catch {
         if (!isMounted) return
       }
@@ -49,6 +54,32 @@ function TeamCreatePage() {
     }))
   }
 
+  const handlePositionChange = (index, key, value) => {
+    setForm((current) => ({
+      ...current,
+      positions: current.positions.map((position, positionIndex) =>
+        positionIndex === index ? { ...position, [key]: value } : position,
+      ),
+    }))
+  }
+
+  const handleAddPosition = () => {
+    setForm((current) => ({
+      ...current,
+      positions: [...current.positions, createEmptyPosition()],
+    }))
+  }
+
+  const handleRemovePosition = (index) => {
+    setForm((current) => ({
+      ...current,
+      positions:
+        current.positions.length === 1
+          ? [createEmptyPosition()]
+          : current.positions.filter((_, positionIndex) => positionIndex !== index),
+    }))
+  }
+
   const handleSubmit = async () => {
     if (!getStoredUser()) {
       setMessage('로그인 후 팀을 생성할 수 있습니다.')
@@ -59,14 +90,23 @@ function TeamCreatePage() {
     setMessage('')
 
     try {
+      const positions = form.positions
+        .map((position) => ({
+          positionName: position.positionName.trim(),
+          requiredCount: Number(position.requiredCount) || 1,
+        }))
+        .filter((position) => position.positionName)
+
       await createTeam({
-        hackathonId: Number(form.hackathonId),
+        hackathonId: form.hackathonId ? Number(form.hackathonId) : null,
         name: form.name,
         description: form.description,
         isOpen: form.isOpen === 'true',
+        maxMemberCount: Number(form.maxMemberCount) || 5,
+        positions,
       })
 
-      navigate(`/hackathons/${form.hackathonId}`)
+      navigate(form.hackathonId ? `/hackathons/${form.hackathonId}` : '/camp')
     } catch {
       setMessage('팀 생성에 실패했습니다. 등록 기간과 입력값을 확인해주세요.')
     } finally {
@@ -87,7 +127,7 @@ function TeamCreatePage() {
           <p className="eyebrow">/team-create</p>
           <h1>팀 생성</h1>
           <p className="page-description">
-            해커톤에 함께할 팀을 만들어보세요. 1인 팀도 가능합니다.
+            해커톤에 연결하거나 독립 팀으로 먼저 생성할 수 있습니다.
           </p>
         </div>
 
@@ -113,9 +153,10 @@ function TeamCreatePage() {
             <section className="surface-card surface-card--soft">
               <p className="meta-text">팀 구성 유의사항</p>
               <ul className="bullet-list">
+                <li>해커톤 없이 독립 팀으로 먼저 생성할 수 있습니다.</li>
                 <li>같은 해커톤에서는 한 팀에만 소속될 수 있습니다.</li>
                 <li>팀 생성 후 팀장은 팀 정보와 신청자 상태를 관리합니다.</li>
-                <li>연락 링크는 공개 범위를 고려해 입력해야 합니다.</li>
+                <li>모집 역할과 인원 수를 미리 설정해 팀 합류 흐름을 정리할 수 있습니다.</li>
                 <li>해커톤과 연결된 팀은 제출 전에 반드시 팀 구성이 완료되어야 합니다.</li>
               </ul>
             </section>
@@ -130,6 +171,7 @@ function TeamCreatePage() {
                     value={form.hackathonId}
                     onChange={handleChange}
                   >
+                    <option value="">선택 안 함</option>
                     {availableHackathons.map((hackathon) => (
                       <option key={hackathon.id} value={hackathon.id}>
                         {hackathon.title}
@@ -172,6 +214,72 @@ function TeamCreatePage() {
                     <option value="false">모집 안 함</option>
                   </select>
                 </label>
+
+                <label className="form-field">
+                  <span className="form-label">최대 팀원 수</span>
+                  <input
+                    className="form-control"
+                    type="number"
+                    min="1"
+                    name="maxMemberCount"
+                    value={form.maxMemberCount}
+                    onChange={handleChange}
+                  />
+                </label>
+              </div>
+            </section>
+
+            <section className="surface-card">
+              <div className="info-row">
+                <div>
+                  <p className="meta-text">모집 멤버 역할</p>
+                  <h2>역할과 인원 수를 설정하세요</h2>
+                </div>
+                <button type="button" className="button-link button-link--ghost" onClick={handleAddPosition}>
+                  역할 추가
+                </button>
+              </div>
+
+              <div className="stack-list stack-list--compact">
+                {form.positions.map((position, index) => (
+                  <div key={`position-${index}`} className="form-grid">
+                    <label className="form-field">
+                      <span className="form-label">역할명</span>
+                      <input
+                        className="form-control"
+                        value={position.positionName}
+                        onChange={(event) =>
+                          handlePositionChange(index, 'positionName', event.target.value)
+                        }
+                        placeholder="예: 프론트엔드, 디자이너, 백엔드"
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span className="form-label">모집 인원</span>
+                      <input
+                        className="form-control"
+                        type="number"
+                        min="1"
+                        value={position.requiredCount}
+                        onChange={(event) =>
+                          handlePositionChange(index, 'requiredCount', event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <div className="form-field">
+                      <span className="form-label">관리</span>
+                      <button
+                        type="button"
+                        className="button-link button-link--ghost"
+                        onClick={() => handleRemovePosition(index)}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </section>
           </div>
@@ -185,13 +293,23 @@ function TeamCreatePage() {
                   <span>연결 해커톤</span>
                   <span>
                     {availableHackathons.find((item) => String(item.id) === form.hackathonId)?.title ??
-                      '-'}
+                      '독립 팀'}
                   </span>
                 </div>
                 <div className="info-row">
                   <span>모집 상태</span>
                   <span className="status-pill status-pill--open">
                     {form.isOpen === 'true' ? '모집중' : '모집 안 함'}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <span>최대 팀원 수</span>
+                  <span>{form.maxMemberCount}명</span>
+                </div>
+                <div className="info-row">
+                  <span>모집 역할</span>
+                  <span>
+                    {form.positions.filter((position) => position.positionName.trim()).length}개
                   </span>
                 </div>
               </div>
@@ -201,8 +319,8 @@ function TeamCreatePage() {
               <p className="meta-text">생성 후 흐름</p>
               <ul className="bullet-list">
                 <li>팀 생성 완료</li>
-                <li>해커톤 참가가 자동으로 처리됨</li>
-                <li>해커톤 상세 팀 탭으로 복귀</li>
+                <li>{form.hackathonId ? '해커톤 참가가 자동으로 처리됨' : 'camp 목록으로 이동'}</li>
+                <li>{form.hackathonId ? '해커톤 상세 팀 탭으로 복귀' : '이후 해커톤 신청 가능'}</li>
               </ul>
             </section>
 
