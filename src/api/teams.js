@@ -109,6 +109,8 @@ export async function fetchTeamDetail(id) {
       ? data.members.map((member) => ({
           userId: member.userId,
           nickname: member.nickname,
+          position: member.position ?? null,
+          roleType: member.roleType ?? null,
         }))
       : [],
   }
