@@ -1,25 +1,95 @@
-import { Link, useNavigate } from 'react-router-dom'
-
-const AUTH_STORAGE_KEY = 'hackhub-demo-user'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { login } from '../api/auth.js'
+import { normalizeAuthErrorMessage, resolveAuthErrorField } from '../lib/auth-error.js'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+  })
+  const [fieldErrors, setFieldErrors] = useState({
+    email: '',
+    password: '',
+    form: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const loginDemoUser = () => {
-    window.localStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify({
-        nickname: 'jinwoo_k',
-        email: 'jinwoo@example.com',
-      }),
-    )
-    window.dispatchEvent(new Event('mock-auth-change'))
-    navigate('/')
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }))
+    setFieldErrors((current) => ({
+      ...current,
+      [name]: '',
+      form: '',
+    }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    loginDemoUser()
+    setIsSubmitting(true)
+    const nextFieldErrors = {
+      email: '',
+      password: '',
+      form: '',
+    }
+
+    if (!form.email.trim()) {
+      nextFieldErrors.email = '이메일을 입력해주세요.'
+    }
+
+    if (!form.password) {
+      nextFieldErrors.password = '비밀번호를 입력해주세요.'
+    }
+
+    if (nextFieldErrors.email || nextFieldErrors.password) {
+      setFieldErrors(nextFieldErrors)
+      setIsSubmitting(false)
+      return
+    }
+
+    setFieldErrors(nextFieldErrors)
+
+    try {
+      await login(form)
+      navigate(location.state?.from || '/', { replace: true })
+    } catch (error) {
+      const message = normalizeAuthErrorMessage(
+        error.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.'
+      )
+      const field = resolveAuthErrorField(message)
+
+      if (field === 'email') {
+        setFieldErrors({
+          email: message,
+          password: '',
+          form: '',
+        })
+        return
+      }
+
+      if (field === 'password') {
+        setFieldErrors({
+          email: '',
+          password: message,
+          form: '',
+        })
+        return
+      }
+
+      setFieldErrors({
+        email: '',
+        password: '',
+        form: message,
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -35,7 +105,7 @@ function LoginPage() {
           <p>해커톤 플랫폼에 로그인하세요.</p>
         </div>
 
-        <button type="button" className="auth-social-button" onClick={loginDemoUser}>
+        <button type="button" className="auth-social-button" disabled>
           <span className="auth-social-button__icon">◔</span>
           GitHub으로 로그인
         </button>
@@ -53,9 +123,15 @@ function LoginPage() {
             </span>
             <input
               type="email"
-              className="auth-input"
+              name="email"
+              className={`auth-input${fieldErrors.email ? ' auth-input--error' : ''}`}
               placeholder="jinwoo@example.com"
+              value={form.email}
+              onChange={handleChange}
             />
+            {fieldErrors.email ? (
+              <small className="auth-field__error">{fieldErrors.email}</small>
+            ) : null}
           </label>
 
           <label className="auth-field">
@@ -64,20 +140,23 @@ function LoginPage() {
             </span>
             <input
               type="password"
-              className="auth-input"
+              name="password"
+              className={`auth-input${fieldErrors.password ? ' auth-input--error' : ''}`}
               placeholder="비밀번호를 입력하세요"
+              value={form.password}
+              onChange={handleChange}
             />
+            {fieldErrors.password ? (
+              <small className="auth-field__error">{fieldErrors.password}</small>
+            ) : null}
           </label>
 
+          {fieldErrors.form ? <p className="auth-form__error">{fieldErrors.form}</p> : null}
+
           <button type="submit" className="auth-submit-button">
-            로그인
+            {isSubmitting ? '로그인 중...' : '로그인'}
           </button>
         </form>
-
-        <div className="auth-demo-note">
-          <p>💡 데모: 아무 값이나 입력하고 로그인하면</p>
-          <strong>jinwoo_k로 접속됩니다.</strong>
-        </div>
 
         <p className="auth-footer">
           계정이 없으신가요? <Link to="/signup">회원가입</Link>

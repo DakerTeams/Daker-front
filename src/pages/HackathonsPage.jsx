@@ -1,42 +1,63 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { hackathons } from '../mock/hackathons.js'
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { fetchHackathons } from "../api/hackathons.js";
 
 const statusFilters = [
-  { key: 'all', label: '전체' },
-  { key: 'open', label: '모집중' },
-  { key: 'upcoming', label: '진행중' },
-  { key: 'closed', label: '종료' },
-]
+  { key: "all", label: "전체" },
+  { key: "open", label: "모집중" },
+  { key: "upcoming", label: "진행중" },
+  { key: "closed", label: "종료" },
+];
 
 function HackathonsPage() {
-  const [query, setQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filteredHackathons = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
+  useEffect(() => {
+    let isMounted = true;
 
-    return hackathons.filter((hackathon) => {
-      const matchesStatus =
-        statusFilter === 'all' || hackathon.status === statusFilter
+    async function loadHackathons() {
+      setIsLoading(true);
 
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        hackathon.title.toLowerCase().includes(normalizedQuery) ||
-        hackathon.summary.toLowerCase().includes(normalizedQuery) ||
-        hackathon.tags.some((tag) =>
-          tag.toLowerCase().includes(normalizedQuery),
-        )
+      try {
+        const data = await fetchHackathons({
+          status:
+            statusFilter === "all"
+              ? undefined
+              : statusFilter === "upcoming"
+                ? "open"
+                : statusFilter,
+          q: query.trim() || undefined,
+        });
+        if (!isMounted) return;
 
-      return matchesStatus && matchesQuery
-    })
-  }, [query, statusFilter])
+        setItems(data);
+      } catch {
+        if (!isMounted) return;
+        setItems([]);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadHackathons();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [query, statusFilter]);
+
+  const filteredHackathons = items;
 
   return (
     <section className="page-section">
       <div className="page-header">
         <p className="eyebrow">/hackathons</p>
-        <h1>해커톤</h1>
+        <h1>해커톤 목록</h1>
         <p className="page-description">
           참가 가능한 모든 해커톤을 확인하세요.
         </p>
@@ -58,7 +79,7 @@ function HackathonsPage() {
                 key={filter.key}
                 type="button"
                 className={`filter-chip${
-                  statusFilter === filter.key ? ' filter-chip--active' : ''
+                  statusFilter === filter.key ? " filter-chip--active" : ""
                 }`}
                 onClick={() => setStatusFilter(filter.key)}
               >
@@ -68,6 +89,12 @@ function HackathonsPage() {
           </div>
         </div>
       </section>
+
+      {isLoading ? (
+        <section className="surface-card empty-panel">
+          <p className="empty-panel__title">해커톤 목록을 불러오는 중입니다.</p>
+        </section>
+      ) : null}
 
       {filteredHackathons.length === 0 ? (
         <section className="surface-card empty-panel">
@@ -79,48 +106,57 @@ function HackathonsPage() {
       ) : (
         <div className="stack-list">
           {filteredHackathons.map((hackathon) => (
-          <Link
-            key={hackathon.slug}
-            to={`/hackathons/${hackathon.slug}`}
-            className="surface-card surface-card--link hackathon-card hackathon-card--list"
-          >
-            <div className="row-between row-between--start">
-              <div className="stack-list stack-list--compact hackathon-card__left">
-                <div className="hackathon-card__topline">
-                  <span
-                    className={`status-outline status-outline--${hackathon.status}`}
-                  >
-                    {hackathon.status === 'upcoming' ? '진행 중' : hackathon.statusLabel}
-                  </span>
-                  <h2>{hackathon.title}</h2>
-                </div>
-                <div className="tag-list" aria-label="해커톤 태그">
-                  {hackathon.tags.map((tag) => (
-                    <span key={tag} className="tag-chip tag-chip--blue">
-                      {tag}
+            <Link
+              key={hackathon.id ?? hackathon.slug}
+              to={`/hackathons/${hackathon.id ?? hackathon.slug}`}
+              className="surface-card surface-card--link hackathon-card hackathon-card--list"
+            >
+              <div className="row-between row-between--start">
+                <div className="stack-list stack-list--compact hackathon-card__left">
+                  <div className="hackathon-card__topline">
+                    <span
+                      className={`status-outline status-outline--${hackathon.status}`}
+                    >
+                      {hackathon.status === "upcoming"
+                        ? "진행 중"
+                        : hackathon.statusLabel}
                     </span>
-                  ))}
+                    <h2>
+                      {hackathon.title}&nbsp;&nbsp;&nbsp;
+                      {hackathon.tags.map((tag) => (
+                        <>
+                          <span key={tag} className="tag-chip tag-chip--blue">
+                            {tag}
+                          </span>
+                          &nbsp;&nbsp;&nbsp;
+                        </>
+                      ))}
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="hackathon-card__meta hackathon-card__meta--right">
+                  <span className="button-action">상세 보기</span>
                 </div>
               </div>
 
-              <div className="hackathon-card__meta hackathon-card__meta--right">
-                <span className="button-action">상세 보기</span>
+              <div className="hackathon-card__footer">
+                <div className="meta-cluster">
+                  <small className="meta-text">
+                    {hackathon.startDate} ~ {hackathon.endDate}
+                  </small>
+                  <small className="meta-text">
+                    참가자 {hackathon.participantCount}명
+                  </small>
+                  <small className="meta-text">{hackathon.organizer}</small>
+                </div>
               </div>
-            </div>
-
-            <div className="hackathon-card__footer">
-              <div className="meta-cluster">
-                <small className="meta-text">{hackathon.startDate} ~ {hackathon.endDate}</small>
-                <small className="meta-text">참가자 {hackathon.participantCount}명</small>
-                <small className="meta-text">{hackathon.organizer}</small>
-              </div>
-            </div>
-          </Link>
+            </Link>
           ))}
         </div>
       )}
     </section>
-  )
+  );
 }
 
-export default HackathonsPage
+export default HackathonsPage;
