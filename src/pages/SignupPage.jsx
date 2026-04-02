@@ -28,8 +28,8 @@ function SignupPage() {
     try {
       await signup(form)
       navigate('/login')
-    } catch {
-      setErrorMessage('회원가입에 실패했습니다. 입력값을 다시 확인해주세요.')
+    } catch (error) {
+      setErrorMessage(error.message ?? '회원가입에 실패했습니다. 입력값을 다시 확인해주세요.')
     } finally {
       setIsSubmitting(false)
     }
