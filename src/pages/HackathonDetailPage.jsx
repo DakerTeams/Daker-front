@@ -1008,7 +1008,7 @@ function HackathonDetailPage() {
                 취소
               </button>
               <Link
-                to="/team-create"
+                to={`/team-create?hackathonId=${id}`}
                 className="team-primary-button"
                 onClick={() => setIsTeamNoticeOpen(false)}
               >

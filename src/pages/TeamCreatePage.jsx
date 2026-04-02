@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { fetchHackathons } from '../api/hackathons.js'
 import { createTeam } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
@@ -13,9 +13,11 @@ function createEmptyPosition() {
 
 function TeamCreatePage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const defaultHackathonId = searchParams.get('hackathonId') ?? ''
   const [availableHackathons, setAvailableHackathons] = useState([])
   const [form, setForm] = useState({
-    hackathonId: '',
+    hackathonId: defaultHackathonId,
     name: '',
     description: '',
     isOpen: 'true',
@@ -34,6 +36,18 @@ function TeamCreatePage() {
         if (!isMounted) return
 
         setAvailableHackathons(items)
+        if (defaultHackathonId) {
+          const matched = items.some(
+            (hackathon) => String(hackathon.id) === String(defaultHackathonId),
+          )
+
+          if (!matched) {
+            setForm((current) => ({
+              ...current,
+              hackathonId: '',
+            }))
+          }
+        }
       } catch {
         if (!isMounted) return
       }
@@ -44,7 +58,7 @@ function TeamCreatePage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [defaultHackathonId])
 
   const handleChange = (event) => {
     const { name, value } = event.target
