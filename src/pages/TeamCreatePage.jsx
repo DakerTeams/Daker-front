@@ -165,13 +165,13 @@ function TeamCreatePage() {
         <div className="create-layout">
           <div className="stack-list">
             <section className="surface-card surface-card--soft">
-              <p className="meta-text">팀 구성 유의사항</p>
+              <p className="meta-text">팀 생성 유의사항</p>
               <ul className="bullet-list">
-                <li>해커톤 없이 독립 팀으로 먼저 생성할 수 있습니다.</li>
-                <li>같은 해커톤에서는 한 팀에만 소속될 수 있습니다.</li>
-                <li>팀 생성 후 팀장은 팀 정보와 신청자 상태를 관리합니다.</li>
-                <li>모집 역할과 인원 수를 미리 설정해 팀 합류 흐름을 정리할 수 있습니다.</li>
-                <li>해커톤과 연결된 팀은 제출 전에 반드시 팀 구성이 완료되어야 합니다.</li>
+                <li>해커톤을 아직 정하지 않았어도 팀을 먼저 만들 수 있습니다.</li>
+                <li>모집 중으로 설정하면 camp에서 다른 사용자가 팀을 보고 지원할 수 있습니다.</li>
+                <li>모집 역할과 인원 수를 구체적으로 적으면 원하는 팀원을 더 정확하게 받을 수 있습니다.</li>
+                <li>팀 소개에는 작업 방향, 원하는 협업 방식, 필요한 역할을 함께 적는 것을 추천합니다.</li>
+                <li>해커톤에 연결된 팀은 같은 해커톤 안에서 한 팀만 참여할 수 있습니다.</li>
               </ul>
             </section>
 
@@ -327,15 +327,6 @@ function TeamCreatePage() {
                   </span>
                 </div>
               </div>
-            </section>
-
-            <section className="surface-card surface-card--soft">
-              <p className="meta-text">생성 후 흐름</p>
-              <ul className="bullet-list">
-                <li>팀 생성 완료</li>
-                <li>{form.hackathonId ? '해커톤 참가가 자동으로 처리됨' : 'camp 목록으로 이동'}</li>
-                <li>{form.hackathonId ? '해커톤 상세 팀 탭으로 복귀' : '이후 해커톤 신청 가능'}</li>
-              </ul>
             </section>
 
             <div className="create-actions">
