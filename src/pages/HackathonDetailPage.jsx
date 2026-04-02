@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   cancelRegistration,
   fetchHackathonDetail,
@@ -37,6 +37,7 @@ function createEmptyPosition() {
 }
 
 function HackathonDetailPage() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
   const [teamState, setTeamState] = useState("notRegistered");
@@ -68,6 +69,17 @@ function HackathonDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const currentUser = getStoredUser();
+
+  const openTeamCreateNotice = () => {
+    if (!currentUser) {
+      setRegistrationMessage("로그인 후 팀 생성과 해커톤 참가가 가능합니다.");
+      navigate("/login");
+      return;
+    }
+
+    setRegistrationMessage("");
+    setIsTeamNoticeOpen(true);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -453,7 +465,7 @@ function HackathonDetailPage() {
               <button
                 type="button"
                 className="team-primary-button"
-                onClick={() => setIsTeamNoticeOpen(true)}
+                onClick={openTeamCreateNotice}
               >
                 팀 만들고 참가하기
               </button>
@@ -477,7 +489,7 @@ function HackathonDetailPage() {
                 <button
                   type="button"
                   className="team-primary-button"
-                  onClick={() => setIsTeamNoticeOpen(true)}
+                  onClick={openTeamCreateNotice}
                 >
                   + 팀 생성하기
                 </button>
@@ -942,7 +954,7 @@ function HackathonDetailPage() {
               <button
                 type="button"
                 className="detail-apply-button"
-                onClick={() => setIsTeamNoticeOpen(true)}
+                onClick={openTeamCreateNotice}
               >
                 팀 만들고 참가하기
               </button>
