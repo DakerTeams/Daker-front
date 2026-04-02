@@ -16,6 +16,10 @@ function normalizeUser(user) {
     role: String(user.role ?? 'USER').toLowerCase(),
     accountStatus: user.accountStatus ?? 'ACTIVE',
     createdAt: user.createdAt ?? '',
+    tags: Array.isArray(user.tags) ? user.tags.map((t) => t.name ?? t) : [],
+    points: user.points ?? 0,
+    rank: user.rank ?? null,
+    joinedHackathons: user.joinedHackathons ?? 0,
   }
 }
 
@@ -69,6 +73,37 @@ export async function fetchMe() {
   }
 
   return user
+}
+
+export async function fetchAllTags() {
+  const response = await apiRequest('/tags')
+  const data = response?.data
+  return Array.isArray(data) ? data : []
+}
+
+export async function fetchUserTags() {
+  const response = await apiRequest('/users/me/tags', {
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
+  })
+  const data = response?.data
+  return Array.isArray(data) ? data : []
+}
+
+export async function addUserTag(name) {
+  const response = await apiRequest('/users/me/tags', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
+    body: JSON.stringify({ name }),
+  })
+  const data = response?.data
+  return Array.isArray(data) ? data : []
+}
+
+export async function removeUserTag(tagId) {
+  await apiRequest(`/users/me/tags/${tagId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
+  })
 }
 
 export async function logout() {
