@@ -51,6 +51,15 @@ export function normalizeAuthErrorMessage(message) {
 }
 
 export function resolveAuthErrorField(message) {
+  if (
+    containsAny(message, [
+      '이메일 또는 비밀번호',
+      '이메일과 비밀번호',
+    ])
+  ) {
+    return 'form'
+  }
+
   if (containsAny(message, ['nickname', '닉네임'])) {
     return 'nickname'
   }
