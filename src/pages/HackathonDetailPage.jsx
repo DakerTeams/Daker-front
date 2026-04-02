@@ -1047,6 +1047,7 @@ function HackathonDetailPage() {
                     <div>
                       <strong>{application.nickname}</strong>
                       <p className="meta-text">
+                        {application.position ? `지원 역할: ${application.position} · ` : ""}
                         상태: {application.status} · 신청 ID:{" "}
                         {application.applicationId}
                       </p>

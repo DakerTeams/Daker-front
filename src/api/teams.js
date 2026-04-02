@@ -148,6 +148,7 @@ export async function fetchTeamApplications(id) {
     applicationId: item.applicationId,
     userId: item.userId,
     nickname: item.nickname,
+    position: item.position ?? null,
     status: item.status,
     createdAt: item.createdAt,
   }))
