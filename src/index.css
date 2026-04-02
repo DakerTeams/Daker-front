@@ -1147,7 +1147,7 @@ h2 {
 }
 
 .team-create-wrap {
-  max-width: 760px;
+  max-width: 1180px;
   margin: 0 auto;
 }
 
@@ -1965,8 +1965,8 @@ h2 {
 
 .create-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.9fr) minmax(240px, 320px);
+  gap: 28px;
 }
 
 .form-grid {
@@ -2137,6 +2137,12 @@ h2 {
   font-weight: 600;
 }
 
+.auth-field__error {
+  color: #e11d48;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .auth-input {
   width: 100%;
   min-height: 50px;
@@ -2151,6 +2157,18 @@ h2 {
 .auth-input:focus {
   outline: 2px solid rgba(15, 157, 122, 0.18);
   border-color: #9fd7c7;
+}
+
+.auth-input--error {
+  border-color: #e5e7eb;
+  background: #ffffff;
+}
+
+.auth-form__error {
+  margin: -4px 0 4px;
+  color: #e11d48;
+  font-size: 0.94rem;
+  font-weight: 700;
 }
 
 .auth-submit-button {

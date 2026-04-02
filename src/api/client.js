@@ -9,6 +9,31 @@ const DEFAULT_API_BASE_URL = '/api'
 
 let refreshPromise = null
 
+async function buildApiError(response) {
+  const contentType = response.headers.get('content-type') ?? ''
+  let message = `API request failed: ${response.status}`
+
+  if (contentType.includes('application/json')) {
+    try {
+      const payload = await response.json()
+      const detailMessage =
+        payload?.data?.message ??
+        payload?.message ??
+        payload?.error?.message
+
+      if (detailMessage) {
+        message = detailMessage
+      }
+    } catch {
+      // Ignore body parsing failures and keep the fallback message.
+    }
+  }
+
+  const error = new Error(message)
+  error.status = response.status
+  return error
+}
+
 function buildUrl(path) {
   const configuredBaseUrl =
     import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL
@@ -114,7 +139,7 @@ export async function apiRequest(path, options = {}) {
       })
 
       if (!retriedResponse.ok) {
-        throw new Error(`API request failed: ${retriedResponse.status}`)
+        throw await buildApiError(retriedResponse)
       }
 
       const retriedContentType = retriedResponse.headers.get('content-type') ?? ''
@@ -130,7 +155,7 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`)
+    throw await buildApiError(response)
   }
 
   const contentType = response.headers.get('content-type') ?? ''

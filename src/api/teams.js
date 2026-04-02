@@ -7,6 +7,22 @@ import {
 import { getAccessToken } from '../lib/auth.js'
 
 function normalizeTeam(item) {
+  const positionDetails = Array.isArray(item.positions)
+    ? item.positions
+        .map((position) =>
+          typeof position === 'string'
+            ? {
+                positionName: position,
+                requiredCount: 1,
+              }
+            : {
+                positionName: position.positionName ?? position.name ?? '',
+                requiredCount: position.requiredCount ?? position.count ?? 1,
+              },
+        )
+        .filter((position) => position.positionName)
+    : []
+
   return {
     id: item.id,
     hackathonId: item.hackathonId ?? item.hackathon?.id ?? null,
@@ -16,13 +32,8 @@ function normalizeTeam(item) {
       item.hackathonName ??
       item.hackathon?.title ??
       (item.hackathonId ? `해커톤 #${item.hackathonId}` : '해커톤 미정'),
-    positions: Array.isArray(item.positions)
-      ? item.positions.map((position) =>
-          typeof position === 'string'
-            ? position
-            : position.positionName ?? position.name ?? '',
-        ).filter(Boolean)
-      : [],
+    positions: positionDetails.map((position) => position.positionName),
+    positionDetails,
     isOpen:
       item.isOpen ?? item.open ?? item.status === 'open' ?? false,
     leaderId:
@@ -116,12 +127,13 @@ export async function fetchTeamDetail(id) {
   }
 }
 
-export async function applyToTeam(id) {
+export async function applyToTeam(id, position = null) {
   return apiRequest(`/teams/${id}/applications`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${getAccessToken()}`,
     },
+    body: JSON.stringify(position ? { position } : {}),
   })
 }
 
@@ -136,6 +148,7 @@ export async function fetchTeamApplications(id) {
     applicationId: item.applicationId,
     userId: item.userId,
     nickname: item.nickname,
+    position: item.position ?? null,
     status: item.status,
     createdAt: item.createdAt,
   }))

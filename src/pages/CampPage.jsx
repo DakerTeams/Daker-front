@@ -10,6 +10,13 @@ import {
 } from '../api/teams.js'
 import { getStoredUser } from '../lib/auth.js'
 
+function createEmptyPosition() {
+  return {
+    positionName: '',
+    requiredCount: '1',
+  }
+}
+
 const openFilters = [
   { key: 'all', label: '전체' },
   { key: 'open', label: '모집중' },
@@ -43,11 +50,14 @@ function CampPage() {
   const [appliedTeamIds, setAppliedTeamIds] = useState([])
   const [teamDetailMessage, setTeamDetailMessage] = useState('')
   const [isApplying, setIsApplying] = useState(false)
+  const [selectedPosition, setSelectedPosition] = useState('')
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
     isOpen: 'true',
+    maxMembers: '5',
+    positions: [createEmptyPosition()],
   })
   const [editMessage, setEditMessage] = useState('')
   const [isSavingEdit, setIsSavingEdit] = useState(false)
@@ -97,6 +107,7 @@ function CampPage() {
 
   const handleOpenTeam = async (teamId) => {
     setTeamDetailMessage('')
+    setSelectedPosition('')
 
     try {
       const detail = await fetchTeamDetail(teamId)
@@ -123,7 +134,7 @@ function CampPage() {
     setTeamDetailMessage('')
 
     try {
-      await applyToTeam(selectedTeam.id)
+      await applyToTeam(selectedTeam.id, selectedPosition || null)
       setAppliedTeamIds((current) =>
         current.includes(selectedTeam.id) ? current : [...current, selectedTeam.id],
       )
@@ -271,9 +282,12 @@ function CampPage() {
               <p className="team-desc">{team.description}</p>
 
               <div className="team-positions">
-                {team.positions.map((position) => (
-                  <span key={position} className="tag-chip">
-                    {position}
+                {team.positionDetails.map((position) => (
+                  <span
+                    key={`${team.id}-${position.positionName}`}
+                    className="tag-chip"
+                  >
+                    {position.positionName} · {position.requiredCount}명
                   </span>
                 ))}
               </div>
@@ -350,10 +364,13 @@ function CampPage() {
               <section className="surface-card">
                 <p className="meta-text">모집 포지션</p>
                 <div className="team-positions">
-                  {selectedTeam.positions.length > 0 ? (
-                    selectedTeam.positions.map((position) => (
-                      <span key={position} className="tag-chip">
-                        {position}
+                  {selectedTeam.positionDetails?.length > 0 ? (
+                    selectedTeam.positionDetails.map((position) => (
+                      <span
+                        key={`${selectedTeam.id}-${position.positionName}`}
+                        className="tag-chip"
+                      >
+                        {position.positionName} · {position.requiredCount}명
                       </span>
                     ))
                   ) : (
@@ -361,6 +378,29 @@ function CampPage() {
                   )}
                 </div>
               </section>
+
+              {selectedTeam.isOpen && !isSelectedTeamLeader ? (
+                <section className="surface-card">
+                  <label className="form-field">
+                    <span className="form-label">지원할 역할</span>
+                    <select
+                      className="form-control"
+                      value={selectedPosition}
+                      onChange={(event) => setSelectedPosition(event.target.value)}
+                    >
+                      <option value="">역할 선택 안 함</option>
+                      {(selectedTeam.positionDetails ?? []).map((position) => (
+                        <option
+                          key={`${selectedTeam.id}-apply-${position.positionName}`}
+                          value={position.positionName}
+                        >
+                          {position.positionName} ({position.requiredCount}명)
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </section>
+              ) : null}
 
               <section className="surface-card">
                 <p className="meta-text">팀원</p>
@@ -400,6 +440,14 @@ function CampPage() {
                         name: selectedTeam.name ?? '',
                         description: selectedTeam.description ?? '',
                         isOpen: String(selectedTeam.isOpen ?? true),
+                        maxMembers: String(selectedTeam.maxMembers ?? 5),
+                        positions:
+                          selectedTeam.positionDetails?.length > 0
+                            ? selectedTeam.positionDetails.map((position) => ({
+                                positionName: position.positionName,
+                                requiredCount: String(position.requiredCount ?? 1),
+                              }))
+                            : [createEmptyPosition()],
                       })
                       setEditMessage('')
                       setIsEditDrawerOpen(true)
@@ -526,6 +574,101 @@ function CampPage() {
                       <option value="false">마감</option>
                     </select>
                   </label>
+
+                  <label className="form-field">
+                    <span className="form-label">최대 팀원 수</span>
+                    <input
+                      className="form-control"
+                      type="number"
+                      min="1"
+                      value={editForm.maxMembers}
+                      onChange={(event) =>
+                        setEditForm((current) => ({
+                          ...current,
+                          maxMembers: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+
+                <div className="stack-list stack-list--compact">
+                  <div className="info-row">
+                    <span className="form-label">모집 역할</span>
+                    <button
+                      type="button"
+                      className="button-link button-link--ghost"
+                      onClick={() =>
+                        setEditForm((current) => ({
+                          ...current,
+                          positions: [...current.positions, createEmptyPosition()],
+                        }))
+                      }
+                    >
+                      역할 추가
+                    </button>
+                  </div>
+
+                  {editForm.positions.map((position, index) => (
+                    <div key={`camp-edit-position-${index}`} className="form-grid">
+                      <label className="form-field">
+                        <span className="form-label">역할명</span>
+                        <input
+                          className="form-control"
+                          value={position.positionName}
+                          onChange={(event) =>
+                            setEditForm((current) => ({
+                              ...current,
+                              positions: current.positions.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, positionName: event.target.value }
+                                  : item,
+                              ),
+                            }))
+                          }
+                        />
+                      </label>
+
+                      <label className="form-field">
+                        <span className="form-label">인원</span>
+                        <input
+                          className="form-control"
+                          type="number"
+                          min="1"
+                          value={position.requiredCount}
+                          onChange={(event) =>
+                            setEditForm((current) => ({
+                              ...current,
+                              positions: current.positions.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, requiredCount: event.target.value }
+                                  : item,
+                              ),
+                            }))
+                          }
+                        />
+                      </label>
+
+                      <div className="form-field">
+                        <span className="form-label">관리</span>
+                        <button
+                          type="button"
+                          className="button-link button-link--ghost"
+                          onClick={() =>
+                            setEditForm((current) => ({
+                              ...current,
+                              positions:
+                                current.positions.length === 1
+                                  ? [createEmptyPosition()]
+                                  : current.positions.filter((_, itemIndex) => itemIndex !== index),
+                            }))
+                          }
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
             </div>
@@ -550,6 +693,13 @@ function CampPage() {
                       name: editForm.name,
                       description: editForm.description,
                       isOpen: editForm.isOpen === 'true',
+                      maxMemberCount: Number(editForm.maxMembers) || 1,
+                      positions: editForm.positions
+                        .map((position) => ({
+                          positionName: position.positionName.trim(),
+                          requiredCount: Number(position.requiredCount) || 1,
+                        }))
+                        .filter((position) => position.positionName),
                     })
 
                     const nextSelectedTeam = {
@@ -557,6 +707,16 @@ function CampPage() {
                       ...updated,
                       description: editForm.description,
                       isOpen: editForm.isOpen === 'true',
+                      maxMembers: Number(editForm.maxMembers) || selectedTeam.maxMembers,
+                      positionDetails: editForm.positions
+                        .map((position) => ({
+                          positionName: position.positionName.trim(),
+                          requiredCount: Number(position.requiredCount) || 1,
+                        }))
+                        .filter((position) => position.positionName),
+                      positions: editForm.positions
+                        .map((position) => position.positionName.trim())
+                        .filter(Boolean),
                     }
 
                     setSelectedTeam(nextSelectedTeam)
