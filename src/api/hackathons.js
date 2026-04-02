@@ -134,26 +134,6 @@ export async function fetchHackathonDetail(id) {
   }
 }
 
-export async function fetchHackathonLeaderboard(id) {
-  const payload = await apiRequest(`/hackathons/${id}/leaderboard`)
-  const data = extractObject(payload)
-  const rows = data.items ?? data.teams ?? []
-
-  return rows.map((item, index) => ({
-    rank: item.rank ?? index + 1,
-    teamId: item.teamId ?? index + 1,
-    teamName: item.teamName ?? item.name ?? item.team?.name ?? `team_${index + 1}`,
-    memberCount: item.memberCount ?? 0,
-    score: item.score ?? item.totalScore ?? null,
-    submitted:
-      typeof item.submitted === 'boolean'
-        ? item.submitted
-        : item.score !== null && item.score !== undefined
-          ? true
-          : item.totalScore !== null && item.totalScore !== undefined,
-  }))
-}
-
 export async function fetchRegistrationStatus(id) {
   const payload = await apiRequest(`/hackathons/${id}/register`, {
     headers: {
@@ -200,3 +180,20 @@ export async function fetchMySubmissions(id) {
   })
   return extractObject(payload)
 }
+
+export async function fetchHackathonLeaderboard(id) {
+  const payload = await apiRequest(`/hackathons/${id}/leaderboard`)
+  const data = extractObject(payload)
+  return {
+    scoreType: data.scoreType ?? 'SCORE',
+    items: Array.isArray(data.items)
+      ? data.items.map((item) => ({
+          rank: item.rank ?? null,
+          score: item.score ?? null,
+          teamName: item.teamName ?? '',
+          submitted: item.submitted ?? false,
+        }))
+      : [],
+  }
+}
+
