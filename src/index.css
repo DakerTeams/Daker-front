@@ -2160,8 +2160,8 @@ h2 {
 }
 
 .auth-input--error {
-  border-color: #fda4af;
-  background: #fff1f2;
+  border-color: #e5e7eb;
+  background: #ffffff;
 }
 
 .auth-form__error {
