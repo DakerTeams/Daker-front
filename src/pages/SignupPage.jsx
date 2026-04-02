@@ -9,7 +9,12 @@ function SignupPage() {
     email: '',
     password: '',
   })
-  const [errorMessage, setErrorMessage] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({
+    nickname: '',
+    email: '',
+    password: '',
+    form: '',
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (event) => {
@@ -18,18 +23,50 @@ function SignupPage() {
       ...current,
       [name]: value,
     }))
+    setFieldErrors((current) => ({
+      ...current,
+      [name]: '',
+      form: '',
+    }))
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setIsSubmitting(true)
-    setErrorMessage('')
+    setFieldErrors({
+      nickname: '',
+      email: '',
+      password: '',
+      form: '',
+    })
 
     try {
       await signup(form)
       navigate('/login')
     } catch (error) {
-      setErrorMessage(error.message ?? '회원가입에 실패했습니다. 입력값을 다시 확인해주세요.')
+      const message = error.message ?? '회원가입에 실패했습니다. 입력값을 다시 확인해주세요.'
+
+      if (message.includes('이메일')) {
+        setFieldErrors((current) => ({
+          ...current,
+          email: message,
+        }))
+      } else if (message.includes('닉네임')) {
+        setFieldErrors((current) => ({
+          ...current,
+          nickname: message,
+        }))
+      } else if (message.includes('비밀번호')) {
+        setFieldErrors((current) => ({
+          ...current,
+          password: message,
+        }))
+      } else {
+        setFieldErrors((current) => ({
+          ...current,
+          form: message,
+        }))
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -70,14 +107,18 @@ function SignupPage() {
             <input
               type="text"
               name="nickname"
-              className="auth-input"
+              className={`auth-input${fieldErrors.nickname ? ' auth-input--error' : ''}`}
               placeholder="jinwoo_k"
               value={form.nickname}
               onChange={handleChange}
             />
-            <small className="auth-field__hint">
-              영문, 숫자, 언더스코어 사용 가능 (2~20자)
-            </small>
+            {fieldErrors.nickname ? (
+              <small className="auth-field__error">{fieldErrors.nickname}</small>
+            ) : (
+              <small className="auth-field__hint">
+                영문, 숫자, 언더스코어 사용 가능 (2~20자)
+              </small>
+            )}
           </label>
 
           <label className="auth-field">
@@ -87,11 +128,14 @@ function SignupPage() {
             <input
               type="email"
               name="email"
-              className="auth-input"
+              className={`auth-input${fieldErrors.email ? ' auth-input--error' : ''}`}
               placeholder="jinwoo@example.com"
               value={form.email}
               onChange={handleChange}
             />
+            {fieldErrors.email ? (
+              <small className="auth-field__error">{fieldErrors.email}</small>
+            ) : null}
           </label>
 
           <label className="auth-field">
@@ -101,19 +145,24 @@ function SignupPage() {
             <input
               type="password"
               name="password"
-              className="auth-input"
+              className={`auth-input${fieldErrors.password ? ' auth-input--error' : ''}`}
               placeholder="8자 이상, 특수문자 포함"
               value={form.password}
               onChange={handleChange}
             />
+            {fieldErrors.password ? (
+              <small className="auth-field__error">{fieldErrors.password}</small>
+            ) : null}
           </label>
+
+          {fieldErrors.form ? (
+            <p className="auth-form__error">{fieldErrors.form}</p>
+          ) : null}
 
           <button type="submit" className="auth-submit-button">
             {isSubmitting ? '가입 중...' : '회원가입'}
           </button>
         </form>
-
-        {errorMessage ? <div className="auth-demo-note">{errorMessage}</div> : null}
 
         <p className="auth-footer">
           이미 계정이 있으신가요? <Link to="/login">로그인</Link>
