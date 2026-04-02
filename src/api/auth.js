@@ -16,6 +16,7 @@ function normalizeUser(user) {
     role: String(user.role ?? 'USER').toLowerCase(),
     accountStatus: user.accountStatus ?? 'ACTIVE',
     createdAt: user.createdAt ?? '',
+    tags: Array.isArray(user.tags) ? user.tags.map((t) => t.name ?? t) : [],
   }
 }
 

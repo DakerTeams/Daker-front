@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchHackathons } from "../api/hackathons.js";
 import { fetchPlatformStats } from "../api/stats.js";
+import { getStoredUser } from "../lib/auth.js";
 
 const typewriterWords = ["Build.", "Compete.", "Win."];
 const cumulativeLengths = typewriterWords.reduce((accumulator, word, index) => {
@@ -68,16 +69,36 @@ function MainPage() {
 
     async function loadPublicData() {
       try {
-        const [hackathonResponse, statsResponse] = await Promise.all([
-          fetchHackathons(),
+        const currentUser = getStoredUser();
+        const userTags = currentUser?.tags ?? [];
+
+        let hackathonPromise;
+        if (userTags.length > 0) {
+          hackathonPromise = Promise.all(
+            userTags.slice(0, 3).map((tag) => fetchHackathons({ tag, limit: 3 })),
+          ).then((results) => {
+            const seen = new Set();
+            return results
+              .flat()
+              .filter((h) => {
+                if (seen.has(h.id)) return false;
+                seen.add(h.id);
+                return true;
+              })
+              .slice(0, 3);
+          });
+        } else {
+          hackathonPromise = fetchHackathons({ limit: 3 });
+        }
+
+        const [hackathonList, statsResponse] = await Promise.all([
+          hackathonPromise,
           fetchPlatformStats(),
         ]);
 
         if (!isMounted) return;
 
-        setVisibleHackathons(
-          hackathonResponse.filter((item) => item.status === "open"),
-        );
+        setVisibleHackathons(hackathonList);
         setStats(statsResponse);
       } catch {
         if (!isMounted) return;
