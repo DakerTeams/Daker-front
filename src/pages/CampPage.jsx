@@ -100,7 +100,7 @@ function CampPage() {
 
     try {
       const detail = await fetchTeamDetail(teamId)
-      setSelectedTeam(enrichTeam(detail, availableHackathons))
+      setSelectedTeam(detail)
     } catch {
       const fallbackTeam = items.find((item) => item.id === teamId) ?? null
       setSelectedTeam({
@@ -369,6 +369,9 @@ function CampPage() {
                     selectedTeam.members.map((member) => (
                       <div key={member.userId} className="info-row">
                         <span>{member.nickname}</span>
+                        {member.position && (
+                          <span className="tag-chip">{member.position}</span>
+                        )}
                       </div>
                     ))
                   ) : (
