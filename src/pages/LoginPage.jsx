@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { login } from '../api/auth.js'
+import { normalizeAuthErrorMessage, resolveAuthErrorField } from '../lib/auth-error.js'
 
 function LoginPage() {
   const navigate = useNavigate()
@@ -9,7 +10,11 @@ function LoginPage() {
     email: '',
     password: '',
   })
-  const [errorMessage, setErrorMessage] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({
+    email: '',
+    password: '',
+    form: '',
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (event) => {
@@ -18,18 +23,70 @@ function LoginPage() {
       ...current,
       [name]: value,
     }))
+    setFieldErrors((current) => ({
+      ...current,
+      [name]: '',
+      form: '',
+    }))
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setIsSubmitting(true)
-    setErrorMessage('')
+    const nextFieldErrors = {
+      email: '',
+      password: '',
+      form: '',
+    }
+
+    if (!form.email.trim()) {
+      nextFieldErrors.email = '이메일을 입력해주세요.'
+    }
+
+    if (!form.password) {
+      nextFieldErrors.password = '비밀번호를 입력해주세요.'
+    }
+
+    if (nextFieldErrors.email || nextFieldErrors.password) {
+      setFieldErrors(nextFieldErrors)
+      setIsSubmitting(false)
+      return
+    }
+
+    setFieldErrors(nextFieldErrors)
 
     try {
       await login(form)
       navigate(location.state?.from || '/', { replace: true })
-    } catch {
-      setErrorMessage('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
+    } catch (error) {
+      const message = normalizeAuthErrorMessage(
+        error.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.'
+      )
+      const field = resolveAuthErrorField(message)
+
+      if (field === 'email') {
+        setFieldErrors({
+          email: message,
+          password: '',
+          form: '',
+        })
+        return
+      }
+
+      if (field === 'password') {
+        setFieldErrors({
+          email: '',
+          password: message,
+          form: '',
+        })
+        return
+      }
+
+      setFieldErrors({
+        email: '',
+        password: '',
+        form: message,
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -67,11 +124,14 @@ function LoginPage() {
             <input
               type="email"
               name="email"
-              className="auth-input"
+              className={`auth-input${fieldErrors.email ? ' auth-input--error' : ''}`}
               placeholder="jinwoo@example.com"
               value={form.email}
               onChange={handleChange}
             />
+            {fieldErrors.email ? (
+              <small className="auth-field__error">{fieldErrors.email}</small>
+            ) : null}
           </label>
 
           <label className="auth-field">
@@ -81,19 +141,22 @@ function LoginPage() {
             <input
               type="password"
               name="password"
-              className="auth-input"
+              className={`auth-input${fieldErrors.password ? ' auth-input--error' : ''}`}
               placeholder="비밀번호를 입력하세요"
               value={form.password}
               onChange={handleChange}
             />
+            {fieldErrors.password ? (
+              <small className="auth-field__error">{fieldErrors.password}</small>
+            ) : null}
           </label>
+
+          {fieldErrors.form ? <p className="auth-form__error">{fieldErrors.form}</p> : null}
 
           <button type="submit" className="auth-submit-button">
             {isSubmitting ? '로그인 중...' : '로그인'}
           </button>
         </form>
-
-        {errorMessage ? <div className="auth-demo-note">{errorMessage}</div> : null}
 
         <p className="auth-footer">
           계정이 없으신가요? <Link to="/signup">회원가입</Link>

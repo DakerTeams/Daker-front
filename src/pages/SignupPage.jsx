@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signup } from '../api/auth.js'
+import { normalizeAuthErrorMessage, resolveAuthErrorField } from '../lib/auth-error.js'
 
 function SignupPage() {
   const navigate = useNavigate()
@@ -33,30 +34,53 @@ function SignupPage() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setIsSubmitting(true)
-    setFieldErrors({
+    const nextFieldErrors = {
       nickname: '',
       email: '',
       password: '',
       form: '',
-    })
+    }
+
+    if (!form.nickname.trim()) {
+      nextFieldErrors.nickname = '닉네임을 입력해주세요.'
+    }
+
+    if (!form.email.trim()) {
+      nextFieldErrors.email = '이메일을 입력해주세요.'
+    }
+
+    if (!form.password) {
+      nextFieldErrors.password = '비밀번호를 입력해주세요.'
+    }
+
+    if (nextFieldErrors.nickname || nextFieldErrors.email || nextFieldErrors.password) {
+      setFieldErrors(nextFieldErrors)
+      setIsSubmitting(false)
+      return
+    }
+
+    setFieldErrors(nextFieldErrors)
 
     try {
       await signup(form)
       navigate('/login')
     } catch (error) {
-      const message = error.message ?? '회원가입에 실패했습니다. 입력값을 다시 확인해주세요.'
+      const message = normalizeAuthErrorMessage(
+        error.message ?? '회원가입에 실패했습니다. 입력값을 다시 확인해주세요.'
+      )
+      const field = resolveAuthErrorField(message)
 
-      if (message.includes('이메일')) {
+      if (field === 'email') {
         setFieldErrors((current) => ({
           ...current,
           email: message,
         }))
-      } else if (message.includes('닉네임')) {
+      } else if (field === 'nickname') {
         setFieldErrors((current) => ({
           ...current,
           nickname: message,
         }))
-      } else if (message.includes('비밀번호')) {
+      } else if (field === 'password') {
         setFieldErrors((current) => ({
           ...current,
           password: message,
