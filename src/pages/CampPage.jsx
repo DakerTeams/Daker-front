@@ -50,6 +50,7 @@ function CampPage() {
   const [appliedTeamIds, setAppliedTeamIds] = useState([])
   const [teamDetailMessage, setTeamDetailMessage] = useState('')
   const [isApplying, setIsApplying] = useState(false)
+  const [selectedPosition, setSelectedPosition] = useState('')
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
@@ -106,6 +107,7 @@ function CampPage() {
 
   const handleOpenTeam = async (teamId) => {
     setTeamDetailMessage('')
+    setSelectedPosition('')
 
     try {
       const detail = await fetchTeamDetail(teamId)
@@ -132,7 +134,7 @@ function CampPage() {
     setTeamDetailMessage('')
 
     try {
-      await applyToTeam(selectedTeam.id)
+      await applyToTeam(selectedTeam.id, selectedPosition || null)
       setAppliedTeamIds((current) =>
         current.includes(selectedTeam.id) ? current : [...current, selectedTeam.id],
       )
@@ -280,9 +282,12 @@ function CampPage() {
               <p className="team-desc">{team.description}</p>
 
               <div className="team-positions">
-                {team.positions.map((position) => (
-                  <span key={position} className="tag-chip">
-                    {position}
+                {team.positionDetails.map((position) => (
+                  <span
+                    key={`${team.id}-${position.positionName}`}
+                    className="tag-chip"
+                  >
+                    {position.positionName} · {position.requiredCount}명
                   </span>
                 ))}
               </div>
@@ -359,10 +364,13 @@ function CampPage() {
               <section className="surface-card">
                 <p className="meta-text">모집 포지션</p>
                 <div className="team-positions">
-                  {selectedTeam.positions.length > 0 ? (
-                    selectedTeam.positions.map((position) => (
-                      <span key={position} className="tag-chip">
-                        {position}
+                  {selectedTeam.positionDetails?.length > 0 ? (
+                    selectedTeam.positionDetails.map((position) => (
+                      <span
+                        key={`${selectedTeam.id}-${position.positionName}`}
+                        className="tag-chip"
+                      >
+                        {position.positionName} · {position.requiredCount}명
                       </span>
                     ))
                   ) : (
@@ -370,6 +378,29 @@ function CampPage() {
                   )}
                 </div>
               </section>
+
+              {selectedTeam.isOpen && !isSelectedTeamLeader ? (
+                <section className="surface-card">
+                  <label className="form-field">
+                    <span className="form-label">지원할 역할</span>
+                    <select
+                      className="form-control"
+                      value={selectedPosition}
+                      onChange={(event) => setSelectedPosition(event.target.value)}
+                    >
+                      <option value="">역할 선택 안 함</option>
+                      {(selectedTeam.positionDetails ?? []).map((position) => (
+                        <option
+                          key={`${selectedTeam.id}-apply-${position.positionName}`}
+                          value={position.positionName}
+                        >
+                          {position.positionName} ({position.requiredCount}명)
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </section>
+              ) : null}
 
               <section className="surface-card">
                 <p className="meta-text">팀원</p>

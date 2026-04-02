@@ -127,12 +127,13 @@ export async function fetchTeamDetail(id) {
   }
 }
 
-export async function applyToTeam(id) {
+export async function applyToTeam(id, position = null) {
   return apiRequest(`/teams/${id}/applications`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${getAccessToken()}`,
     },
+    body: JSON.stringify(position ? { position } : {}),
   })
 }
 
