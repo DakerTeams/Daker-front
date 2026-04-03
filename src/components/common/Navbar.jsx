@@ -1,7 +1,42 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { fetchMe, logout } from '../../api/auth.js'
-import { getStoredUser, subscribeAuthChange } from '../../lib/auth.js'
+import { fetchMe, logout, refreshAccessToken } from '../../api/auth.js'
+import { getStoredUser, getTokenExpiresAt, subscribeAuthChange } from '../../lib/auth.js'
+
+function useTokenExpiry() {
+  const [secondsLeft, setSecondsLeft] = useState(null)
+
+  useEffect(() => {
+    function update() {
+      const expiresAt = getTokenExpiresAt()
+      if (!expiresAt) {
+        setSecondsLeft(null)
+        return
+      }
+      const diff = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000))
+      setSecondsLeft(diff)
+    }
+
+    update()
+    const id = setInterval(update, 1000)
+    const unsub = subscribeAuthChange(update)
+
+    return () => {
+      clearInterval(id)
+      unsub()
+    }
+  }, [])
+
+  return secondsLeft
+}
+
+function formatExpiry(seconds) {
+  if (seconds === null) return null
+  if (seconds <= 0) return '만료됨'
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
 
 const navItems = [
   { to: '/hackathons', label: '해커톤' },
@@ -12,6 +47,8 @@ const navItems = [
 function Navbar() {
   const location = useLocation()
   const [user, setUser] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const secondsLeft = useTokenExpiry()
 
   useEffect(() => {
     const syncUser = async () => {
@@ -38,6 +75,17 @@ function Navbar() {
 
   const handleLogout = async () => {
     await logout()
+  }
+
+  const handleRefreshToken = async () => {
+    setRefreshing(true)
+    try {
+      await refreshAccessToken()
+    } catch {
+      // 실패 시 SessionGuard가 처리
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const isAdminView = location.pathname.startsWith('/admin')
@@ -77,7 +125,20 @@ function Navbar() {
         <div className="navbar__auth">
           {user ? (
             <>
-              <div className="navbar__role-chip">role: {displayRole} ↻</div>
+              {secondsLeft !== null && (
+                <div className={`navbar__token-expiry${secondsLeft <= 300 ? ' navbar__token-expiry--warn' : ''}`}>
+                  <span>{formatExpiry(secondsLeft)}</span>
+                  <button
+                    type="button"
+                    className={`navbar__token-refresh${refreshing ? ' navbar__token-refresh--spinning' : ''}`}
+                    onClick={handleRefreshToken}
+                    disabled={refreshing}
+                    title="토큰 갱신"
+                  >
+                    ↻
+                  </button>
+                </div>
+              )}
               <Link to="/me" className="navbar__profile">
                 <span className="navbar__profile-avatar">
                   {user.nickname?.slice(0, 1).toUpperCase()}

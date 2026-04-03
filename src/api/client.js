@@ -149,7 +149,7 @@ export async function apiRequest(path, options = {}) {
 
       return retriedResponse.json()
     } catch {
-      clearAuthSession()
+      clearAuthSession({ expired: true })
       throw new Error('API request failed: 401')
     }
   }

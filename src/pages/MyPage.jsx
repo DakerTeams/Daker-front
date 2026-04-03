@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { fetchMe, fetchAllTags, fetchUserTags, addUserTag, removeUserTag } from '../api/auth.js'
 import { fetchHackathons, fetchHackathonLeaderboard } from '../api/hackathons.js'
 import {
@@ -8,7 +9,7 @@ import {
   decideTeamApplication,
   updateTeam,
 } from '../api/teams.js'
-import { getStoredUser } from '../lib/auth.js'
+import { getStoredUser, SESSION_EXPIRED_EVENT } from '../lib/auth.js'
 
 function ApplicationsModal({ team, onClose, onUpdate }) {
   const [applications, setApplications] = useState([])
@@ -220,19 +221,17 @@ function groupTagsByCategory(tags) {
   return groups
 }
 
-function ProfileEditModal({ user, onClose, onSave }) {
+function ProfileEditModal({ user, initialTagObjects, onClose, onSave }) {
   const [allTags, setAllTags] = useState([])
-  const [currentTags, setCurrentTags] = useState([])
-  const [selectedNames, setSelectedNames] = useState(user.tags ?? [])
+  const [currentTags, setCurrentTags] = useState(initialTagObjects)
+  const [selectedNames, setSelectedNames] = useState(initialTagObjects.map((t) => t.name))
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    Promise.all([fetchAllTags(), fetchUserTags()]).then(([all, mine]) => {
+    fetchAllTags().then((all) => {
       setAllTags(all)
-      setCurrentTags(mine)
-      setSelectedNames(mine.map((t) => t.name))
       setLoading(false)
     })
   }, [])
@@ -256,7 +255,11 @@ function ProfileEditModal({ user, onClose, onSave }) {
         ...toRemove.map((t) => removeUserTag(t.tagId)),
       ])
 
-      onSave(selectedNames)
+      const newTagObjects = [
+        ...currentTags.filter((t) => selectedNames.includes(t.name)),
+        ...toAdd.map((name) => ({ tagId: null, name })),
+      ]
+      onSave(selectedNames, newTagObjects)
     } catch {
       setError('저장에 실패했습니다. 다시 시도해주세요.')
     } finally {
@@ -398,6 +401,7 @@ function TeamInfoModal({ team, hackathonName, onClose }) {
 }
 
 function MyPage() {
+  const navigate = useNavigate()
   const [user, setUser] = useState(getStoredUser() ?? null)
   const [myTeams, setMyTeams] = useState([])
   const [activeTab, setActiveTab] = useState('teams')
@@ -405,6 +409,15 @@ function MyPage() {
   const [applicationsModal, setApplicationsModal] = useState(null)
   const [infoModal, setInfoModal] = useState(null)
   const [profileEditOpen, setProfileEditOpen] = useState(false)
+  const [userTagObjects, setUserTagObjects] = useState([]) // { tagId, name }[]
+
+  useEffect(() => {
+    function onSessionExpired() {
+      navigate('/login', { replace: true, state: { from: '/me' } })
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired)
+  }, [navigate])
 
   async function loadTeams(resolvedUser) {
     const [teamList, hackathonList] = await Promise.all([
@@ -491,12 +504,16 @@ function MyPage() {
 
     async function loadMyPage() {
       try {
-        const me = await fetchMe()
+        const [me, tagObjects] = await Promise.all([fetchMe(), fetchUserTags()])
         if (!isMounted) return
         if (me) setUser(me)
+        setUserTagObjects(tagObjects)
         await loadTeams(me)
-      } catch {
-        // keep initial state
+      } catch (err) {
+        if (!isMounted) return
+        if (err?.status === 401 || err?.message?.includes('401')) {
+          navigate('/login', { replace: true, state: { from: '/me' } })
+        }
       }
     }
 
@@ -679,9 +696,11 @@ function MyPage() {
       {profileEditOpen && (
         <ProfileEditModal
           user={user}
+          initialTagObjects={userTagObjects}
           onClose={() => setProfileEditOpen(false)}
-          onSave={(newTags) => {
+          onSave={(newTags, newTagObjects) => {
             setUser((prev) => ({ ...prev, tags: newTags }))
+            setUserTagObjects(newTagObjects)
             setProfileEditOpen(false)
           }}
         />
