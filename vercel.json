@@ -1,7 +1,6 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://15-164-250-113.sslip.io/:path*" },
-    { "source": "/ws/:path*", "destination": "https://15-164-250-113.sslip.io/ws/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
