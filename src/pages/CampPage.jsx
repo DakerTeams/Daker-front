@@ -95,8 +95,13 @@ function CampPage() {
   }, [openFilter, query, page]);
 
   const handleOpenTeam = async (teamId) => {
-    setTeamDetailMessage("");
     setSelectedPosition("");
+
+    if (!getStoredUser()) {
+      setTeamDetailMessage("로그인 후 합류 신청이 가능합니다.");
+    } else {
+      setTeamDetailMessage("");
+    }
 
     try {
       const detail = await fetchTeamDetail(teamId);
@@ -117,7 +122,7 @@ function CampPage() {
     if (!selectedTeam) return;
 
     if (!getStoredUser()) {
-      setTeamDetailMessage("로그인 후 팀 합류 신청을 할 수 있습니다.");
+      navigate("/login");
       return;
     }
 
