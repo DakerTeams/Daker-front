@@ -17,7 +17,11 @@ function MainPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [brandTilt, setBrandTilt] = useState({ x: 0, y: 0 });
   const [visibleHackathons, setVisibleHackathons] = useState([]);
-  const [stats, setStats] = useState({ participants: 0, activeHackathons: 0, totalPrize: '-' });
+  const [stats, setStats] = useState({
+    participants: 0,
+    activeHackathons: 0,
+    totalPrize: "-",
+  });
 
   const renderedWords = useMemo(
     () =>
@@ -75,7 +79,9 @@ function MainPage() {
         let hackathonPromise;
         if (userTags.length > 0) {
           hackathonPromise = Promise.all(
-            userTags.slice(0, 3).map((tag) => fetchHackathons({ tag, limit: 3 })),
+            userTags
+              .slice(0, 3)
+              .map((tag) => fetchHackathons({ tag, limit: 3 })),
           ).then((results) => {
             const seen = new Set();
             return results
@@ -313,6 +319,19 @@ function MainPage() {
                       </span>
                     </h2>
                   </div>
+                  {hackathon.tags.length > 0 && (
+                    <div className="hackathon-card__tags">
+                      {hackathon.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="tag-chip tag-chip--blue"
+                          style={{ marginRight: "5px" }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <p>{hackathon.summary}</p>
                 </div>
                 <div className="hackathon-card__meta">

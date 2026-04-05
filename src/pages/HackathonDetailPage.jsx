@@ -5,9 +5,7 @@ import {
   fetchHackathonDetail,
   fetchHackathonLeaderboard,
   fetchHackathonTeams,
-  fetchMySubmissions,
   fetchRegistrationStatus,
-  registerHackathon,
   submitResult,
 } from "../api/hackathons.js";
 import {
@@ -48,7 +46,6 @@ function HackathonDetailPage() {
   const [remoteLeaderboard, setRemoteLeaderboard] = useState(null);
   const [registrationStatus, setRegistrationStatus] = useState(null);
   const [registrationMessage, setRegistrationMessage] = useState("");
-  const [isRegisteringTeam, setIsRegisteringTeam] = useState(false);
   const [myTeamDetail, setMyTeamDetail] = useState(null);
   const [applications, setApplications] = useState([]);
   const [isApplicationsOpen, setIsApplicationsOpen] = useState(false);
@@ -85,12 +82,14 @@ function HackathonDetailPage() {
     let isMounted = true;
 
     async function loadDetail() {
+      let hackathonDetail = null;
       try {
         const [detail, participantTeams, leaderboard] = await Promise.all([
           fetchHackathonDetail(id),
           fetchHackathonTeams(id),
           fetchHackathonLeaderboard(id),
         ]);
+        hackathonDetail = detail;
 
         if (!isMounted) return;
 
@@ -115,7 +114,22 @@ function HackathonDetailPage() {
           if (!isMounted) return;
 
           setRegistrationStatus(status);
-          setTeamState(status?.teamId ? "hasTeam" : "notRegistered");
+
+          const hasTeam = Boolean(status?.teamId);
+          const isRegistered = hasTeam || Boolean(status?.registered || status?.id);
+
+          setTeamState(
+            hasTeam ? "hasTeam" : isRegistered ? "noTeam" : "notRegistered",
+          );
+          setSubmitState(
+            !isRegistered
+              ? "notRegistered"
+              : !hasTeam
+                ? "noTeam"
+                : hackathonDetail?.status === "closed" || hackathonDetail?.status === "ended"
+                  ? "closed"
+                  : "open",
+          );
 
           const matchedTeam = myTeams.find(
             (team) => String(team.id) === String(status?.teamId),
@@ -137,7 +151,7 @@ function HackathonDetailPage() {
             }
 
             setRemoteTeams((current) => {
-              const others = (current ?? participantTeams ?? []).filter(
+              const others = (current ?? []).filter(
                 (team) => String(team.id) !== String(matchedTeam.id),
               );
               return [matchedTeam, ...others];
@@ -147,6 +161,7 @@ function HackathonDetailPage() {
           if (!isMounted) return;
           setRegistrationStatus(null);
           setTeamState("notRegistered");
+          setSubmitState("notRegistered");
         }
       }
     }
@@ -168,7 +183,7 @@ function HackathonDetailPage() {
       prizes: remoteHackathon.prizes ?? [],
       teamStates: remoteHackathon.teamStates ?? {},
       submitStates: remoteHackathon.submitStates ?? {},
-      leaderboard: remoteLeaderboard ?? [],
+      leaderboard: remoteLeaderboard ?? { scoreType: "SCORE", items: [] },
     };
   }, [remoteHackathon, remoteLeaderboard]);
 
@@ -417,39 +432,6 @@ function HackathonDetailPage() {
     if (activeTab === "team") {
       return (
         <div className="stack-list team-tab-layout">
-          <div className="team-state-switcher" aria-label="팀 상태 미리보기">
-            <span className="team-state-switcher__label">데모 상태 :</span>
-            <div className="filter-group">
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === "notRegistered" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setTeamState("notRegistered")}
-              >
-                미참가
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === "noTeam" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setTeamState("noTeam")}
-              >
-                참가 완료 · 팀 없음
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === "hasTeam" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setTeamState("hasTeam")}
-              >
-                팀 있음
-              </button>
-            </div>
-          </div>
-
           {teamState === "notRegistered" && (
             <div className="team-state-card team-state-card--locked">
               <div className="team-state-card__icon">🔒</div>
@@ -653,7 +635,8 @@ function HackathonDetailPage() {
                   <div key={team.id} className="participant-team-table__row">
                     <div className="participant-team-table__team">
                       <strong>{team.name}</strong>
-                      {String(team.id) === String(registrationStatus?.teamId) && (
+                      {String(team.id) ===
+                        String(registrationStatus?.teamId) && (
                         <span className="team-role-badge">내 팀</span>
                       )}
                     </div>
@@ -662,11 +645,11 @@ function HackathonDetailPage() {
                     <span
                       className={`status-outline ${
                         team.isOpen
-                          ? 'status-outline--open'
-                          : 'status-outline--closed'
+                          ? "status-outline--open"
+                          : "status-outline--closed"
                       }`}
                     >
-                      {team.isOpen ? '모집 중' : '마감'}
+                      {team.isOpen ? "모집 중" : "마감"}
                     </span>
                   </div>
                 ))}
@@ -714,27 +697,46 @@ function HackathonDetailPage() {
                       파일 첨부 <span className="submit-required">*</span>
                     </span>
                     <div className="submit-dropzone">
-                      <p>{submitFile ? submitFile.name : "ZIP, PDF 파일을 끌어다 놓거나"}</p>
-                      <label className="submit-file-button" style={{ cursor: "pointer" }}>
+                      <p>
+                        {submitFile
+                          ? submitFile.name
+                          : "ZIP, PDF 파일을 끌어다 놓거나"}
+                      </p>
+                      <label
+                        className="submit-file-button"
+                        style={{ cursor: "pointer" }}
+                      >
                         파일 선택
                         <input
                           type="file"
                           accept=".zip,.pdf"
                           style={{ display: "none" }}
-                          onChange={(e) => setSubmitFile(e.target.files[0] ?? null)}
+                          onChange={(e) =>
+                            setSubmitFile(e.target.files[0] ?? null)
+                          }
                         />
                       </label>
                       <span>최대 50MB · ZIP / PDF</span>
                     </div>
                   </label>
 
-                  {submitMessage && <p style={{ color: submitMessage.includes("실패") ? "red" : "green" }}>{submitMessage}</p>}
+                  {submitMessage && (
+                    <p
+                      style={{
+                        color: submitMessage.includes("실패") ? "red" : "green",
+                      }}
+                    >
+                      {submitMessage}
+                    </p>
+                  )}
 
                   <div>
                     <button
                       type="button"
                       className="team-primary-button submit-button"
-                      disabled={isSubmitting || !submitFile || !submitMemo.trim()}
+                      disabled={
+                        isSubmitting || !submitFile || !submitMemo.trim()
+                      }
                       onClick={async () => {
                         if (!submitFile || !submitMemo.trim()) return;
                         setIsSubmitting(true);
@@ -748,7 +750,9 @@ function HackathonDetailPage() {
                           setSubmitFile(null);
                           setSubmitMemo("");
                         } catch {
-                          setSubmitMessage("제출에 실패했습니다. 다시 시도해주세요.");
+                          setSubmitMessage(
+                            "제출에 실패했습니다. 다시 시도해주세요.",
+                          );
                         } finally {
                           setIsSubmitting(false);
                         }
@@ -764,62 +768,37 @@ function HackathonDetailPage() {
         );
       }
 
-      return (
-        <div className="stack-list">
-          <div className="surface-card surface-card--soft">
-            <div className="filter-group" aria-label="제출 상태 미리보기">
-              <button
-                type="button"
-                className={`filter-chip${
-                  submitState === "notRegistered" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setSubmitState("notRegistered")}
-              >
-                미참가
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  submitState === "noTeam" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setSubmitState("noTeam")}
-              >
-                팀 없음
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  submitState === "open" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setSubmitState("open")}
-              >
-                제출 가능
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  submitState === "closed" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setSubmitState("closed")}
-              >
-                제출 마감
-              </button>
-            </div>
+      if (submitState === "notRegistered") {
+        return (
+          <div className="team-state-card team-state-card--locked">
+            <div className="team-state-card__icon">🔒</div>
+            <h2 className="team-state-card__title">해커톤에 먼저 참가해야 합니다</h2>
+            <p className="team-state-card__description">
+              제출하려면 먼저 이 해커톤에 참가 신청을 해주세요.
+            </p>
           </div>
+        );
+      }
 
-          <div className="surface-card">
-            <p className="meta-text">제출 탭 상태</p>
-            <h2>{hackathon.submitStates[submitState]}</h2>
-            <div className="surface-card surface-card--soft">
-              <p className="meta-text">제출 폼 필드</p>
-              <ul className="bullet-list">
-                <li>제출 제목</li>
-                <li>한 줄 요약</li>
-                <li>규칙별 URL / PDF / ZIP 첨부</li>
-                <li>팀 소개 및 메모</li>
-              </ul>
-            </div>
+      if (submitState === "noTeam") {
+        return (
+          <div className="team-state-card team-state-card--ready">
+            <div className="team-state-card__icon">🤝</div>
+            <h2 className="team-state-card__title">팀을 먼저 구성해주세요</h2>
+            <p className="team-state-card__description">
+              팀 없이는 제출할 수 없어요. 팀 탭에서 팀을 생성하거나 기존 팀에 합류해주세요.
+            </p>
           </div>
+        );
+      }
+
+      return (
+        <div className="team-state-card team-state-card--locked">
+          <div className="team-state-card__icon">⏰</div>
+          <h2 className="team-state-card__title">제출이 마감되었습니다</h2>
+          <p className="team-state-card__description">
+            이 해커톤의 제출 기간이 종료되었습니다.
+          </p>
         </div>
       );
     }
@@ -827,11 +806,11 @@ function HackathonDetailPage() {
     if (activeTab === "leaderboard") {
       return (
         <div className="surface-card">
-          {hackathon.leaderboard.length === 0 ? (
+          {hackathon.leaderboard.items.length === 0 ? (
             <p>아직 공개된 리더보드가 없습니다.</p>
           ) : (
             <div className="stack-list stack-list--compact">
-              {hackathon.leaderboard.map((entry) => (
+              {hackathon.leaderboard.items.map((entry) => (
                 <div
                   key={entry.teamName}
                   className="detail-list-row row-between"
@@ -840,7 +819,7 @@ function HackathonDetailPage() {
                     #{entry.rank} {entry.teamName}
                   </strong>
                   <span className="meta-text">
-                    {entry.submitted ? `${entry.score}점` : "미제출"}
+                    {entry.submitted ? `${entry.score ?? "-"}` : "미제출"}
                   </span>
                 </div>
               ))}
@@ -1047,7 +1026,9 @@ function HackathonDetailPage() {
                     <div>
                       <strong>{application.nickname}</strong>
                       <p className="meta-text">
-                        {application.position ? `지원 역할: ${application.position} · ` : ""}
+                        {application.position
+                          ? `지원 역할: ${application.position} · `
+                          : ""}
                         상태: {application.status} · 신청 ID:{" "}
                         {application.applicationId}
                       </p>
@@ -1207,7 +1188,10 @@ function HackathonDetailPage() {
               </div>
 
               {teamEditForm.positions.map((position, index) => (
-                <div key={`detail-edit-position-${index}`} className="form-grid">
+                <div
+                  key={`detail-edit-position-${index}`}
+                  className="form-grid"
+                >
                   <label className="form-field">
                     <span className="form-label">역할명</span>
                     <input
@@ -1257,7 +1241,9 @@ function HackathonDetailPage() {
                           positions:
                             current.positions.length === 1
                               ? [createEmptyPosition()]
-                              : current.positions.filter((_, itemIndex) => itemIndex !== index),
+                              : current.positions.filter(
+                                  (_, itemIndex) => itemIndex !== index,
+                                ),
                         }))
                       }
                     >
