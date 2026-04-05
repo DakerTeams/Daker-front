@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { login } from '../api/auth.js'
+import { getGithubLoginUrl, login } from '../api/auth.js'
 import { normalizeAuthErrorMessage, resolveAuthErrorField } from '../lib/auth-error.js'
 
 function LoginPage() {
@@ -16,6 +16,10 @@ function LoginPage() {
     form: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleGithubLogin = () => {
+    window.location.assign(getGithubLoginUrl())
+  }
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -105,7 +109,7 @@ function LoginPage() {
           <p>해커톤 플랫폼에 로그인하세요.</p>
         </div>
 
-        <button type="button" className="auth-social-button" disabled>
+        <button type="button" className="auth-social-button" onClick={handleGithubLogin}>
           <span className="auth-social-button__icon">◔</span>
           GitHub으로 로그인
         </button>

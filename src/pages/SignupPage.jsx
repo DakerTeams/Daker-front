@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { signup } from '../api/auth.js'
+import { getGithubLoginUrl, signup } from '../api/auth.js'
 import { normalizeAuthErrorMessage, resolveAuthErrorField } from '../lib/auth-error.js'
 
 function SignupPage() {
@@ -17,6 +17,10 @@ function SignupPage() {
     form: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleGithubSignup = () => {
+    window.location.assign(getGithubLoginUrl())
+  }
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -109,7 +113,7 @@ function SignupPage() {
           <p>계정을 만들고 첫 해커톤에 참가해보세요.</p>
         </div>
 
-        <button type="button" className="auth-social-button" disabled>
+        <button type="button" className="auth-social-button" onClick={handleGithubSignup}>
           <span className="auth-social-button__icon">◔</span>
           GitHub으로 가입 (추천)
         </button>

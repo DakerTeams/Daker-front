@@ -35,6 +35,18 @@ export function normalizeAuthErrorMessage(message) {
     return '이미 가입된 이메일입니다.'
   }
 
+  if (message.includes('GitHub 로그인 처리에 실패')) {
+    return 'GitHub 로그인 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'
+  }
+
+  if (message.includes('GitHub 계정 이메일을 확인할 수 없습니다')) {
+    return 'GitHub 계정에서 사용할 이메일을 확인할 수 없습니다.'
+  }
+
+  if (message.includes('GitHub 로그인 인증 상태가 유효하지 않습니다')) {
+    return 'GitHub 로그인 상태가 만료되었습니다. 다시 시도해주세요.'
+  }
+
   if (message.includes('이미 사용 중인 닉네임')) {
     return '이미 사용 중인 닉네임입니다.'
   }
