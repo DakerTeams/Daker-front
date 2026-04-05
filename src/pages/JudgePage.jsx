@@ -12,6 +12,10 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
+function scoreTypeLabel(scoreType) {
+  return scoreType === 'VOTE' ? '투표형' : '평가형'
+}
+
 function JudgePage() {
   const [hackathons, setHackathons] = useState([])
   const [selectedHackathon, setSelectedHackathon] = useState(null)
@@ -24,7 +28,17 @@ function JudgePage() {
   const [loadingSubmission, setLoadingSubmission] = useState(false)
   const [loading, setLoading] = useState(false)
   const [loadingTeams, setLoadingTeams] = useState(false)
-  const [error, setError] = useState('')
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    if (!toast) return undefined
+
+    const timer = window.setTimeout(() => {
+      setToast(null)
+    }, 2600)
+
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
   useEffect(() => {
     setLoading(true)
@@ -33,7 +47,10 @@ function JudgePage() {
         setHackathons(list)
         if (list.length > 0) setSelectedHackathon(list[0])
       })
-      .catch(() => setError('배정된 해커톤 목록을 불러오지 못했습니다.'))
+      .catch((requestError) => {
+        console.error('Failed to fetch judge hackathons', requestError)
+        setToast({ type: 'error', message: '배정된 해커톤 목록을 불러오지 못했습니다.' })
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -46,7 +63,6 @@ function JudgePage() {
     setSavedTeamIds(new Set())
     setSelectedTeam(null)
     setSubmission(null)
-    setError('')
 
     fetchJudgeTeams(selectedHackathon.id)
       .then((data) => {
@@ -71,7 +87,10 @@ function JudgePage() {
         )
         setSavedTeamIds(reviewedIds)
       })
-      .catch(() => setError('팀 목록을 불러오지 못했습니다.'))
+      .catch((requestError) => {
+        console.error('Failed to fetch judge teams', requestError)
+        setToast({ type: 'error', message: '팀 목록을 불러오지 못했습니다.' })
+      })
       .finally(() => setLoadingTeams(false))
   }, [selectedHackathon])
 
@@ -84,7 +103,11 @@ function JudgePage() {
     setLoadingSubmission(true)
     fetchJudgeSubmission(selectedHackathon.id, selectedTeam.teamId)
       .then(setSubmission)
-      .catch(() => setSubmission(null))
+      .catch((requestError) => {
+        console.error('Failed to fetch judge submission', requestError)
+        setSubmission(null)
+        setToast({ type: 'error', message: '제출물을 불러오지 못했습니다.' })
+      })
       .finally(() => setLoadingSubmission(false))
   }, [selectedTeam, selectedHackathon])
 
@@ -97,17 +120,49 @@ function JudgePage() {
 
   async function handleSaveScore(team) {
     const criteria = judgeData?.criteria ?? []
+    const isVoteType = judgeData?.scoreType === 'VOTE'
+    const hasCriteria = criteria.length > 0
+    const hasSubmission = Boolean(team.submissionId)
+
+    if (isVoteType) {
+      console.error('Scoring blocked: vote-based hackathon cannot be scored in JudgePage', {
+        hackathonId: selectedHackathon?.id,
+        teamId: team.teamId,
+      })
+      setToast({ type: 'error', message: '투표형 해커톤은 점수 채점을 지원하지 않습니다.' })
+      return
+    }
+
+    if (!hasCriteria) {
+      console.error('Scoring blocked: no criteria configured', {
+        hackathonId: selectedHackathon?.id,
+        teamId: team.teamId,
+      })
+      setToast({ type: 'error', message: '채점 기준이 없어 점수를 저장할 수 없습니다.' })
+      return
+    }
+
+    if (!hasSubmission) {
+      console.error('Scoring blocked: team has no submission', {
+        hackathonId: selectedHackathon?.id,
+        teamId: team.teamId,
+      })
+      setToast({ type: 'error', message: '제출물이 없는 팀은 채점할 수 없습니다.' })
+      return
+    }
+
     const scores = criteria.map((_, i) => ({
       score: scoreMap[team.teamId]?.[i] ?? 0,
     }))
 
     setSavingTeamId(team.teamId)
-    setError('')
     try {
       await submitJudgeScore(selectedHackathon.id, team.teamId, scores)
       setSavedTeamIds((prev) => new Set([...prev, team.teamId]))
-    } catch {
-      setError(`${team.teamName} 채점 저장에 실패했습니다.`)
+      setToast({ type: 'success', message: `${team.teamName} 채점을 저장했습니다.` })
+    } catch (requestError) {
+      console.error('Failed to save judge score', requestError)
+      setToast({ type: 'error', message: '채점 저장에 실패했습니다.' })
     } finally {
       setSavingTeamId(null)
     }
@@ -116,6 +171,8 @@ function JudgePage() {
   const criteria = judgeData?.criteria ?? []
   const teams = judgeData?.items ?? []
   const reviewedCount = savedTeamIds.size
+  const isVoteType = judgeData?.scoreType === 'VOTE'
+  const hasCriteria = criteria.length > 0
 
   function calcTotalScore(teamId) {
     const values = scoreMap[teamId] ?? {}
@@ -132,6 +189,8 @@ function JudgePage() {
     const isSaving = savingTeamId === team.teamId
     const total = calcTotalScore(team.teamId)
     const hasSubmission = !!team.submissionId
+    const canScore = !isVoteType && hasCriteria && hasSubmission
+    const panelModeLabel = scoreTypeLabel(judgeData?.scoreType)
 
     return (
       <div className="judge-score-panel">
@@ -139,9 +198,12 @@ function JudgePage() {
           <button type="button" className="judge-back-btn" onClick={() => setSelectedTeam(null)}>
             ← 팀 목록
           </button>
-          <span className={`admin-pill ${isReviewed ? 'admin-pill--green' : 'admin-pill--gray'}`}>
-            {isReviewed ? '채점 완료' : '미채점'}
-          </span>
+          <div className="judge-inline-badges">
+            <span className="admin-pill admin-pill--blue">{panelModeLabel}</span>
+            <span className={`admin-pill ${isReviewed ? 'admin-pill--green' : 'admin-pill--gray'}`}>
+              {isReviewed ? '채점 완료' : isVoteType ? '검토 전' : '미채점'}
+            </span>
+          </div>
         </div>
 
         <div className="judge-score-panel__team">
@@ -205,59 +267,86 @@ function JudgePage() {
           </div>
         )}
 
-        {error && <p className="judge-error">{error}</p>}
-
-        {/* 채점 */}
-        <div className="judge-score-grid">
-          {criteria.map((c, i) => {
-            const value = scoreMap[team.teamId]?.[i] ?? 0
-            return (
-              <div key={c.label} className="judge-score-row">
-                <div className="judge-score-row__meta">
-                  <strong>{c.label}</strong>
-                  <span>최대 {c.maxScore}점</span>
+        {isVoteType ? (
+          <div className="judge-mode-banner judge-mode-banner--info">
+            투표형 해커톤입니다. 심사패널에서는 제출물 검토만 가능하며 점수 채점은 지원하지 않습니다.
+          </div>
+        ) : !hasCriteria ? (
+          <div className="judge-mode-banner judge-mode-banner--warn">
+            채점 기준이 등록되지 않아 현재 이 해커톤은 점수 채점이 불가능합니다.
+          </div>
+        ) : (
+          <div className="judge-score-grid">
+            {criteria.map((c, i) => {
+              const value = scoreMap[team.teamId]?.[i] ?? 0
+              return (
+                <div key={c.label} className="judge-score-row">
+                  <div className="judge-score-row__meta">
+                    <strong>{c.label}</strong>
+                    <span>최대 {c.maxScore}점</span>
+                  </div>
+                  <div className="judge-slider-wrap">
+                    <input
+                      type="range"
+                      min="0"
+                      max={c.maxScore ?? 100}
+                      step="0.5"
+                      value={value}
+                      onChange={(e) => updateScore(team.teamId, i, e.target.value)}
+                      className="judge-slider"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      max={c.maxScore ?? 100}
+                      step="0.5"
+                      defaultValue={value}
+                      key={`${team.teamId}-${i}-${value}`}
+                      onBlur={(e) => {
+                        const v = Math.min(c.maxScore ?? 100, Math.max(0, Number(e.target.value) || 0))
+                        updateScore(team.teamId, i, v)
+                      }}
+                      className="judge-score-input"
+                    />
+                  </div>
                 </div>
-                <div className="judge-slider-wrap">
-                  <input
-                    type="range"
-                    min="0"
-                    max={c.maxScore ?? 100}
-                    step="0.5"
-                    value={value}
-                    onChange={(e) => updateScore(team.teamId, i, e.target.value)}
-                    className="judge-slider"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    max={c.maxScore ?? 100}
-                    step="0.5"
-                    defaultValue={value}
-                    key={`${team.teamId}-${i}-${value}`}
-                    onBlur={(e) => {
-                      const v = Math.min(c.maxScore ?? 100, Math.max(0, Number(e.target.value) || 0))
-                      updateScore(team.teamId, i, v)
-                    }}
-                    className="judge-score-input"
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
 
         <div className="judge-score-panel__footer">
           <p className="judge-weighted-score">
-            예상 총점 <strong>{total.toFixed(1)}</strong>
-            <span className="judge-max-score"> / {maxTotalScore()}점</span>
+            {isVoteType ? (
+              <>
+                제출물 검토 모드
+                <span className="judge-max-score"> / 투표형</span>
+              </>
+            ) : hasCriteria ? (
+              <>
+                예상 총점 <strong>{total.toFixed(1)}</strong>
+                <span className="judge-max-score"> / {maxTotalScore()}점</span>
+              </>
+            ) : (
+              <>
+                채점 불가
+                <span className="judge-max-score"> / 기준 미설정</span>
+              </>
+            )}
           </p>
           <button
             type="button"
             className="team-primary-button"
-            disabled={isSaving || !hasSubmission}
+            disabled={isSaving || !canScore}
             onClick={() => handleSaveScore(team)}
           >
-            {isSaving ? '저장 중...' : isReviewed ? '재채점 저장' : '채점 저장'}
+            {isVoteType
+              ? '투표형'
+              : isSaving
+                ? '저장 중...'
+                : isReviewed
+                  ? '재채점 저장'
+                  : '채점 저장'}
           </button>
         </div>
       </div>
@@ -273,25 +362,35 @@ function JudgePage() {
     return (
       <div className="judge-team-list">
         <div className="judge-team-list__header">
-          <h2>{selectedHackathon?.title}</h2>
+          <div className="judge-selected-info__left">
+            <h2>{selectedHackathon?.title}</h2>
+            <div className="judge-inline-badges">
+              <span className="admin-pill admin-pill--blue">{scoreTypeLabel(judgeData?.scoreType)}</span>
+              {!isVoteType && !hasCriteria && (
+                <span className="admin-pill admin-pill--warn">기준 없음</span>
+              )}
+            </div>
+          </div>
           <div className="judge-progress-bar-wrap">
             <div className="judge-progress-bar">
               <div
                 className="judge-progress-bar__fill"
                 style={{
-                  width: selectedHackathon?.submissionCount
-                    ? `${(reviewedCount / selectedHackathon.submissionCount) * 100}%`
-                    : '0%',
+                  width: isVoteType
+                    ? (selectedHackathon?.submissionCount ? '100%' : '0%')
+                    : selectedHackathon?.submissionCount
+                      ? `${(reviewedCount / selectedHackathon.submissionCount) * 100}%`
+                      : '0%',
                 }}
               />
             </div>
             <span className="judge-progress-label">
-              {reviewedCount} / {selectedHackathon?.submissionCount ?? teams.length}팀
+              {isVoteType
+                ? `제출 ${selectedHackathon?.submissionCount ?? teams.length}팀`
+                : `${reviewedCount} / ${selectedHackathon?.submissionCount ?? teams.length}팀`}
             </span>
           </div>
         </div>
-
-        {error && <p className="judge-error">{error}</p>}
 
         <div className="judge-team-items">
           {teams.map((team) => {
@@ -343,8 +442,10 @@ function JudgePage() {
             <p className="judge-sidebar__label">배정된 해커톤</p>
             {hackathons.map((h) => {
               const isActive = selectedHackathon?.id === h.id
-              const pct = h.submissionCount
-                ? Math.round((h.reviewedCount / h.submissionCount) * 100)
+              const pct = h.scoreType === 'VOTE'
+                ? (h.submissionCount ? 100 : 0)
+                : h.submissionCount
+                  ? Math.round((h.reviewedCount / h.submissionCount) * 100)
                 : 0
               return (
                 <button
@@ -354,11 +455,18 @@ function JudgePage() {
                   onClick={() => setSelectedHackathon(h)}
                 >
                   <span className="judge-sidebar-item__title">{h.title}</span>
+                  <div className="judge-inline-badges">
+                    <span className="admin-pill admin-pill--blue">{scoreTypeLabel(h.scoreType)}</span>
+                  </div>
                   <div className="judge-sidebar-item__progress">
                     <div className="judge-progress-bar">
                       <div className="judge-progress-bar__fill" style={{ width: `${pct}%` }} />
                     </div>
-                    <span>{h.reviewedCount ?? 0}/{h.submissionCount ?? 0}</span>
+                    <span>
+                      {h.scoreType === 'VOTE'
+                        ? `제출 ${h.submissionCount ?? 0}팀`
+                        : `${h.reviewedCount ?? 0}/${h.submissionCount ?? 0}`}
+                    </span>
                   </div>
                 </button>
               )
@@ -368,6 +476,12 @@ function JudgePage() {
           <main className="judge-main">
             {selectedTeam ? <ScorePanel team={selectedTeam} /> : <TeamList />}
           </main>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`admin-toast admin-toast--${toast.type}`}>
+          {toast.message}
         </div>
       )}
     </section>

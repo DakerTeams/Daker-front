@@ -4109,6 +4109,13 @@ h2 {
   color: var(--text);
 }
 
+.judge-inline-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .judge-progress-bar-wrap {
   display: flex;
   align-items: center;
@@ -4159,6 +4166,25 @@ h2 {
 
 .judge-team-item--no-submission {
   opacity: 0.7;
+}
+
+.judge-mode-banner {
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.judge-mode-banner--info {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.judge-mode-banner--warn {
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
 }
 
 .admin-pill--warn {
