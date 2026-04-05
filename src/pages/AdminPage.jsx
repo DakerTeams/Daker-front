@@ -37,32 +37,35 @@ function AdminPage() {
   const [actionMessage, setActionMessage] = useState('')
 
   useEffect(() => {
-    setError(null)
-    setLoading(true)
-
     const load = async () => {
-      if (activeSection === 'dashboard') {
-        const [stats, hackathonList] = await Promise.all([
-          fetchPlatformStats(),
-          fetchAdminHackathons(),
-        ])
-        setPlatformStats(stats)
-        setHackathons(hackathonList)
-      } else if (activeSection === 'hackathons') {
-        const data = await fetchAdminHackathons()
-        setHackathons(data)
-      } else if (activeSection === 'users' || activeSection === 'judges') {
-        const data = await fetchAdminUsers()
-        setUsers(data)
-      } else if (activeSection === 'submissions') {
-        const data = await fetchAdminSubmissions()
-        setSubmissions(data)
+      setError(null)
+      setLoading(true)
+      try {
+        if (activeSection === 'dashboard') {
+          const [stats, hackathonList] = await Promise.all([
+            fetchPlatformStats(),
+            fetchAdminHackathons(),
+          ])
+          setPlatformStats(stats)
+          setHackathons(hackathonList)
+        } else if (activeSection === 'hackathons') {
+          const data = await fetchAdminHackathons()
+          setHackathons(data)
+        } else if (activeSection === 'users' || activeSection === 'judges') {
+          const data = await fetchAdminUsers()
+          setUsers(data)
+        } else if (activeSection === 'submissions') {
+          const data = await fetchAdminSubmissions()
+          setSubmissions(data)
+        }
+      } catch (err) {
+        setError(`데이터를 불러오지 못했습니다. (${err.message})`)
+      } finally {
+        setLoading(false)
       }
     }
 
     load()
-      .catch((err) => setError(`데이터를 불러오지 못했습니다. (${err.message})`))
-      .finally(() => setLoading(false))
   }, [activeSection])
 
   const filteredUsers = useMemo(() => {

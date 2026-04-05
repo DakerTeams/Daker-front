@@ -23,22 +23,6 @@ const openFilters = [
   { key: 'closed', label: '마감' },
 ]
 
-function enrichTeam(team, hackathonList) {
-  const matchedHackathon = hackathonList.find(
-    (hackathon) => String(hackathon.id) === String(team.hackathonId),
-  )
-
-  return {
-    ...team,
-    hackathonName: team.hackathonName ?? matchedHackathon?.title ?? '해커톤 미정',
-    maxMembers: team.maxMembers ?? matchedHackathon?.maxTeamSize ?? 1,
-  }
-}
-
-function enrichTeams(teamList, hackathonList) {
-  return teamList.map((team) => enrichTeam(team, hackathonList))
-}
-
 function CampPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
