@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchHackathons } from "../api/hackathons.js";
 
 const statusFilters = [
   { key: "all", label: "전체" },
+  { key: "upcoming", label: "오픈예정" },
   { key: "open", label: "모집중" },
-  { key: "upcoming", label: "진행중" },
-  { key: "closed", label: "종료" },
+  { key: "closed", label: "진행중" },
 ];
 
 function HackathonsPage() {
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("upcoming");
+  const [statusFilter, setStatusFilter] = useState("open");
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,12 +23,7 @@ function HackathonsPage() {
 
       try {
         const data = await fetchHackathons({
-          status:
-            statusFilter === "all"
-              ? undefined
-              : statusFilter === "upcoming"
-                ? "open"
-                : statusFilter,
+          status: statusFilter === "all" ? undefined : statusFilter.toUpperCase(),
           q: query.trim() || undefined,
         });
         if (!isMounted) return;
@@ -51,13 +46,15 @@ function HackathonsPage() {
     };
   }, [query, statusFilter]);
 
-  const statusOrder = { open: 0, upcoming: 1, ended: 2, closed: 3 };
+  const statusOrder = { upcoming: 0, open: 1, closed: 2 };
   const filteredHackathons =
     statusFilter === "all"
-      ? [...items].sort(
-          (a, b) =>
-            (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99),
-        )
+      ? [...items]
+          .filter((h) => h.status !== "ended")
+          .sort(
+            (a, b) =>
+              (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99),
+          )
       : items;
 
   return (
@@ -121,27 +118,26 @@ function HackathonsPage() {
               <div className="row-between row-between--start">
                 <div className="stack-list stack-list--compact hackathon-card__left">
                   <div className="hackathon-card__topline">
-                    {hackathon.status !== "closed" &&
-                      hackathon.status !== "ended" && (
-                        <span
-                          className={`status-outline status-outline--${hackathon.status}`}
-                        >
-                          {hackathon.status === "upcoming"
-                            ? "진행 중"
-                            : hackathon.statusLabel}
-                        </span>
-                      )}
-                    <h2>
-                      {hackathon.title}&nbsp;&nbsp;&nbsp;
-                      {hackathon.tags.map((tag) => (
-                        <>
-                          <span key={tag} className="tag-chip tag-chip--blue">
-                            {tag}
-                          </span>
-                          &nbsp;&nbsp;&nbsp;
-                        </>
-                      ))}
-                    </h2>
+                    <span
+                      className={`status-outline status-outline--${hackathon.status}`}
+                    >
+                      {hackathon.statusLabel}
+                    </span>
+                    {hackathon.scoreType === "VOTE" && hackathon.votingOpen && (
+                      <span className="status-outline status-outline--voting">
+                        투표 진행중
+                      </span>
+                    )}
+                    <h2>{hackathon.title}</h2>
+                    {hackathon.tags.length > 0 && (
+                      <div className="hackathon-card__tags">
+                        {hackathon.tags.map((tag) => (
+                          <Fragment key={tag}>
+                            <span className="tag-chip tag-chip--blue">{tag}</span>
+                          </Fragment>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
