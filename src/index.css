@@ -3441,7 +3441,7 @@ h2 {
 
 .admin-table__head--users,
 .admin-table__row--users {
-  grid-template-columns: 1fr 1.2fr 0.8fr 0.8fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr) 0.75fr 0.72fr minmax(132px, 0.95fr);
 }
 
 .admin-table__head--submissions,
@@ -3521,6 +3521,9 @@ h2 {
 }
 
 .admin-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 40px;
   padding: 0 16px;
   border-radius: 10px;
@@ -3528,6 +3531,8 @@ h2 {
   background: #ffffff;
   font-weight: 800;
   cursor: pointer;
+  white-space: nowrap;
+  word-break: keep-all;
 }
 
 .admin-action-button--danger {
@@ -3582,6 +3587,44 @@ h2 {
 .admin-judge-item p {
   color: #9ca3af;
   font-weight: 700;
+}
+
+.admin-user-cell--name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-user-cell--email {
+  word-break: break-word;
+}
+
+.admin-user-cell--date {
+  white-space: nowrap;
+}
+
+.admin-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1200;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+  font-weight: 700;
+}
+
+.admin-toast--success {
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.admin-toast--error {
+  color: #b91c1c;
+  border-color: #fecaca;
 }
 
 /* ── Judge Page 2-panel layout ── */

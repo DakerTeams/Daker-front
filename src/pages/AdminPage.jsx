@@ -14,7 +14,6 @@ const adminMenu = [
   { key: 'dashboard', label: '대시보드', icon: '📊' },
   { key: 'hackathons', label: '해커톤 관리', icon: '🏆' },
   { key: 'users', label: '유저 관리', icon: '👥' },
-  { key: 'judges', label: '심사위원 관리', icon: '⚖️' },
   { key: 'submissions', label: '제출물 관리', icon: '📂' },
 ]
 
@@ -359,10 +358,20 @@ function AdminPage() {
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [actionMessage, setActionMessage] = useState('')
+  const [toast, setToast] = useState(null)
   const [editingHackathon, setEditingHackathon] = useState(null)
   const [isHackathonModalOpen, setIsHackathonModalOpen] = useState(false)
   const [isSavingHackathon, setIsSavingHackathon] = useState(false)
+
+  useEffect(() => {
+    if (!toast) return undefined
+
+    const timer = window.setTimeout(() => {
+      setToast(null)
+    }, 2600)
+
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
   useEffect(() => {
     const load = async () => {
@@ -377,7 +386,7 @@ function AdminPage() {
         } else if (activeSection === 'hackathons') {
           const data = await fetchAdminHackathons()
           setHackathons(data)
-        } else if (activeSection === 'users' || activeSection === 'judges') {
+        } else if (activeSection === 'users') {
           const data = await fetchAdminUsers()
           setUsers(data)
         } else if (activeSection === 'submissions') {
@@ -398,11 +407,6 @@ function AdminPage() {
     if (userFilter === 'all') return users
     return users.filter((user) => String(user.role ?? '').toLowerCase() === userFilter)
   }, [users, userFilter])
-
-  const judges = useMemo(
-    () => users.filter((user) => String(user.role ?? '').toLowerCase() === 'judge'),
-    [users],
-  )
 
   function openCreateHackathonModal() {
     setEditingHackathon(null)
@@ -437,7 +441,7 @@ function AdminPage() {
               : item,
           ),
         )
-        setActionMessage('해커톤이 수정되었습니다.')
+        setToast({ type: 'success', message: '해커톤이 수정되었습니다.' })
       } else {
         const created = await createAdminHackathon(payload)
         const nextHackathon = {
@@ -448,7 +452,7 @@ function AdminPage() {
           numOfTeams: 0,
         }
         setHackathons((current) => [nextHackathon, ...current])
-        setActionMessage('해커톤이 등록되었습니다.')
+        setToast({ type: 'success', message: '해커톤이 등록되었습니다.' })
       }
 
       setIsHackathonModalOpen(false)
@@ -464,9 +468,9 @@ function AdminPage() {
     try {
       await deleteAdminHackathon(id)
       setHackathons((current) => current.filter((item) => item.id !== id))
-      setActionMessage('해커톤이 삭제되었습니다.')
+      setToast({ type: 'success', message: '해커톤이 삭제되었습니다.' })
     } catch {
-      setActionMessage('해커톤 삭제에 실패했습니다.')
+      setToast({ type: 'error', message: '해커톤 삭제에 실패했습니다.' })
     }
   }
 
@@ -480,9 +484,15 @@ function AdminPage() {
       setUsers((current) =>
         current.map((user) => (user.userId === userId ? { ...user, role: newRole } : user)),
       )
-      setActionMessage('역할이 변경되었습니다.')
-    } catch {
-      setActionMessage('역할 변경에 실패했습니다.')
+      setToast({
+        type: 'success',
+        message: newRole === 'JUDGE' ? '심사위원으로 지정했습니다.' : '심사위원 권한을 회수했습니다.',
+      })
+    } catch (requestError) {
+      setToast({
+        type: 'error',
+        message: requestError?.message || '실패했습니다.',
+      })
     }
   }
 
@@ -532,12 +542,11 @@ function AdminPage() {
   const renderHackathons = () => (
     <>
       <div className="row-between row-between--wrap">
-        <h1 className="admin-title">해커톤 관리</h1>
+      <h1 className="admin-title">해커톤 관리</h1>
         <button type="button" className="team-primary-button" onClick={openCreateHackathonModal}>
           + 새 해커톤 등록
         </button>
       </div>
-      {actionMessage && <p className="admin-subtitle">{actionMessage}</p>}
       {loading && <p className="admin-subtitle">불러오는 중...</p>}
       {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
       <section className="admin-card">
@@ -591,9 +600,11 @@ function AdminPage() {
   const renderUsers = () => (
     <>
       <h1 className="admin-title">유저 관리</h1>
-      {actionMessage && <p className="admin-subtitle">{actionMessage}</p>}
       {loading && <p className="admin-subtitle">불러오는 중...</p>}
       {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
+      <p className="admin-subtitle">
+        유저 역할 변경은 여기서 통합 관리합니다. 별도 심사위원 탭은 제거했습니다.
+      </p>
       <div className="admin-toolbar">
         <input className="search-input admin-search-input" placeholder="닉네임, 이메일 검색..." />
         <div className="filter-group">
@@ -629,10 +640,10 @@ function AdminPage() {
             const isJudge = role === 'judge'
             return (
               <div key={user.userId ?? user.email} className="admin-table__row admin-table__row--users">
-                <strong>{user.nickname}</strong>
-                <span>{user.email}</span>
+                <strong className="admin-user-cell admin-user-cell--name">{user.nickname}</strong>
+                <span className="admin-user-cell admin-user-cell--email">{user.email}</span>
                 <span className={`admin-pill admin-pill--${role}`}>{user.role}</span>
-                <span>{user.createdAt?.slice(0, 10) ?? '-'}</span>
+                <span className="admin-user-cell admin-user-cell--date">{user.createdAt?.slice(0, 10) ?? '-'}</span>
                 <button
                   type="button"
                   className={`admin-action-button admin-action-button--${isJudge ? 'danger' : 'primary'}`}
@@ -643,44 +654,6 @@ function AdminPage() {
               </div>
             )
           })}
-        </div>
-      </section>
-    </>
-  )
-
-  const renderJudges = () => (
-    <>
-      <h1 className="admin-title">심사위원 관리</h1>
-      <p className="admin-subtitle">
-        심사위원은 모든 해커톤을 심사할 수 있습니다. 역할 부여/회수만 관리하세요.
-      </p>
-      {actionMessage && <p className="admin-subtitle">{actionMessage}</p>}
-      {loading && <p className="admin-subtitle">불러오는 중...</p>}
-      {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
-      <section className="admin-card">
-        <h2 className="admin-card__title">현재 심사위원 {judges.length}명</h2>
-        <div className="admin-judge-list">
-          {judges.map((judge) => (
-            <article key={judge.userId ?? judge.email} className="admin-judge-item">
-              <div className="admin-judge-item__left">
-                <span className="admin-judge-item__icon">⚖️</span>
-                <div>
-                  <h3>{judge.nickname}</h3>
-                  <p>{judge.email}</p>
-                </div>
-              </div>
-              <div className="admin-inline-actions">
-                <span className="admin-pill admin-pill--judge">심사위원</span>
-                <button
-                  type="button"
-                  className="admin-action-button admin-action-button--danger"
-                  onClick={() => handleChangeRole(judge.userId, 'JUDGE')}
-                >
-                  역할 회수
-                </button>
-              </div>
-            </article>
-          ))}
         </div>
       </section>
     </>
@@ -744,10 +717,15 @@ function AdminPage() {
           {activeSection === 'dashboard' && renderDashboard()}
           {activeSection === 'hackathons' && renderHackathons()}
           {activeSection === 'users' && renderUsers()}
-          {activeSection === 'judges' && renderJudges()}
           {activeSection === 'submissions' && renderSubmissions()}
         </div>
       </section>
+
+      {toast && (
+        <div className={`admin-toast admin-toast--${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
 
       {isHackathonModalOpen && (
         <HackathonFormModal
