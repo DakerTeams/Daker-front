@@ -177,10 +177,6 @@ function CampPage() {
       <div className="page-header">
         <p className="eyebrow">/camp</p>
         <h1>팀원 모집</h1>
-        <p className="page-description">
-          해커톤별 팀 모집글을 확인하고, 바로 팀을 만들거나 기존 팀에
-          지원해보세요.
-        </p>
       </div>
 
       <section className="surface-card">

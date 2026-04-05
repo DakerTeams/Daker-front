@@ -6,9 +6,7 @@ import {
   fetchHackathonLeaderboard,
   fetchHackathonTeams,
   fetchRegistrationStatus,
-  fetchTeamSubmission,
   submitResult,
-  submitVote,
 } from "../api/hackathons.js";
 import {
   decideTeamApplication,
@@ -54,12 +52,9 @@ function HackathonDetailPage() {
   const [isApplicationsOpen, setIsApplicationsOpen] = useState(false);
   const [applicationMessage, setApplicationMessage] = useState("");
   const [isEditTeamOpen, setIsEditTeamOpen] = useState(false);
-  const [votedTeamId, setVotedTeamId] = useState(null)
   const [chatJoined, setChatJoined] = useState(false)
   const [chatJoining, setChatJoining] = useState(false)
   const [chatJoinMessage, setChatJoinMessage] = useState('')
-  const [voteError, setVoteError] = useState('')
-  const [isVoting, setIsVoting] = useState(false)
   const [teamEditForm, setTeamEditForm] = useState({
     name: "",
     description: "",
@@ -313,108 +308,6 @@ function HackathonDetailPage() {
         </Link>
       </section>
     );
-  }
-
-  function formatFileSize(bytes) {
-    if (!bytes) return ''
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
-  }
-
-  function VoteTeamItem({ team, hackathonId: hid, isOwn, isVoted, isVoting, votedTeamId: votedId, onVote }) {
-    const [submission, setSubmission] = useState(null)
-    const [loadingSubmission, setLoadingSubmission] = useState(false)
-    const [showSubmission, setShowSubmission] = useState(false)
-
-    function handleToggleSubmission() {
-      if (showSubmission) {
-        setShowSubmission(false)
-        return
-      }
-      setShowSubmission(true)
-      if (submission !== null) return
-      setLoadingSubmission(true)
-      fetchTeamSubmission(hid, team.id)
-        .then(setSubmission)
-        .catch(() => setSubmission(null))
-        .finally(() => setLoadingSubmission(false))
-    }
-
-    const hasVoted = votedId !== null
-    const voteDisabled = isOwn || hasVoted || isVoting
-
-    return (
-      <div className={`vote-team-item${isVoted ? ' vote-team-item--voted' : ''}${isOwn ? ' vote-team-item--own' : ''}`}>
-        <div className="vote-team-item__header">
-          <div className="vote-team-item__info">
-            <strong>{team.name}</strong>
-            {isOwn && <span className="meta-text">(내 팀)</span>}
-          </div>
-          <div className="vote-team-item__actions">
-            <button
-              type="button"
-              className="vote-submission-toggle"
-              onClick={handleToggleSubmission}
-            >
-              {showSubmission ? '닫기' : '제출물 보기'}
-            </button>
-            <button
-              type="button"
-              className={`vote-btn${isVoted ? ' vote-btn--voted' : ''}`}
-              disabled={voteDisabled}
-              onClick={() => onVote(team.id)}
-            >
-              {isVoted ? '투표 완료' : '투표'}
-            </button>
-          </div>
-        </div>
-
-        {showSubmission && (
-          <div className="judge-submission">
-            {loadingSubmission && <p className="judge-submission__loading">불러오는 중...</p>}
-            {!loadingSubmission && submission && (submission.items ?? []).length > 0 && (
-              <div className="judge-submission__items">
-                {(submission.items ?? []).map((item) => (
-                  <div key={item.itemId} className="judge-submission__item">
-                    {item.fileUrl && (
-                      <a
-                        href={item.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="judge-submission__file"
-                      >
-                        <span className="judge-submission__icon">📄</span>
-                        <span className="judge-submission__name">{item.originalFileName}</span>
-                        {item.fileSize && (
-                          <span className="judge-submission__size">{formatFileSize(item.fileSize)}</span>
-                        )}
-                      </a>
-                    )}
-                    {item.valueUrl && (
-                      <a
-                        href={item.valueUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="judge-submission__file judge-submission__file--link"
-                      >
-                        <span className="judge-submission__icon">🔗</span>
-                        <span className="judge-submission__name">{item.valueUrl}</span>
-                      </a>
-                    )}
-                    {item.valueText && (
-                      <p className="judge-submission__text">{item.valueText}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            {!loadingSubmission && (!submission || (submission.items ?? []).length === 0) && (
-              <p className="judge-submission__loading">제출물이 없습니다.</p>
-            )}
-          </div>
-        )}
-      </div>
-    )
   }
 
   const renderTabContent = () => {
@@ -984,81 +877,6 @@ function HackathonDetailPage() {
       );
     }
 
-    if (activeTab === "vote") {
-      const myTeamId = registrationStatus?.teamId
-      const isVotingOpen = hackathon.votingOpen
-
-      async function handleVote(teamId) {
-        setIsVoting(true)
-        setVoteError('')
-        try {
-          await submitVote(id, teamId)
-          setVotedTeamId(teamId)
-        } catch (err) {
-          const code = err?.message ?? ''
-          if (code.includes('ALREADY_VOTED')) {
-            setVoteError('이미 투표하셨습니다.')
-          } else if (code.includes('VOTE_PERIOD_INVALID')) {
-            setVoteError('현재 투표 기간이 아닙니다.')
-          } else if (code.includes('CANNOT_VOTE_OWN_TEAM')) {
-            setVoteError('자신의 팀에는 투표할 수 없습니다.')
-          } else {
-            setVoteError('투표에 실패했습니다. 다시 시도해주세요.')
-          }
-        } finally {
-          setIsVoting(false)
-        }
-      }
-
-      if (!currentUser) {
-        return (
-          <div className="vote-empty">
-            <p>로그인 후 투표할 수 있습니다.</p>
-            <Link to="/login" className="team-primary-button">로그인</Link>
-          </div>
-        )
-      }
-
-      if (!isVotingOpen) {
-        return (
-          <div className="vote-empty">
-            <p>현재 투표 기간이 아닙니다.</p>
-            <p className="meta-text">제출 마감 이후 ~ 해커톤 종료 전에 투표할 수 있습니다.</p>
-          </div>
-        )
-      }
-
-      return (
-        <div className="vote-panel">
-          {votedTeamId && (
-            <div className="vote-success">
-              투표 완료! 소중한 한 표 감사합니다 🎉
-            </div>
-          )}
-          {voteError && <p className="vote-error">{voteError}</p>}
-
-          <div className="vote-team-list">
-            {participantTeams.map((team) => {
-              const isOwn = String(team.id) === String(myTeamId)
-              const isVoted = String(team.id) === String(votedTeamId)
-              return (
-                <VoteTeamItem
-                  key={team.id}
-                  team={team}
-                  hackathonId={id}
-                  isOwn={isOwn}
-                  isVoted={isVoted}
-                  isVoting={isVoting}
-                  votedTeamId={votedTeamId}
-                  onVote={handleVote}
-                />
-              )
-            })}
-          </div>
-        </div>
-      )
-    }
-
     return null;
   };
 
@@ -1071,11 +889,6 @@ function HackathonDetailPage() {
           >
             {hackathon.statusLabel}
           </span>
-          {hackathon.scoreType === "VOTE" && hackathon.votingOpen && (
-            <span className="status-outline status-outline--voting">
-              투표 진행중
-            </span>
-          )}
           {hackathon.tags.map((tag) => (
             <span key={tag} className="tag-chip tag-chip--blue">
               {tag}
@@ -1101,12 +914,7 @@ function HackathonDetailPage() {
             role="tablist"
             aria-label="해커톤 상세 탭"
           >
-            {[
-              ...detailTabs,
-              ...(hackathon.scoreType === "VOTE"
-                ? [{ key: "vote", label: "투표" }]
-                : []),
-            ].map((tab) => (
+            {detailTabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
