@@ -189,7 +189,7 @@ function ChatDrawer({ open, onClose }) {
                       onKeyDown={(e) => e.key === 'Enter' && setJoinSelectedId(h.id)}
                     >
                       <span className="chat-drawer__hackathon-name">{h.title}</span>
-                      <span className="chat-drawer__hackathon-status">{h.statusLabel}</span>
+                      <span className={`chat-drawer__status-chip chat-drawer__status-chip--${h.status}`}>{h.statusLabel}</span>
                     </div>
                   ))
                 }
@@ -244,7 +244,36 @@ function ChatDrawer({ open, onClose }) {
                   {joinSelected.statusLabel}
                 </span>
                 <h2 className="chat-join-panel__title">{joinSelected.title}</h2>
-                <p className="chat-join-panel__desc">이 해커톤의 채팅방에 참가하면 참가자들과 실시간으로 소통할 수 있습니다.</p>
+                {joinSelected.summary && (
+                  <p className="chat-join-panel__summary">{joinSelected.summary}</p>
+                )}
+                <dl className="chat-join-panel__meta">
+                  {joinSelected.period && (
+                    <div className="chat-join-panel__meta-row">
+                      <dt>기간</dt>
+                      <dd>{joinSelected.period}</dd>
+                    </div>
+                  )}
+                  {joinSelected.organizer && joinSelected.organizer !== '-' && (
+                    <div className="chat-join-panel__meta-row">
+                      <dt>주최</dt>
+                      <dd>{joinSelected.organizer}</dd>
+                    </div>
+                  )}
+                  {joinSelected.participantCount > 0 && (
+                    <div className="chat-join-panel__meta-row">
+                      <dt>참가자</dt>
+                      <dd>{joinSelected.participantCount.toLocaleString()}명</dd>
+                    </div>
+                  )}
+                </dl>
+                {joinSelected.tags.length > 0 && (
+                  <div className="chat-join-panel__tags">
+                    {joinSelected.tags.map((tag) => (
+                      <span key={tag} className="chat-join-panel__tag">{tag}</span>
+                    ))}
+                  </div>
+                )}
               </div>
               {joinError && <p className="chat-join-panel__error">{joinError}</p>}
               {joinedIds.has(joinSelected.id) ? (
