@@ -343,7 +343,6 @@ function AdminPage() {
             <span>상태</span>
             <span>기간</span>
             <span>참가팀</span>
-            <span>심사방식</span>
             <span>액션</span>
           </div>
           {hackathons.map((item) => {
@@ -359,11 +358,10 @@ function AdminPage() {
                 </span>
                 <span>{formatDateRange(item.startAt, item.endAt)}</span>
                 <span>{item.numOfTeams ?? item.teamCount ?? '-'}</span>
-                <span className="admin-pill admin-pill--blue">{item.scoreType ?? '-'}</span>
                 <div className="admin-inline-actions">
                   <button
                     type="button"
-                    className="team-secondary-button team-secondary-button--muted"
+                    className="admin-action-button admin-action-button--muted"
                     onClick={() => navigate(`/admin/hackathons/${item.id}/edit`)}
                   >
                     수정
@@ -507,7 +505,6 @@ function AdminPage() {
                 }`}
                 onClick={() => setActiveSection(item.key)}
               >
-                <span>{item.icon}</span>
                 {item.label}
               </button>
             ))}
