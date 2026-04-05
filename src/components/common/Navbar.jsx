@@ -97,7 +97,6 @@ function Navbar() {
       ...((isAdminView || user?.role === 'admin') ? [{ to: '/admin', label: '관리자' }] : []),
     ]
 
-  const displayRole = isAdminView ? 'admin' : isJudgeView ? 'judge' : user?.role || 'user'
 
   return (
     <header className="navbar">

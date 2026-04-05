@@ -58,7 +58,7 @@ function RankingsPage() {
   const currentUser = getStoredUser()
 
   useEffect(() => {
-    if (!currentUser) return
+    if (!getStoredUser()) return
     fetchMyRanking(period)
       .then(setMyRankingData)
       .catch(() => setMyRankingData(null))

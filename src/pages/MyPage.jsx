@@ -221,9 +221,9 @@ function groupTagsByCategory(tags) {
   return groups
 }
 
-function ProfileEditModal({ user, initialTagObjects, onClose, onSave }) {
+function ProfileEditModal({ initialTagObjects, onClose, onSave }) {
   const [allTags, setAllTags] = useState([])
-  const [currentTags, setCurrentTags] = useState(initialTagObjects)
+  const currentTags = initialTagObjects
   const [selectedNames, setSelectedNames] = useState(initialTagObjects.map((t) => t.name))
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
