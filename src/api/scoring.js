@@ -39,3 +39,13 @@ export async function submitJudgeScore(hackathonId, teamId, scores) {
   })
   return extractObject(response)
 }
+
+// 심사위원 투표 — POST /hackathons/{hackathonId}/votes
+export async function submitJudgeVote(hackathonId, teamId) {
+  const response = await apiRequest(`/hackathons/${hackathonId}/votes`, {
+    method: 'POST',
+    headers: authHeader(),
+    body: JSON.stringify({ teamId }),
+  })
+  return extractObject(response)
+}

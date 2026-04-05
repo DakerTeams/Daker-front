@@ -3861,12 +3861,152 @@ h2 {
 .judge-score-panel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 14px;
+  overflow: hidden;
   box-shadow: var(--shadow);
+}
+
+.judge-score-panel--vote {
+  border-top: 3px solid #7c3aed;
+}
+
+.judge-score-panel--score {
+  border-top: 3px solid var(--primary);
+}
+
+/* 패널 섹션 공통 */
+.judge-panel-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.judge-panel-section:last-child {
+  border-bottom: none;
+}
+
+.judge-panel-section--header {
+  gap: 14px;
+}
+
+.judge-panel-section--submission {
+  background: var(--bg);
+}
+
+.judge-panel-section--criteria {
+  gap: 16px;
+}
+
+.judge-panel-section--vote-action {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+.judge-panel-section--voted {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.judge-panel-section--footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+}
+
+.judge-panel-section__title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+
+.judge-panel-section__desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* 패널 헤더 팀 정보 */
+.judge-panel-team {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.judge-panel-team__info h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+/* 모드 뱃지 */
+.judge-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.judge-mode-badge--vote {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.judge-mode-badge--score {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* 투표 버튼 */
+.judge-vote-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid #7c3aed;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-top: 4px;
+}
+
+.judge-vote-btn:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.judge-vote-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.judge-vote-btn--done {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+/* 팀 목록 헤더 타입별 */
+.judge-team-list__header--vote {
+  border-left: 3px solid #7c3aed;
+  padding-left: 14px;
+}
+
+.judge-team-list__header--score {
+  border-left: 3px solid var(--primary);
+  padding-left: 14px;
 }
 
 .judge-score-panel__header {
@@ -4192,6 +4332,17 @@ h2 {
   border: 1px solid #fde68a;
 }
 
+.judge-mode-banner--success {
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.judge-vote-done {
+  color: #166534;
+  font-weight: 700;
+}
+
 .admin-pill--warn {
   background: #fff7ed;
   color: #c2410c;
@@ -4312,6 +4463,42 @@ h2 {
 .judge-section-title {
   font-size: 1.8rem;
   letter-spacing: -0.05em;
+}
+
+/* 심사 섹션 (평가형 / 투표형 분리) */
+.judge-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.judge-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.judge-section__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+}
+
+.judge-section--score .judge-section__header {
+  border-bottom-color: var(--primary);
+}
+
+.judge-section--vote .judge-section__header {
+  border-bottom-color: #7c3aed;
+}
+
+.judge-section__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
 }
 
 .judge-progress-copy {
