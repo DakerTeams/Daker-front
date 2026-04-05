@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import Navbar from '../components/common/Navbar.jsx'
 import {
@@ -9,8 +9,11 @@ import {
   subscribeAuthChange,
 } from '../lib/auth.js'
 
+const ChatDrawer = lazy(() => import('../components/chat/ChatDrawer.jsx'))
+
 function MainLayout() {
   const navigate = useNavigate()
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   useEffect(() => {
     let timerId = null
@@ -49,10 +52,13 @@ function MainLayout() {
 
   return (
     <div className="app-shell">
-      <Navbar />
+      <Navbar onChatOpen={() => setIsChatOpen(true)} />
       <main className="page-shell">
         <Outlet />
       </main>
+      <Suspense fallback={null}>
+        <ChatDrawer open={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      </Suspense>
     </div>
   )
 }

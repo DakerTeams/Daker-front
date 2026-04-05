@@ -44,7 +44,7 @@ const navItems = [
   { to: '/rankings', label: '랭킹' },
 ]
 
-function Navbar() {
+function Navbar({ onChatOpen }) {
   const navigate = useNavigate()
   const [user, setUser] = useState(() => getStoredUser())
   const [refreshing, setRefreshing] = useState(false)
@@ -122,6 +122,13 @@ function Navbar() {
               {item.label}
             </NavLink>
           ))}
+          <button
+            type="button"
+            className="navbar__link navbar__chat-btn"
+            onClick={onChatOpen}
+          >
+            채팅
+          </button>
         </nav>
 
         <div className="navbar__auth">

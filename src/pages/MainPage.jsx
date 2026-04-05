@@ -1,10 +1,8 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchHackathons } from "../api/hackathons.js";
 import { fetchPlatformStats } from "../api/stats.js";
 import { getStoredUser } from "../lib/auth.js";
-
-const ChatDrawer = lazy(() => import("../components/chat/ChatDrawer.jsx"));
 
 const typewriterWords = ["Build.", "Compete.", "Win."];
 const cumulativeLengths = typewriterWords.reduce((accumulator, word, index) => {
@@ -19,7 +17,6 @@ function MainPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [brandTilt, setBrandTilt] = useState({ x: 0, y: 0 });
   const [visibleHackathons, setVisibleHackathons] = useState([]);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [stats, setStats] = useState({
     participants: 0,
     activeHackathons: 0,
@@ -348,18 +345,6 @@ function MainPage() {
         </div>
       </section>
 
-      <button
-        type="button"
-        className="chat-fab"
-        onClick={() => setIsChatOpen(true)}
-        aria-label="채팅 열기"
-      >
-        💬
-      </button>
-
-      <Suspense fallback={null}>
-        <ChatDrawer open={isChatOpen} onClose={() => setIsChatOpen(false)} />
-      </Suspense>
     </section>
   );
 }

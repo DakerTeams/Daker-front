@@ -2178,6 +2178,29 @@ h2 {
   color: #4b5563;
 }
 
+.detail-chat-join {
+  margin-top: 8px;
+}
+
+.detail-chat-join__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detail-chat-join__msg {
+  font-size: 0.9rem;
+}
+
+.detail-chat-join__msg--ok {
+  color: #22c55e;
+}
+
+.detail-chat-join__msg--err {
+  color: #ef4444;
+}
+
 .schedule-legend {
   display: flex;
   flex-wrap: wrap;
@@ -5629,4 +5652,13 @@ h2 {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.navbar__chat-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
 }
