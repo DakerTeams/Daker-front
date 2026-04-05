@@ -18,6 +18,7 @@ function ChatDrawer({ open, onClose }) {
   const [myRooms, setMyRooms] = useState([])
   const [joinPage, setJoinPage] = useState({ items: [], totalPages: 1, page: 0 })
   const [selectedId, setSelectedId] = useState(null)
+  const [joinSelectedId, setJoinSelectedId] = useState(null)
   const [joiningId, setJoiningId] = useState(null)
   const [leavingId, setLeavingId] = useState(null)
   const [joinError, setJoinError] = useState('')
@@ -59,6 +60,7 @@ function ChatDrawer({ open, onClose }) {
   function handleFilterChange(value) {
     setStatusFilter(value)
     setCurrentPage(0)
+    setJoinSelectedId(null)
   }
 
   async function handleJoin(hackathonId) {
@@ -101,6 +103,7 @@ function ChatDrawer({ open, onClose }) {
   }
 
   const joinedIds = new Set(myRooms.map((r) => r.hackathonId))
+  const joinSelected = joinPage.items.find((h) => h.id === joinSelectedId) ?? null
 
   return (
     <>
@@ -174,33 +177,19 @@ function ChatDrawer({ open, onClose }) {
                     </button>
                   ))}
                 </div>
-                {joinError && <p className="chat-drawer__error">{joinError}</p>}
                 {joinPage.items.length === 0
                   ? <p className="chat-drawer__empty">해당 상태의 해커톤이 없습니다.</p>
                   : joinPage.items.map((h) => (
-                    <div key={h.id} className="chat-drawer__join-item">
-                      <div className="chat-drawer__join-info">
-                        <span className={`status-outline status-outline--${h.status}`}>{h.statusLabel}</span>
-                        <span className="chat-drawer__hackathon-name">{h.title}</span>
-                      </div>
-                      {joinedIds.has(h.id) ? (
-                        <button
-                          type="button"
-                          className="chat-drawer__join-btn chat-drawer__join-btn--joined"
-                          onClick={() => { setSelectedId(h.id); setTab('my') }}
-                        >
-                          입장
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="chat-drawer__join-btn"
-                          disabled={joiningId === h.id}
-                          onClick={() => handleJoin(h.id)}
-                        >
-                          {joiningId === h.id ? '...' : '참가'}
-                        </button>
-                      )}
+                    <div
+                      key={h.id}
+                      className={`chat-drawer__hackathon-item${joinSelectedId === h.id ? ' chat-drawer__hackathon-item--active' : ''}`}
+                      onClick={() => setJoinSelectedId(h.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && setJoinSelectedId(h.id)}
+                    >
+                      <span className="chat-drawer__hackathon-name">{h.title}</span>
+                      <span className="chat-drawer__hackathon-status">{h.statusLabel}</span>
                     </div>
                   ))
                 }
@@ -242,12 +231,41 @@ function ChatDrawer({ open, onClose }) {
         <div className="chat-drawer__chat">
           {!currentUser ? (
             <div className="chat-empty">로그인 후 채팅에 참여할 수 있습니다.</div>
-          ) : selectedId && tab === 'my' ? (
+          ) : tab === 'my' && selectedId ? (
             <HackathonChat
               hackathonId={selectedId}
               key={selectedId}
               title={myRooms.find((r) => r.hackathonId === selectedId)?.hackathonTitle ?? ''}
             />
+          ) : tab === 'join' && joinSelected ? (
+            <div className="chat-join-panel">
+              <div className="chat-join-panel__info">
+                <span className={`status-outline status-outline--${joinSelected.status}`}>
+                  {joinSelected.statusLabel}
+                </span>
+                <h2 className="chat-join-panel__title">{joinSelected.title}</h2>
+                <p className="chat-join-panel__desc">이 해커톤의 채팅방에 참가하면 참가자들과 실시간으로 소통할 수 있습니다.</p>
+              </div>
+              {joinError && <p className="chat-join-panel__error">{joinError}</p>}
+              {joinedIds.has(joinSelected.id) ? (
+                <button
+                  type="button"
+                  className="chat-join-panel__btn chat-join-panel__btn--entered"
+                  onClick={() => { setSelectedId(joinSelected.id); setTab('my') }}
+                >
+                  채팅방 입장하기
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="chat-join-panel__btn"
+                  disabled={joiningId === joinSelected.id}
+                  onClick={() => handleJoin(joinSelected.id)}
+                >
+                  {joiningId === joinSelected.id ? '참가 중...' : '채팅 참가하기'}
+                </button>
+              )}
+            </div>
           ) : (
             <div className="chat-empty">
               {tab === 'my' ? '채팅방을 선택하세요.' : '참가할 해커톤을 선택하세요.'}

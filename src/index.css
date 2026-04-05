@@ -5801,60 +5801,83 @@ h2 {
   font-weight: 700;
 }
 
-.chat-drawer__join-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  transition: background 0.12s;
+.chat-drawer__hackathon-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
-.chat-drawer__join-item:hover {
-  background: var(--surface);
-}
-
-.chat-drawer__join-info {
+/* ── Join panel (right side) ── */
+.chat-join-panel {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  flex: 1;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 48px;
+  gap: 24px;
+  text-align: center;
 }
 
-.chat-drawer__join-btn {
-  flex-shrink: 0;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px solid var(--primary);
-  background: none;
-  color: var(--primary);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+.chat-join-panel__info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
-.chat-drawer__join-btn:hover:not(:disabled) {
+.chat-join-panel__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+.chat-join-panel__desc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 360px;
+}
+
+.chat-join-panel__error {
+  font-size: 0.82rem;
+  color: #ef4444;
+  margin: 0;
+}
+
+.chat-join-panel__btn {
+  padding: 12px 32px;
+  border-radius: 12px;
+  border: none;
   background: var(--primary);
   color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: -0.01em;
 }
 
-.chat-drawer__join-btn:disabled {
+.chat-join-panel__btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.chat-join-panel__btn:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
-.chat-drawer__join-btn--joined {
-  border-color: #22c55e;
-  color: #22c55e;
+.chat-join-panel__btn--entered {
+  background: #16a34a;
 }
 
-.chat-drawer__join-btn--joined:hover {
-  background: #22c55e;
-  color: #fff;
+.chat-join-panel__btn--entered:hover {
+  background: #15803d;
 }
+
 
 /* ── Main chat area ── */
 .chat-drawer__chat {
