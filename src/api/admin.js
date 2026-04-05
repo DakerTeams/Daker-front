@@ -5,6 +5,14 @@ function authHeader() {
   return { Authorization: `Bearer ${getAccessToken()}` }
 }
 
+export async function fetchAdminDashboard(params = {}) {
+  const query = createQueryString(params)
+  const payload = await apiRequest(`/admin/dashboard${query}`, {
+    headers: authHeader(),
+  })
+  return extractObject(payload)
+}
+
 // 해커톤 관리
 export async function fetchAdminHackathons(params = {}) {
   const query = createQueryString(params)
@@ -28,7 +36,7 @@ export async function createAdminHackathon(payload) {
 
 export async function updateAdminHackathon(id, payload) {
   const response = await apiRequest(`/admin/hackathons/${id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: authHeader(),
     body: JSON.stringify(payload),
   })
