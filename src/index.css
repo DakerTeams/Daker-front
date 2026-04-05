@@ -1224,9 +1224,40 @@ h2 {
 }
 
 .hackathon-card {
+  position: relative;
   gap: 18px;
   padding: 30px 38px;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 26px;
 }
+
+.hackathon-card--list::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 18% 18%,
+      rgba(63, 127, 232, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(180deg, rgba(63, 127, 232, 0.04), transparent 56%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.hackathon-card--list:hover {
+  transform: translateY(-4px);
+  border-color: #b8cdf8;
+  box-shadow: var(--shadow-md);
+}
+
+.hackathon-card--list:hover::after {
+  opacity: 1;
+}
+
 
 .hackathon-card__meta {
   min-width: 132px;

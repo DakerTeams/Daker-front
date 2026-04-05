@@ -11,7 +11,7 @@ const statusFilters = [
 
 function HackathonsPage() {
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("upcoming");
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -51,7 +51,14 @@ function HackathonsPage() {
     };
   }, [query, statusFilter]);
 
-  const filteredHackathons = items;
+  const statusOrder = { open: 0, upcoming: 1, ended: 2, closed: 3 };
+  const filteredHackathons =
+    statusFilter === "all"
+      ? [...items].sort(
+          (a, b) =>
+            (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99),
+        )
+      : items;
 
   return (
     <section className="page-section">
@@ -114,13 +121,16 @@ function HackathonsPage() {
               <div className="row-between row-between--start">
                 <div className="stack-list stack-list--compact hackathon-card__left">
                   <div className="hackathon-card__topline">
-                    <span
-                      className={`status-outline status-outline--${hackathon.status}`}
-                    >
-                      {hackathon.status === "upcoming"
-                        ? "진행 중"
-                        : hackathon.statusLabel}
-                    </span>
+                    {hackathon.status !== "closed" &&
+                      hackathon.status !== "ended" && (
+                        <span
+                          className={`status-outline status-outline--${hackathon.status}`}
+                        >
+                          {hackathon.status === "upcoming"
+                            ? "진행 중"
+                            : hackathon.statusLabel}
+                        </span>
+                      )}
                     <h2>
                       {hackathon.title}&nbsp;&nbsp;&nbsp;
                       {hackathon.tags.map((tag) => (
