@@ -3,6 +3,7 @@ import {
   createQueryString,
   extractArray,
   extractObject,
+  extractPage,
 } from './client.js'
 import { getAccessToken } from '../lib/auth.js'
 
@@ -69,9 +70,31 @@ function normalizeHackathon(item) {
 }
 
 export async function fetchHackathons(params = {}) {
-  const query = createQueryString(params)
+  const { page = 0, size = 10, ...serverParams } = params
+  const query = createQueryString({ ...serverParams, page: page + 1, size })
   const payload = await apiRequest(`/hackathons${query}`)
-  return extractArray(payload).map(normalizeHackathon)
+  const result = extractPage(payload)
+
+  if (result.totalPages > 1 || result.totalElements > size) {
+    return {
+      items: result.content.map(normalizeHackathon),
+      totalPages: result.totalPages,
+      totalElements: result.totalElements,
+      page,
+      size,
+    }
+  }
+
+  const allItems = result.content.map(normalizeHackathon)
+  const totalPages = Math.max(1, Math.ceil(allItems.length / size))
+  const start = page * size
+  return {
+    items: allItems.slice(start, start + size),
+    totalPages,
+    totalElements: allItems.length,
+    page,
+    size,
+  }
 }
 
 export async function fetchHackathonTeams(id, params = {}) {

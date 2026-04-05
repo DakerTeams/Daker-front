@@ -3,6 +3,7 @@ import {
   createQueryString,
   extractArray,
   extractObject,
+  extractPage,
 } from './client.js'
 import { getAccessToken } from '../lib/auth.js'
 
@@ -62,9 +63,31 @@ function normalizeTeam(item) {
 }
 
 export async function fetchTeams(params = {}) {
-  const query = createQueryString(params)
+  const { page = 0, size = 10, ...serverParams } = params
+  const query = createQueryString({ ...serverParams, page: page + 1, size })
   const payload = await apiRequest(`/teams${query}`)
-  return extractArray(payload).map(normalizeTeam)
+  const result = extractPage(payload)
+
+  if (result.totalPages > 1 || result.totalElements > size) {
+    return {
+      items: result.content.map(normalizeTeam),
+      totalPages: result.totalPages,
+      totalElements: result.totalElements,
+      page,
+      size,
+    }
+  }
+
+  const allItems = result.content.map(normalizeTeam)
+  const totalPages = Math.max(1, Math.ceil(allItems.length / size))
+  const start = page * size
+  return {
+    items: allItems.slice(start, start + size),
+    totalPages,
+    totalElements: allItems.length,
+    page,
+    size,
+  }
 }
 
 export async function fetchMyTeams() {

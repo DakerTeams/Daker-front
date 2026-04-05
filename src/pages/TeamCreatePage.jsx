@@ -32,7 +32,7 @@ function TeamCreatePage() {
 
     async function loadHackathons() {
       try {
-        const items = await fetchHackathons()
+        const { items } = await fetchHackathons()
         if (!isMounted) return
 
         setAvailableHackathons(items)
