@@ -6,9 +6,11 @@ import { normalizeAuthErrorMessage } from '../lib/auth-error.js'
 
 function parseAuthHash(hashValue) {
   const searchParams = new URLSearchParams(hashValue.replace(/^#/, ''))
+  const expiresIn = searchParams.get('expiresIn')
   return {
     accessToken: searchParams.get('accessToken') ?? '',
     refreshToken: searchParams.get('refreshToken') ?? '',
+    expiresIn: expiresIn ? Number(expiresIn) : null,
   }
 }
 
@@ -27,7 +29,7 @@ function GithubAuthCallbackPage() {
         return
       }
 
-      const { accessToken, refreshToken } = parseAuthHash(window.location.hash)
+      const { accessToken, refreshToken, expiresIn } = parseAuthHash(window.location.hash)
       if (!accessToken || !refreshToken) {
         clearAuthSession()
         setErrorMessage('GitHub 로그인 응답이 올바르지 않습니다. 다시 시도해주세요.')
@@ -41,6 +43,7 @@ function GithubAuthCallbackPage() {
           accessToken,
           refreshToken,
           user: null,
+          expiresIn,
         })
         await fetchMe()
         navigate('/', { replace: true })
