@@ -71,7 +71,7 @@ function normalizeHackathon(item) {
 
 export async function fetchHackathons(params = {}) {
   const { page = 0, size = 10, ...serverParams } = params
-  const query = createQueryString({ ...serverParams, page: page + 1, size })
+  const query = createQueryString({ ...serverParams, page: page + 1, limit: size })
   const payload = await apiRequest(`/hackathons${query}`)
   const result = extractPage(payload)
 

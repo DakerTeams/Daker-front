@@ -64,7 +64,7 @@ function normalizeTeam(item) {
 
 export async function fetchTeams(params = {}) {
   const { page = 0, size = 10, ...serverParams } = params
-  const query = createQueryString({ ...serverParams, page: page + 1, size })
+  const query = createQueryString({ ...serverParams, page: page + 1, limit: size })
   const payload = await apiRequest(`/teams${query}`)
   const result = extractPage(payload)
 
