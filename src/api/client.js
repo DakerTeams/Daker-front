@@ -50,6 +50,10 @@ function buildUrl(path) {
   return `${normalizedBaseUrl}${normalizedPath}`
 }
 
+export function buildApiUrl(path) {
+  return buildUrl(path)
+}
+
 function createQueryString(params = {}) {
   const searchParams = new URLSearchParams()
 

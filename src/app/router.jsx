@@ -4,6 +4,7 @@ import MainLayout from '../layouts/MainLayout.jsx'
 import AccessDeniedPage from '../pages/AccessDeniedPage.jsx'
 import CampPage from '../pages/CampPage.jsx'
 import AdminPage from '../pages/AdminPage.jsx'
+import GithubAuthCallbackPage from '../pages/GithubAuthCallbackPage.jsx'
 import HackathonDetailPage from '../pages/HackathonDetailPage.jsx'
 import HackathonsPage from '../pages/HackathonsPage.jsx'
 import JudgePage from '../pages/JudgePage.jsx'
@@ -56,6 +57,10 @@ export const router = createBrowserRouter([
       {
         path: 'signup',
         element: <SignupPage />,
+      },
+      {
+        path: 'auth/github/callback',
+        element: <GithubAuthCallbackPage />,
       },
       {
         path: 'me',

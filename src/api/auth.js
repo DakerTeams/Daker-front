@@ -1,4 +1,4 @@
-import { apiRequest, extractObject } from './client.js'
+import { apiRequest, buildApiUrl, extractObject } from './client.js'
 import {
   clearAuthSession,
   getAccessToken,
@@ -119,28 +119,6 @@ export async function logout() {
   }
 }
 
-export async function requestGithubDevice() {
-  const response = await apiRequest('/auth/github/device', {
-    method: 'POST',
-  })
-  return extractObject(response)
-}
-
-export async function pollGithubToken(deviceCode) {
-  const response = await apiRequest('/auth/github/token', {
-    method: 'POST',
-    body: JSON.stringify({ deviceCode }),
-  })
-
-  const data = extractObject(response)
-  if (data.accessToken) {
-    const sessionUser = normalizeUser(data.user)
-    saveAuthSession({
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
-      user: sessionUser,
-    })
-  }
-
-  return data
+export function getGithubLoginUrl() {
+  return buildApiUrl('/auth/github/login')
 }
