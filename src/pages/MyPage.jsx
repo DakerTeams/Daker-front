@@ -645,7 +645,7 @@ function MyPage() {
                   if (oa !== ob) return oa - ob
                   const da = a.hackathonEndDate ?? a.hackathonStartDate ?? ''
                   const db = b.hackathonEndDate ?? b.hackathonStartDate ?? ''
-                  return db.localeCompare(da)
+                  return da.localeCompare(db)
                 })
                 .map((team) => {
                 const status = team.hackathonStatus
