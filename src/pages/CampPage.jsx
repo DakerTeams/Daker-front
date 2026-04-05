@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   applyToTeam,
   deleteTeam,
@@ -7,151 +7,156 @@ import {
   fetchTeamDetail,
   fetchTeams,
   updateTeam,
-} from '../api/teams.js'
-import { getStoredUser } from '../lib/auth.js'
+} from "../api/teams.js";
+import { getStoredUser } from "../lib/auth.js";
 
 function createEmptyPosition() {
   return {
-    positionName: '',
-    requiredCount: '1',
-  }
+    positionName: "",
+    requiredCount: "1",
+  };
 }
 
 const openFilters = [
-  { key: 'all', label: '전체' },
-  { key: 'open', label: '모집중' },
-  { key: 'closed', label: '마감' },
-]
+  { key: "all", label: "전체" },
+  { key: "open", label: "모집중" },
+  { key: "closed", label: "마감" },
+];
 
 function CampPage() {
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const [openFilter, setOpenFilter] = useState('all')
-  const [items, setItems] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedTeam, setSelectedTeam] = useState(null)
-  const [myTeams, setMyTeams] = useState([])
-  const [appliedTeamIds, setAppliedTeamIds] = useState([])
-  const [teamDetailMessage, setTeamDetailMessage] = useState('')
-  const [isApplying, setIsApplying] = useState(false)
-  const [selectedPosition, setSelectedPosition] = useState('')
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [openFilter, setOpenFilter] = useState("all");
+  const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [myTeams, setMyTeams] = useState([]);
+  const [appliedTeamIds, setAppliedTeamIds] = useState([]);
+  const [teamDetailMessage, setTeamDetailMessage] = useState("");
+  const [isApplying, setIsApplying] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState("");
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: '',
-    description: '',
-    isOpen: 'true',
-    maxMembers: '5',
+    name: "",
+    description: "",
+    isOpen: "true",
+    maxMembers: "5",
     positions: [createEmptyPosition()],
-  })
-  const [editMessage, setEditMessage] = useState('')
-  const [isSavingEdit, setIsSavingEdit] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
+  });
+  const [editMessage, setEditMessage] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
 
     async function loadTeamsAndHackathons() {
-      setIsLoading(true)
+      setIsLoading(true);
 
       try {
         const [teamData, myTeamData] = await Promise.all([
           fetchTeams({
-            isOpen:
-              openFilter === 'all'
-                ? undefined
-                : openFilter === 'open',
+            isOpen: openFilter === "all" ? undefined : openFilter === "open",
             q: query.trim() || undefined,
           }),
-          getStoredUser() ? fetchMyTeams().catch(() => []) : Promise.resolve([]),
-        ])
-        if (!isMounted) return
+          getStoredUser()
+            ? fetchMyTeams().catch(() => [])
+            : Promise.resolve([]),
+        ]);
+        if (!isMounted) return;
 
         if (teamData.length > 0) {
-          setItems(teamData)
+          setItems(teamData);
         }
 
-        setMyTeams(myTeamData)
+        setMyTeams(myTeamData);
       } catch {
-        if (!isMounted) return
-        setItems([])
-        setMyTeams([])
+        if (!isMounted) return;
+        setItems([]);
+        setMyTeams([]);
       } finally {
         if (isMounted) {
-          setIsLoading(false)
+          setIsLoading(false);
         }
       }
     }
 
-    loadTeamsAndHackathons()
+    loadTeamsAndHackathons();
 
     return () => {
-      isMounted = false
-    }
-  }, [openFilter, query])
+      isMounted = false;
+    };
+  }, [openFilter, query]);
 
   const handleOpenTeam = async (teamId) => {
-    setTeamDetailMessage('')
-    setSelectedPosition('')
+    setTeamDetailMessage("");
+    setSelectedPosition("");
 
     try {
-      const detail = await fetchTeamDetail(teamId)
-      setSelectedTeam(detail)
+      const detail = await fetchTeamDetail(teamId);
+      setSelectedTeam(detail);
     } catch {
-      const fallbackTeam = items.find((item) => item.id === teamId) ?? null
+      const fallbackTeam = items.find((item) => item.id === teamId) ?? null;
       setSelectedTeam({
         ...fallbackTeam,
         members: [],
-      })
-      setTeamDetailMessage('팀 상세 정보를 불러오지 못해 기본 정보만 표시합니다.')
+      });
+      setTeamDetailMessage(
+        "팀 상세 정보를 불러오지 못해 기본 정보만 표시합니다.",
+      );
     }
-  }
+  };
 
   const handleApply = async () => {
-    if (!selectedTeam) return
+    if (!selectedTeam) return;
 
     if (!getStoredUser()) {
-      setTeamDetailMessage('로그인 후 팀 합류 신청을 할 수 있습니다.')
-      return
+      setTeamDetailMessage("로그인 후 팀 합류 신청을 할 수 있습니다.");
+      return;
     }
 
-    setIsApplying(true)
-    setTeamDetailMessage('')
+    setIsApplying(true);
+    setTeamDetailMessage("");
 
     try {
-      await applyToTeam(selectedTeam.id, selectedPosition || null)
+      await applyToTeam(selectedTeam.id, selectedPosition || null);
       setAppliedTeamIds((current) =>
-        current.includes(selectedTeam.id) ? current : [...current, selectedTeam.id],
-      )
-      setTeamDetailMessage('합류 신청이 완료되었습니다.')
+        current.includes(selectedTeam.id)
+          ? current
+          : [...current, selectedTeam.id],
+      );
+      setTeamDetailMessage("합류 신청이 완료되었습니다.");
     } catch {
-      setTeamDetailMessage('합류 신청에 실패했습니다. 이미 신청했거나 팀 정원이 찼을 수 있습니다.')
+      setTeamDetailMessage(
+        "합류 신청에 실패했습니다. 이미 신청했거나 팀 정원이 찼을 수 있습니다.",
+      );
     } finally {
-      setIsApplying(false)
+      setIsApplying(false);
     }
-  }
+  };
 
-  const currentUser = getStoredUser()
+  const currentUser = getStoredUser();
   const isMySelectedTeam = selectedTeam
     ? myTeams.some((team) => String(team.id) === String(selectedTeam.id))
-    : false
-  const selectedLeaderName = selectedTeam?.leader ?? ''
+    : false;
+  const selectedLeaderName = selectedTeam?.leader ?? "";
   const isSelectedTeamLeader =
     isMySelectedTeam &&
     Boolean(currentUser) &&
     ((selectedTeam?.leaderId && selectedTeam.leaderId === currentUser.userId) ||
-      (currentUser?.nickname && selectedLeaderName === currentUser.nickname))
+      (currentUser?.nickname && selectedLeaderName === currentUser.nickname));
   const hasAppliedToSelectedTeam = selectedTeam
     ? appliedTeamIds.includes(selectedTeam.id)
-    : false
+    : false;
 
   const filteredTeams = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
+    const normalizedQuery = query.trim().toLowerCase();
 
     return items.filter((team) => {
       const matchesOpen =
-        openFilter === 'all' ||
-        (openFilter === 'open' && team.isOpen) ||
-        (openFilter === 'closed' && !team.isOpen)
+        openFilter === "all" ||
+        (openFilter === "open" && team.isOpen) ||
+        (openFilter === "closed" && !team.isOpen);
 
       const matchesQuery =
         normalizedQuery.length === 0 ||
@@ -159,11 +164,11 @@ function CampPage() {
         team.hackathonName.toLowerCase().includes(normalizedQuery) ||
         team.positions.some((position) =>
           position.toLowerCase().includes(normalizedQuery),
-        )
+        );
 
-      return matchesOpen && matchesQuery
-    })
-  }, [items, openFilter, query])
+      return matchesOpen && matchesQuery;
+    });
+  }, [items, openFilter, query]);
 
   return (
     <section className="page-section">
@@ -171,7 +176,8 @@ function CampPage() {
         <p className="eyebrow">/camp</p>
         <h1>팀원 모집</h1>
         <p className="page-description">
-          해커톤별 팀 모집글을 확인하고, 바로 팀을 만들거나 기존 팀에 지원해보세요.
+          해커톤별 팀 모집글을 확인하고, 바로 팀을 만들거나 기존 팀에
+          지원해보세요.
         </p>
       </div>
 
@@ -180,13 +186,14 @@ function CampPage() {
           <div className="stack-list stack-list--compact">
             <h2>함께 해커톤을 완주할 팀원을 찾아보세요.</h2>
             <p className="page-description">
-              모집 상태와 해커톤별로 필터링해서 원하는 팀을 빠르게 찾을 수 있습니다.
+              모집 상태와 해커톤별로 필터링해서 원하는 팀을 빠르게 찾을 수
+              있습니다.
             </p>
           </div>
           <button
             type="button"
             className="button-link"
-            onClick={() => navigate('/team-create')}
+            onClick={() => navigate("/team-create")}
           >
             + 팀 생성하기
           </button>
@@ -203,13 +210,16 @@ function CampPage() {
             placeholder="팀명, 포지션, 해커톤명으로 검색"
           />
 
-          <div className="filter-group camp-status-filter" aria-label="모집 상태 필터">
+          <div
+            className="filter-group camp-status-filter"
+            aria-label="모집 상태 필터"
+          >
             {openFilters.map((filter) => (
               <button
                 key={filter.key}
                 type="button"
                 className={`filter-chip${
-                  openFilter === filter.key ? ' filter-chip--active' : ''
+                  openFilter === filter.key ? " filter-chip--active" : ""
                 }`}
                 onClick={() => setOpenFilter(filter.key)}
               >
@@ -228,7 +238,9 @@ function CampPage() {
 
       {filteredTeams.length === 0 ? (
         <section className="surface-card empty-panel">
-          <p className="empty-panel__title">조건에 맞는 팀 모집글이 없습니다.</p>
+          <p className="empty-panel__title">
+            조건에 맞는 팀 모집글이 없습니다.
+          </p>
           <p className="page-description">
             필터를 조정하거나 새 팀을 직접 만들어보세요.
           </p>
@@ -243,23 +255,27 @@ function CampPage() {
               tabIndex={0}
               onClick={() => handleOpenTeam(team.id)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  handleOpenTeam(team.id)
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleOpenTeam(team.id);
                 }
               }}
             >
               <div className="team-card-head">
                 <div>
                   <h2>{team.name}</h2>
-                  <p className="team-card__hackathon">🏆 {team.hackathonName}</p>
+                  <p className="team-card__hackathon">
+                    🏆 {team.hackathonName}
+                  </p>
                 </div>
                 <span
                   className={`status-outline ${
-                    team.isOpen ? 'status-outline--open' : 'status-outline--closed'
+                    team.isOpen
+                      ? "status-outline--open"
+                      : "status-outline--closed"
                   }`}
                 >
-                  {team.isOpen ? '모집 중' : '마감'}
+                  {team.isOpen ? "모집 중" : "마감"}
                 </span>
               </div>
 
@@ -280,10 +296,12 @@ function CampPage() {
                 <span>팀장: {team.leader}</span>
                 <span
                   className={`camp-contact-button ${
-                    team.isOpen ? 'camp-contact-button--open' : 'camp-contact-button--closed'
+                    team.isOpen
+                      ? "camp-contact-button--open"
+                      : "camp-contact-button--closed"
                   }`}
                 >
-                  {team.isOpen ? '팀 보기' : '마감'}
+                  {team.isOpen ? "팀 보기" : "마감"}
                 </span>
               </div>
             </article>
@@ -322,7 +340,9 @@ function CampPage() {
               <section className="surface-card">
                 <div className="stack-list stack-list--compact">
                   <p className="meta-text">🏆 {selectedTeam.hackathonName}</p>
-                  <p>{selectedTeam.description || '팀 소개가 아직 없습니다.'}</p>
+                  <p>
+                    {selectedTeam.description || "팀 소개가 아직 없습니다."}
+                  </p>
                 </div>
               </section>
 
@@ -334,7 +354,7 @@ function CampPage() {
                   </div>
                   <div className="info-row">
                     <span>모집 상태</span>
-                    <span>{selectedTeam.isOpen ? '모집 중' : '마감'}</span>
+                    <span>{selectedTeam.isOpen ? "모집 중" : "마감"}</span>
                   </div>
                   <div className="info-row">
                     <span>현재 인원</span>
@@ -358,7 +378,9 @@ function CampPage() {
                       </span>
                     ))
                   ) : (
-                    <span className="meta-text">현재 별도 포지션 정보가 없습니다.</span>
+                    <span className="meta-text">
+                      현재 별도 포지션 정보가 없습니다.
+                    </span>
                   )}
                 </div>
               </section>
@@ -370,7 +392,9 @@ function CampPage() {
                     <select
                       className="form-control"
                       value={selectedPosition}
-                      onChange={(event) => setSelectedPosition(event.target.value)}
+                      onChange={(event) =>
+                        setSelectedPosition(event.target.value)
+                      }
                     >
                       <option value="">역할 선택 안 함</option>
                       {(selectedTeam.positionDetails ?? []).map((position) => (
@@ -406,7 +430,9 @@ function CampPage() {
             </div>
 
             <div className="team-create-drawer__footer">
-              {teamDetailMessage ? <p className="meta-text">{teamDetailMessage}</p> : null}
+              {teamDetailMessage ? (
+                <p className="meta-text">{teamDetailMessage}</p>
+              ) : null}
               <button
                 type="button"
                 className="team-secondary-button team-secondary-button--muted"
@@ -421,20 +447,22 @@ function CampPage() {
                     className="team-secondary-button team-secondary-button--muted"
                     onClick={() => {
                       setEditForm({
-                        name: selectedTeam.name ?? '',
-                        description: selectedTeam.description ?? '',
+                        name: selectedTeam.name ?? "",
+                        description: selectedTeam.description ?? "",
                         isOpen: String(selectedTeam.isOpen ?? true),
                         maxMembers: String(selectedTeam.maxMembers ?? 5),
                         positions:
                           selectedTeam.positionDetails?.length > 0
                             ? selectedTeam.positionDetails.map((position) => ({
                                 positionName: position.positionName,
-                                requiredCount: String(position.requiredCount ?? 1),
+                                requiredCount: String(
+                                  position.requiredCount ?? 1,
+                                ),
                               }))
                             : [createEmptyPosition()],
-                      })
-                      setEditMessage('')
-                      setIsEditDrawerOpen(true)
+                      });
+                      setEditMessage("");
+                      setIsEditDrawerOpen(true);
                     }}
                   >
                     팀 수정
@@ -444,23 +472,29 @@ function CampPage() {
                     className="team-danger-button"
                     onClick={async () => {
                       try {
-                        setIsDeleting(true)
-                        await deleteTeam(selectedTeam.id)
+                        setIsDeleting(true);
+                        await deleteTeam(selectedTeam.id);
                         setItems((current) =>
-                          current.filter((team) => String(team.id) !== String(selectedTeam.id)),
-                        )
+                          current.filter(
+                            (team) =>
+                              String(team.id) !== String(selectedTeam.id),
+                          ),
+                        );
                         setMyTeams((current) =>
-                          current.filter((team) => String(team.id) !== String(selectedTeam.id)),
-                        )
-                        setSelectedTeam(null)
+                          current.filter(
+                            (team) =>
+                              String(team.id) !== String(selectedTeam.id),
+                          ),
+                        );
+                        setSelectedTeam(null);
                       } catch {
-                        setTeamDetailMessage('팀 삭제에 실패했습니다.')
+                        setTeamDetailMessage("팀 삭제에 실패했습니다.");
                       } finally {
-                        setIsDeleting(false)
+                        setIsDeleting(false);
                       }
                     }}
                   >
-                    {isDeleting ? '삭제 중...' : '팀 삭제'}
+                    {isDeleting ? "삭제 중..." : "팀 삭제"}
                   </button>
                 </>
               ) : (
@@ -468,15 +502,19 @@ function CampPage() {
                   type="button"
                   className="team-primary-button"
                   onClick={handleApply}
-                  disabled={!selectedTeam.isOpen || isApplying || hasAppliedToSelectedTeam}
+                  disabled={
+                    !selectedTeam.isOpen ||
+                    isApplying ||
+                    hasAppliedToSelectedTeam
+                  }
                 >
                   {hasAppliedToSelectedTeam
-                    ? '신청 완료'
+                    ? "신청 완료"
                     : selectedTeam.isOpen
-                  ? isApplying
-                    ? '신청 중...'
-                    : '합류 신청'
-                  : '모집 마감'}
+                      ? isApplying
+                        ? "신청 중..."
+                        : "합류 신청"
+                      : "모집 마감"}
                 </button>
               )}
             </div>
@@ -585,7 +623,10 @@ function CampPage() {
                       onClick={() =>
                         setEditForm((current) => ({
                           ...current,
-                          positions: [...current.positions, createEmptyPosition()],
+                          positions: [
+                            ...current.positions,
+                            createEmptyPosition(),
+                          ],
                         }))
                       }
                     >
@@ -594,7 +635,10 @@ function CampPage() {
                   </div>
 
                   {editForm.positions.map((position, index) => (
-                    <div key={`camp-edit-position-${index}`} className="form-grid">
+                    <div
+                      key={`camp-edit-position-${index}`}
+                      className="form-grid"
+                    >
                       <label className="form-field">
                         <span className="form-label">역할명</span>
                         <input
@@ -603,10 +647,14 @@ function CampPage() {
                           onChange={(event) =>
                             setEditForm((current) => ({
                               ...current,
-                              positions: current.positions.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, positionName: event.target.value }
-                                  : item,
+                              positions: current.positions.map(
+                                (item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        positionName: event.target.value,
+                                      }
+                                    : item,
                               ),
                             }))
                           }
@@ -623,10 +671,14 @@ function CampPage() {
                           onChange={(event) =>
                             setEditForm((current) => ({
                               ...current,
-                              positions: current.positions.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, requiredCount: event.target.value }
-                                  : item,
+                              positions: current.positions.map(
+                                (item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        requiredCount: event.target.value,
+                                      }
+                                    : item,
                               ),
                             }))
                           }
@@ -644,7 +696,9 @@ function CampPage() {
                               positions:
                                 current.positions.length === 1
                                   ? [createEmptyPosition()]
-                                  : current.positions.filter((_, itemIndex) => itemIndex !== index),
+                                  : current.positions.filter(
+                                      (_, itemIndex) => itemIndex !== index,
+                                    ),
                             }))
                           }
                         >
@@ -671,12 +725,12 @@ function CampPage() {
                 className="team-primary-button"
                 onClick={async () => {
                   try {
-                    setIsSavingEdit(true)
-                    setEditMessage('')
+                    setIsSavingEdit(true);
+                    setEditMessage("");
                     const updated = await updateTeam(selectedTeam.id, {
                       name: editForm.name,
                       description: editForm.description,
-                      isOpen: editForm.isOpen === 'true',
+                      isOpen: editForm.isOpen === "true",
                       maxMemberCount: Number(editForm.maxMembers) || 1,
                       positions: editForm.positions
                         .map((position) => ({
@@ -684,14 +738,15 @@ function CampPage() {
                           requiredCount: Number(position.requiredCount) || 1,
                         }))
                         .filter((position) => position.positionName),
-                    })
+                    });
 
                     const nextSelectedTeam = {
                       ...selectedTeam,
                       ...updated,
                       description: editForm.description,
-                      isOpen: editForm.isOpen === 'true',
-                      maxMembers: Number(editForm.maxMembers) || selectedTeam.maxMembers,
+                      isOpen: editForm.isOpen === "true",
+                      maxMembers:
+                        Number(editForm.maxMembers) || selectedTeam.maxMembers,
                       positionDetails: editForm.positions
                         .map((position) => ({
                           positionName: position.positionName.trim(),
@@ -701,35 +756,39 @@ function CampPage() {
                       positions: editForm.positions
                         .map((position) => position.positionName.trim())
                         .filter(Boolean),
-                    }
+                    };
 
-                    setSelectedTeam(nextSelectedTeam)
+                    setSelectedTeam(nextSelectedTeam);
                     setItems((current) =>
                       current.map((team) =>
-                        String(team.id) === String(selectedTeam.id) ? nextSelectedTeam : team,
+                        String(team.id) === String(selectedTeam.id)
+                          ? nextSelectedTeam
+                          : team,
                       ),
-                    )
+                    );
                     setMyTeams((current) =>
                       current.map((team) =>
-                        String(team.id) === String(selectedTeam.id) ? nextSelectedTeam : team,
+                        String(team.id) === String(selectedTeam.id)
+                          ? nextSelectedTeam
+                          : team,
                       ),
-                    )
-                    setIsEditDrawerOpen(false)
+                    );
+                    setIsEditDrawerOpen(false);
                   } catch {
-                    setEditMessage('팀 수정에 실패했습니다.')
+                    setEditMessage("팀 수정에 실패했습니다.");
                   } finally {
-                    setIsSavingEdit(false)
+                    setIsSavingEdit(false);
                   }
                 }}
               >
-                {isSavingEdit ? '저장 중...' : '저장'}
+                {isSavingEdit ? "저장 중..." : "저장"}
               </button>
             </div>
           </aside>
         </div>
       ) : null}
     </section>
-  )
+  );
 }
 
-export default CampPage
+export default CampPage;
