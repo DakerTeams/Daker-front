@@ -67,24 +67,33 @@ function RankingsPage() {
   const myScoreRanking = useMemo(() => scoreRows.find((r) => r.isMe) ?? null, [scoreRows])
   const myParticipationRanking = useMemo(() => participationRows.find((r) => r.isMe) ?? null, [participationRows])
 
-  const myCardScoreRank = myRankingData?.scoreRank?.rank ?? myScoreRanking?.rank ?? null
   const myCardPoints = myRankingData?.scoreRank?.points ?? myScoreRanking?.visibleScore ?? null
-  const myCardParticipationRank = myRankingData?.participationRank?.rank ?? myParticipationRanking?.rank ?? null
+  const myCardScoreRank = (myCardPoints > 0) ? (myRankingData?.scoreRank?.rank ?? myScoreRanking?.rank ?? null) : null
   const myCardParticipationCount =
     myRankingData?.participationRank?.hackathonCount ??
     myScoreRanking?.participationCount ??
     null
+  const myCardParticipationRank = (myCardParticipationCount > 0) ? (myRankingData?.participationRank?.rank ?? myParticipationRanking?.rank ?? null) : null
 
   const scoredRows = useMemo(
     () =>
-      scoreRows.map((ranking) => ({
-        ...ranking,
-        visibleScore: ranking.period?.[period] ?? ranking.score,
-      })),
+      scoreRows
+        .map((ranking) => ({
+          ...ranking,
+          visibleScore: ranking.period?.[period] ?? ranking.score,
+        }))
+        .filter((r) => r.visibleScore > 0)
+        .sort((a, b) => a.rank - b.rank),
     [period, scoreRows],
   )
 
-  const votingRows = useMemo(() => participationRows, [participationRows])
+  const votingRows = useMemo(
+    () =>
+      participationRows
+        .filter((r) => r.participationCount > 0)
+        .sort((a, b) => a.rank - b.rank),
+    [participationRows],
+  )
 
   const rankIcon = (rank) => `#${rank}`
 
@@ -172,9 +181,6 @@ function RankingsPage() {
       <div className="page-header">
         <p className="eyebrow">/rankings</p>
         <h1>랭킹</h1>
-        <p className="page-description">
-          점수 기준과 참여 기준을 분리해서 보여줄 페이지입니다.
-        </p>
       </div>
 
       <section className="rank-hero">
