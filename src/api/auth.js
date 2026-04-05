@@ -37,6 +37,7 @@ export async function login(payload) {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
     user: sessionUser,
+    expiresIn: data.expiresIn,
   })
 
   return {
@@ -104,6 +105,26 @@ export async function removeUserTag(tagId) {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${getAccessToken()}` },
   })
+}
+
+export async function refreshAccessToken() {
+  const response = await apiRequest('/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refreshToken: getRefreshToken() }),
+    skipRefresh: true,
+  })
+
+  const data = extractObject(response)
+  if (!data.accessToken) throw new Error('토큰 갱신 실패')
+
+  saveAuthSession({
+    accessToken: data.accessToken,
+    refreshToken: getRefreshToken(),
+    user: null,
+    expiresIn: data.expiresIn,
+  })
+
+  return data.accessToken
 }
 
 export async function logout() {

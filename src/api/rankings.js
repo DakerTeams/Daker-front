@@ -41,15 +41,16 @@ export async function fetchParticipationRankings(period = 'all') {
   return extractArray(payload).map(normalizeRanking)
 }
 
-export async function fetchMyRanking() {
-  const payload = await apiRequest('/rankings/me', {
+export async function fetchMyRanking(period = 'all') {
+  const query = createQueryString({ period: periodMap[period] ?? period })
+  const payload = await apiRequest(`/rankings/me${query}`, {
     headers: {
       Authorization: `Bearer ${getAccessToken()}`,
     },
   })
   const data = extractObject(payload)
   return {
-    score: data.score ?? null,
-    participation: data.participation ?? null,
+    scoreRank: data.scoreRank ?? null,
+    participationRank: data.participationRank ?? null,
   }
 }
