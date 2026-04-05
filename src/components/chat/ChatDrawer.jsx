@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchHackathons } from '../../api/hackathons.js'
 import { fetchMyChatRooms, joinChat, leaveChat } from '../../api/chat.js'
 import { getStoredUser } from '../../lib/auth.js'
+import { CHAT_ROOMS_UPDATED_EVENT, notifyChatRoomsUpdated } from '../../lib/chat-events.js'
 import HackathonChat from './HackathonChat.jsx'
 
 const STATUS_FILTERS = [
@@ -26,19 +27,47 @@ function ChatDrawer({ open, onClose }) {
   const [currentPage, setCurrentPage] = useState(0)
   const currentUser = getStoredUser()
 
+  const refreshMyRooms = useCallback(async (preferredHackathonId = null) => {
+    const rooms = await fetchMyChatRooms()
+    setMyRooms(rooms)
+
+    if (rooms.length === 0) {
+      setSelectedId(null)
+      return rooms
+    }
+
+    const nextSelectedId =
+      preferredHackathonId && rooms.some((room) => room.hackathonId === preferredHackathonId)
+        ? preferredHackathonId
+        : selectedId && rooms.some((room) => room.hackathonId === selectedId)
+          ? selectedId
+          : rooms[0].hackathonId
+
+    setSelectedId(nextSelectedId)
+    return rooms
+  }, [selectedId])
+
   useEffect(() => {
     if (!open) return
     if (!currentUser) return
 
-    fetchMyChatRooms()
-      .then((rooms) => {
-        setMyRooms(rooms)
-        if (rooms.length > 0 && !selectedId) {
-          setSelectedId(rooms[0].hackathonId)
-        }
-      })
+    refreshMyRooms()
       .catch(() => {})
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentUser, open, refreshMyRooms])
+
+  useEffect(() => {
+    if (!currentUser) return undefined
+
+    function handleRoomsUpdated(event) {
+      refreshMyRooms(event.detail?.hackathonId).catch(() => {})
+    }
+
+    window.addEventListener(CHAT_ROOMS_UPDATED_EVENT, handleRoomsUpdated)
+
+    return () => {
+      window.removeEventListener(CHAT_ROOMS_UPDATED_EVENT, handleRoomsUpdated)
+    }
+  }, [currentUser, refreshMyRooms])
 
   useEffect(() => {
     if (!open || tab !== 'join') return
@@ -68,15 +97,13 @@ function ChatDrawer({ open, onClose }) {
     setJoinError('')
     try {
       await joinChat(hackathonId)
-      const rooms = await fetchMyChatRooms()
-      setMyRooms(rooms)
-      setSelectedId(hackathonId)
+      await refreshMyRooms(hackathonId)
+      notifyChatRoomsUpdated(hackathonId)
       setTab('my')
     } catch (err) {
       if (err?.status === 409) {
-        const rooms = await fetchMyChatRooms()
-        setMyRooms(rooms)
-        setSelectedId(hackathonId)
+        await refreshMyRooms(hackathonId)
+        notifyChatRoomsUpdated(hackathonId)
         setTab('my')
       } else {
         setJoinError('참가에 실패했습니다.')
@@ -90,11 +117,8 @@ function ChatDrawer({ open, onClose }) {
     setLeavingId(hackathonId)
     try {
       await leaveChat(hackathonId)
-      const rooms = await fetchMyChatRooms()
-      setMyRooms(rooms)
-      if (selectedId === hackathonId) {
-        setSelectedId(rooms.length > 0 ? rooms[0].hackathonId : null)
-      }
+      await refreshMyRooms()
+      notifyChatRoomsUpdated()
     } catch {
       // 실패 시 조용히 무시
     } finally {

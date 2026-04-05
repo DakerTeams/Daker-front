@@ -18,6 +18,7 @@ import {
 } from "../api/teams.js";
 import { getStoredUser } from "../lib/auth.js";
 import { joinChat } from "../api/chat.js";
+import { notifyChatRoomsUpdated, openChatDrawer } from "../lib/chat-events.js";
 
 const detailTabs = [
   { key: "overview", label: "개요" },
@@ -319,10 +320,14 @@ function HackathonDetailPage() {
           await joinChat(id)
           setChatJoined(true)
           setChatJoinMessage('채팅방에 참가했습니다.')
+          notifyChatRoomsUpdated(Number(id))
+          openChatDrawer(Number(id))
         } catch (err) {
           if (err?.status === 409) {
             setChatJoined(true)
             setChatJoinMessage('이미 참가한 채팅방입니다.')
+            notifyChatRoomsUpdated(Number(id))
+            openChatDrawer(Number(id))
           } else {
             setChatJoinMessage('참가에 실패했습니다.')
           }

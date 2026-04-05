@@ -8,6 +8,7 @@ import {
   getTokenExpiresAt,
   subscribeAuthChange,
 } from '../lib/auth.js'
+import { CHAT_DRAWER_OPEN_EVENT } from '../lib/chat-events.js'
 
 const ChatDrawer = lazy(() => import('../components/chat/ChatDrawer.jsx'))
 
@@ -49,6 +50,18 @@ function MainLayout() {
       window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpired)
     }
   }, [navigate])
+
+  useEffect(() => {
+    function handleOpenChat() {
+      setIsChatOpen(true)
+    }
+
+    window.addEventListener(CHAT_DRAWER_OPEN_EVENT, handleOpenChat)
+
+    return () => {
+      window.removeEventListener(CHAT_DRAWER_OPEN_EVENT, handleOpenChat)
+    }
+  }, [])
 
   return (
     <div className="app-shell">
