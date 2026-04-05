@@ -3,9 +3,12 @@ import {
   changeUserRole,
   createAdminHackathon,
   deleteAdminHackathon,
+  downloadAdminHackathonSubmissions,
+  downloadAdminSubmission,
   fetchAdminDashboard,
   fetchAdminHackathons,
-  fetchAdminSubmissions,
+  fetchAdminSubmissionHackathonDetails,
+  fetchAdminSubmissionHackathons,
   fetchAdminUsers,
   updateAdminHackathon,
 } from '../api/admin.js'
@@ -80,6 +83,16 @@ function formatDateRange(startAt, endAt) {
 
   if (start === '-' && end === '-') return '-'
   return `${start} ~ ${end}`
+}
+
+function formatDateTime(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const pad = (number) => String(number).padStart(2, '0')
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 function buildHackathonForm(item) {
@@ -349,13 +362,93 @@ function HackathonFormModal({ initialValue, onClose, onSubmit, saving }) {
   )
 }
 
+function SubmissionHackathonModal({
+  open,
+  hackathon,
+  items,
+  loading,
+  onClose,
+  onDownloadSubmission,
+  onDownloadAll,
+}) {
+  if (!open || !hackathon) return null
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="mypage-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="mypage-modal__header">
+          <div>
+            <h2>{hackathon.hackathonName}</h2>
+            <p className="mypage-modal__subtitle">
+              제출 팀 {hackathon.submittedTeamCount}개, 파일 {hackathon.totalFileCount}개
+            </p>
+          </div>
+          <div className="admin-inline-actions">
+            <button type="button" className="team-primary-button" onClick={() => onDownloadAll(hackathon.hackathonId)}>
+              전체 다운로드
+            </button>
+            <button type="button" className="mypage-modal__close" onClick={onClose}>✕</button>
+          </div>
+        </div>
+
+        <div className="mypage-modal__body">
+          {loading ? (
+            <p className="mypage-modal__empty">제출물을 불러오는 중...</p>
+          ) : items.length === 0 ? (
+            <p className="mypage-modal__empty">제출된 팀이 없습니다.</p>
+          ) : (
+            <div className="admin-judge-list">
+              {items.map((item) => (
+                <article key={item.submissionId} className="admin-judge-item admin-submission-item">
+                  <div className="admin-judge-item__left admin-submission-item__left">
+                    <div>
+                      <h3>{item.teamName}</h3>
+                      <p>{formatDateTime(item.submittedAt)}</p>
+                      <p className="admin-submission-item__meta">
+                        파일 {item.submissionItems?.length ?? 0}개 · {item.reviewStatus === 'reviewed' ? '검토 완료' : '검토 대기'}
+                      </p>
+                      {item.submissionItems?.length > 0 && (
+                        <ul className="admin-submission-item__files">
+                          {item.submissionItems.map((submissionItem) => (
+                            <li key={submissionItem.itemId}>
+                              {submissionItem.originalFileName ?? submissionItem.fileName ?? submissionItem.valueUrl ?? '링크 자료'}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-action-button"
+                    onClick={() => onDownloadSubmission(item.submissionId)}
+                  >
+                    자료 다운로드
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mypage-modal__footer">
+          <button type="button" className="team-secondary-button" onClick={onClose}>닫기</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AdminPage() {
   const [activeSection, setActiveSection] = useState('dashboard')
   const [userFilter, setUserFilter] = useState('all')
   const [dashboard, setDashboard] = useState(null)
   const [hackathons, setHackathons] = useState([])
   const [users, setUsers] = useState([])
-  const [submissions, setSubmissions] = useState([])
+  const [submissionHackathons, setSubmissionHackathons] = useState([])
+  const [submissionModalHackathon, setSubmissionModalHackathon] = useState(null)
+  const [submissionModalItems, setSubmissionModalItems] = useState([])
+  const [submissionModalLoading, setSubmissionModalLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [toast, setToast] = useState(null)
@@ -390,8 +483,8 @@ function AdminPage() {
           const data = await fetchAdminUsers()
           setUsers(data)
         } else if (activeSection === 'submissions') {
-          const data = await fetchAdminSubmissions()
-          setSubmissions(data)
+          const data = await fetchAdminSubmissionHackathons()
+          setSubmissionHackathons(data)
         }
       } catch (err) {
         setError(`데이터를 불러오지 못했습니다. (${err.message})`)
@@ -492,6 +585,52 @@ function AdminPage() {
       setToast({
         type: 'error',
         message: requestError?.message || '실패했습니다.',
+      })
+    }
+  }
+
+  async function handleOpenSubmissionModal(hackathon) {
+    setSubmissionModalHackathon(hackathon)
+    setSubmissionModalLoading(true)
+
+    try {
+      const data = await fetchAdminSubmissionHackathonDetails(hackathon.hackathonId)
+      setSubmissionModalItems(data)
+    } catch (requestError) {
+      setToast({
+        type: 'error',
+        message: requestError?.message || '제출물을 불러오지 못했습니다.',
+      })
+      setSubmissionModalItems([])
+    } finally {
+      setSubmissionModalLoading(false)
+    }
+  }
+
+  function handleCloseSubmissionModal() {
+    setSubmissionModalHackathon(null)
+    setSubmissionModalItems([])
+    setSubmissionModalLoading(false)
+  }
+
+  async function handleDownloadSubmission(submissionId) {
+    try {
+      await downloadAdminSubmission(submissionId)
+    } catch (requestError) {
+      setToast({
+        type: 'error',
+        message: requestError?.message || '다운로드에 실패했습니다.',
+      })
+    }
+  }
+
+  async function handleDownloadAllSubmissions(hackathonId) {
+    try {
+      await downloadAdminHackathonSubmissions(hackathonId)
+    } catch (requestError) {
+      setToast({
+        type: 'error',
+        message: requestError?.message || '전체 다운로드에 실패했습니다.',
       })
     }
   }
@@ -662,27 +801,32 @@ function AdminPage() {
   const renderSubmissions = () => (
     <>
       <h1 className="admin-title">제출물 관리</h1>
+      <p className="admin-subtitle">
+        해커톤별 제출 현황을 확인하고, 모달에서 팀별 자료 또는 전체 제출물을 다운로드할 수 있습니다.
+      </p>
       {loading && <p className="admin-subtitle">불러오는 중...</p>}
       {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
       <section className="admin-card">
         <div className="admin-table">
-          <div className="admin-table__head admin-table__head--submissions">
+          <div className="admin-table__head admin-table__head--submission-hackathons">
             <span>해커톤</span>
-            <span>팀명</span>
-            <span>제출 시각</span>
-            <span>파일</span>
-            <span>재제출</span>
+            <span>제출 팀</span>
+            <span>자료 수</span>
+            <span>마지막 제출</span>
             <span>액션</span>
           </div>
-          {submissions.map((item) => (
-            <div key={`${item.hackathonId}-${item.teamId}`} className="admin-table__row admin-table__row--submissions">
-              <span>{item.hackathonTitle ?? item.hackathonId}</span>
-              <strong>{item.teamName ?? item.teamId}</strong>
-              <span>{item.submittedAt?.slice(0, 16).replace('T', ' ') ?? '-'}</span>
-              <span className="admin-pill admin-pill--file">{item.fileName ?? item.fileType ?? '-'}</span>
-              <span className="admin-pill admin-pill--blue">{item.retryCount ?? 0}회</span>
-              <button type="button" className="team-secondary-button team-secondary-button--muted">
-                다운로드
+          {submissionHackathons.map((item) => (
+            <div key={item.hackathonId} className="admin-table__row admin-table__row--submission-hackathons">
+              <strong>{item.hackathonName}</strong>
+              <span>{item.submittedTeamCount}팀</span>
+              <span className="admin-pill admin-pill--blue">{item.totalFileCount}개</span>
+              <span>{formatDateTime(item.latestSubmittedAt)}</span>
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => handleOpenSubmissionModal(item)}
+              >
+                제출물 보기
               </button>
             </div>
           ))}
@@ -735,6 +879,16 @@ function AdminPage() {
           saving={isSavingHackathon}
         />
       )}
+
+      <SubmissionHackathonModal
+        open={Boolean(submissionModalHackathon)}
+        hackathon={submissionModalHackathon}
+        items={submissionModalItems}
+        loading={submissionModalLoading}
+        onClose={handleCloseSubmissionModal}
+        onDownloadSubmission={handleDownloadSubmission}
+        onDownloadAll={handleDownloadAllSubmissions}
+      />
     </>
   )
 }
