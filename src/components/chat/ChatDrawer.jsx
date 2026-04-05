@@ -26,6 +26,7 @@ function ChatDrawer({ open, onClose, preferredHackathonId = null, roomsRefreshKe
   const [statusFilter, setStatusFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(0)
   const currentUser = getStoredUser()
+  const currentUserId = currentUser?.userId ?? null
   const selectedIdRef = useRef(null)
 
   useEffect(() => {
@@ -59,7 +60,7 @@ function ChatDrawer({ open, onClose, preferredHackathonId = null, roomsRefreshKe
 
   useEffect(() => {
     if (!open) return
-    if (!currentUser) return
+    if (!currentUserId) return
 
     setTab('my')
     if (preferredHackathonId) {
@@ -68,7 +69,7 @@ function ChatDrawer({ open, onClose, preferredHackathonId = null, roomsRefreshKe
 
     refreshMyRooms(preferredHackathonId)
       .catch(() => {})
-  }, [currentUser, open, preferredHackathonId, refreshMyRooms, roomsRefreshKey])
+  }, [currentUserId, open, preferredHackathonId, refreshMyRooms, roomsRefreshKey])
 
   useEffect(() => {
     if (!open || tab !== 'join') return
