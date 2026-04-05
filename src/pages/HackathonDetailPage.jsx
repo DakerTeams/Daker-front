@@ -18,7 +18,7 @@ import {
 } from "../api/teams.js";
 import { getStoredUser } from "../lib/auth.js";
 import { joinChat } from "../api/chat.js";
-import { notifyChatRoomsUpdated, openChatDrawer } from "../lib/chat-events.js";
+import { openChatDrawer } from "../lib/chat-events.js";
 
 const detailTabs = [
   { key: "overview", label: "개요" },
@@ -314,20 +314,23 @@ function HackathonDetailPage() {
   const renderTabContent = () => {
     if (activeTab === "overview") {
       async function handleChatJoin() {
+        if (chatJoined) {
+          openChatDrawer({ hackathonId: Number(id), refreshRooms: true })
+          return
+        }
+
         setChatJoining(true)
         setChatJoinMessage('')
         try {
           await joinChat(id)
           setChatJoined(true)
           setChatJoinMessage('채팅방에 참가했습니다.')
-          notifyChatRoomsUpdated(Number(id))
-          openChatDrawer(Number(id))
+          openChatDrawer({ hackathonId: Number(id), refreshRooms: true })
         } catch (err) {
           if (err?.status === 409) {
             setChatJoined(true)
             setChatJoinMessage('이미 참가한 채팅방입니다.')
-            notifyChatRoomsUpdated(Number(id))
-            openChatDrawer(Number(id))
+            openChatDrawer({ hackathonId: Number(id), refreshRooms: true })
           } else {
             setChatJoinMessage('참가에 실패했습니다.')
           }
@@ -351,10 +354,10 @@ function HackathonDetailPage() {
                 <button
                   type="button"
                   className="team-primary-button"
-                  disabled={chatJoined || chatJoining}
+                  disabled={chatJoining}
                   onClick={handleChatJoin}
                 >
-                  {chatJoining ? '참가 중...' : chatJoined ? '채팅방 참가 완료' : '채팅 참가'}
+                  {chatJoining ? '참가 중...' : chatJoined ? '채팅방 입장하기' : '채팅 참가'}
                 </button>
                 {chatJoinMessage && (
                   <span className={`detail-chat-join__msg${chatJoined ? ' detail-chat-join__msg--ok' : ' detail-chat-join__msg--err'}`}>
