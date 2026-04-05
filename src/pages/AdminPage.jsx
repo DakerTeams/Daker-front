@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   changeUserRole,
+  closeAdminHackathon,
   createAdminHackathon,
   deleteAdminHackathon,
   downloadAdminHackathonSubmissions,
@@ -35,18 +36,22 @@ const hackathonStatusOptions = [
 ]
 
 const scoreTypeOptions = [
-  { value: 'SCORE', label: 'SCORE' },
-  { value: 'VOTE', label: 'VOTE' },
+  { value: 'JUDGE', label: 'JUDGE (심사위원)' },
+  { value: 'SCORE', label: 'SCORE (점수)' },
+  { value: 'VOTE', label: 'VOTE (투표)' },
 ]
+
+const linkTypeOptions = ['WEBSITE', 'GITHUB', 'NOTION', 'DISCORD', 'OTHER']
 
 function createEmptyHackathonForm() {
   return {
     title: '',
     summary: '',
     description: '',
+    thumbnailUrl: '',
     organizerName: '',
     status: 'UPCOMING',
-    scoreType: 'SCORE',
+    scoreType: 'JUDGE',
     registrationStartAt: '',
     registrationEndAt: '',
     startAt: '',
@@ -56,6 +61,12 @@ function createEmptyHackathonForm() {
     maxParticipants: '',
     campEnabled: false,
     allowSolo: false,
+    tags: '',
+    prizes: [],
+    criteria: [],
+    milestones: [],
+    notices: [],
+    links: [],
   }
 }
 
@@ -102,9 +113,10 @@ function buildHackathonForm(item) {
     title: item.title ?? '',
     summary: item.summary ?? '',
     description: item.description ?? '',
+    thumbnailUrl: item.thumbnailUrl ?? '',
     organizerName: item.organizerName ?? '',
     status: item.status ?? 'UPCOMING',
-    scoreType: item.scoreType ?? 'SCORE',
+    scoreType: item.scoreType ?? 'JUDGE',
     registrationStartAt: formatDateTimeInput(item.registrationStartAt),
     registrationEndAt: formatDateTimeInput(item.registrationEndAt),
     startAt: formatDateTimeInput(item.startAt),
@@ -114,14 +126,22 @@ function buildHackathonForm(item) {
     maxParticipants: item.maxParticipants ? String(item.maxParticipants) : '',
     campEnabled: Boolean(item.campEnabled),
     allowSolo: Boolean(item.allowSolo),
+    tags: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags ?? ''),
+    prizes: Array.isArray(item.prizes) ? item.prizes : [],
+    criteria: Array.isArray(item.criteria) ? item.criteria : [],
+    milestones: Array.isArray(item.milestones) ? item.milestones : [],
+    notices: Array.isArray(item.notices) ? item.notices : [],
+    links: Array.isArray(item.links) ? item.links : [],
   }
 }
 
 function buildHackathonPayload(form) {
+  const tags = form.tags.split(',').map((t) => t.trim()).filter(Boolean)
   return {
     title: form.title.trim(),
     summary: form.summary.trim() || null,
     description: form.description.trim() || null,
+    thumbnailUrl: form.thumbnailUrl.trim() || null,
     organizerName: form.organizerName.trim(),
     status: form.status,
     scoreType: form.scoreType,
@@ -134,6 +154,12 @@ function buildHackathonPayload(form) {
     maxParticipants: form.maxParticipants ? Number(form.maxParticipants) : null,
     campEnabled: form.campEnabled,
     allowSolo: form.allowSolo,
+    tags: tags.length > 0 ? tags : undefined,
+    prizes: form.prizes.length > 0 ? form.prizes : undefined,
+    criteria: form.criteria.length > 0 ? form.criteria : undefined,
+    milestones: form.milestones.length > 0 ? form.milestones : undefined,
+    notices: form.notices.length > 0 ? form.notices : undefined,
+    links: form.links.length > 0 ? form.links : undefined,
   }
 }
 
@@ -346,6 +372,100 @@ function HackathonFormModal({ initialValue, onClose, onSubmit, saving }) {
               />
               개인 참가 허용
             </label>
+
+            <label className="mypage-modal__label">
+              썸네일 URL
+              <input
+                className="mypage-modal__input"
+                value={form.thumbnailUrl}
+                placeholder="https://..."
+                onChange={(event) => updateField('thumbnailUrl', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              태그 (쉼표 구분)
+              <input
+                className="mypage-modal__input"
+                value={form.tags}
+                placeholder="AI, ML, 웹개발"
+                onChange={(event) => updateField('tags', event.target.value)}
+              />
+            </label>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>상금</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('prizes', [...form.prizes, { rank: form.prizes.length + 1, label: '', amount: '' }])}>+ 추가</button>
+              </div>
+              {form.prizes.map((prize, i) => (
+                <div key={i} className="admin-form-row">
+                  <input className="mypage-modal__input admin-form-row__small" type="number" placeholder="순위" value={prize.rank} onChange={(e) => { const next = [...form.prizes]; next[i] = { ...prize, rank: Number(e.target.value) }; updateField('prizes', next) }} />
+                  <input className="mypage-modal__input" placeholder="라벨 (대상)" value={prize.label} onChange={(e) => { const next = [...form.prizes]; next[i] = { ...prize, label: e.target.value }; updateField('prizes', next) }} />
+                  <input className="mypage-modal__input" placeholder="금액 (500만원)" value={prize.amount} onChange={(e) => { const next = [...form.prizes]; next[i] = { ...prize, amount: e.target.value }; updateField('prizes', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('prizes', form.prizes.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>평가 기준</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('criteria', [...form.criteria, { label: '', weight: '', maxScore: '' }])}>+ 추가</button>
+              </div>
+              {form.criteria.map((c, i) => (
+                <div key={i} className="admin-form-row">
+                  <input className="mypage-modal__input" placeholder="항목명" value={c.label} onChange={(e) => { const next = [...form.criteria]; next[i] = { ...c, label: e.target.value }; updateField('criteria', next) }} />
+                  <input className="mypage-modal__input admin-form-row__small" placeholder="비중 (40%)" value={c.weight} onChange={(e) => { const next = [...form.criteria]; next[i] = { ...c, weight: e.target.value }; updateField('criteria', next) }} />
+                  <input className="mypage-modal__input admin-form-row__small" type="number" placeholder="최고점" value={c.maxScore} onChange={(e) => { const next = [...form.criteria]; next[i] = { ...c, maxScore: e.target.value ? Number(e.target.value) : '' }; updateField('criteria', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('criteria', form.criteria.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>일정 (milestones)</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('milestones', [...form.milestones, { label: '', date: '' }])}>+ 추가</button>
+              </div>
+              {form.milestones.map((m, i) => (
+                <div key={i} className="admin-form-row">
+                  <input className="mypage-modal__input" placeholder="라벨" value={m.label} onChange={(e) => { const next = [...form.milestones]; next[i] = { ...m, label: e.target.value }; updateField('milestones', next) }} />
+                  <input className="mypage-modal__input" type="datetime-local" value={m.date ? formatDateTimeInput(m.date) : ''} onChange={(e) => { const next = [...form.milestones]; next[i] = { ...m, date: e.target.value }; updateField('milestones', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('milestones', form.milestones.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>공지사항</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('notices', [...form.notices, { content: '' }])}>+ 추가</button>
+              </div>
+              {form.notices.map((n, i) => (
+                <div key={i} className="admin-form-row">
+                  <input className="mypage-modal__input" placeholder="공지 내용" value={n.content} onChange={(e) => { const next = [...form.notices]; next[i] = { content: e.target.value }; updateField('notices', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('notices', form.notices.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>링크</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('links', [...form.links, { linkType: 'WEBSITE', label: '', url: '' }])}>+ 추가</button>
+              </div>
+              {form.links.map((l, i) => (
+                <div key={i} className="admin-form-row">
+                  <select className="mypage-modal__input admin-form-row__small" value={l.linkType} onChange={(e) => { const next = [...form.links]; next[i] = { ...l, linkType: e.target.value }; updateField('links', next) }}>
+                    {linkTypeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <input className="mypage-modal__input admin-form-row__small" placeholder="라벨" value={l.label} onChange={(e) => { const next = [...form.links]; next[i] = { ...l, label: e.target.value }; updateField('links', next) }} />
+                  <input className="mypage-modal__input" placeholder="https://..." value={l.url} onChange={(e) => { const next = [...form.links]; next[i] = { ...l, url: e.target.value }; updateField('links', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('links', form.links.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
           </div>
 
           {error ? <p className="mypage-modal__error">{error}</p> : null}
@@ -555,6 +675,19 @@ function AdminPage() {
     }
   }
 
+  async function handleCloseHackathon(id) {
+    if (!window.confirm('해커톤을 마감 처리하시겠습니까?')) return
+    try {
+      await closeAdminHackathon(id)
+      setHackathons((current) =>
+        current.map((item) => item.id === id ? { ...item, status: 'CLOSED' } : item),
+      )
+      setToast({ type: 'success', message: '마감 처리되었습니다.' })
+    } catch {
+      setToast({ type: 'error', message: '마감 처리에 실패했습니다.' })
+    }
+  }
+
   async function handleDeleteHackathon(id) {
     if (!window.confirm('해커톤을 삭제하시겠습니까? 삭제는 소프트 삭제로 처리됩니다.')) return
 
@@ -720,6 +853,15 @@ function AdminPage() {
                   >
                     수정
                   </button>
+                  {String(item.status ?? '').toLowerCase() === 'open' && (
+                    <button
+                      type="button"
+                      className="admin-action-button"
+                      onClick={() => handleCloseHackathon(item.id)}
+                    >
+                      마감
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="admin-action-button admin-action-button--danger"

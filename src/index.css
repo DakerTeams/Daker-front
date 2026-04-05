@@ -3525,6 +3525,57 @@ h2 {
   gap: 10px;
 }
 
+.admin-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.admin-form-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.admin-form-add-btn {
+  background: none;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-form-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-form-row__small {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.admin-form-remove-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
 .admin-action-button {
   display: inline-flex;
   align-items: center;

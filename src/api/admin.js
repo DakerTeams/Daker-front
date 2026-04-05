@@ -43,6 +43,14 @@ export async function updateAdminHackathon(id, payload) {
   return extractObject(response)
 }
 
+export async function closeAdminHackathon(id) {
+  const response = await apiRequest(`/admin/hackathons/${id}/close`, {
+    method: 'PATCH',
+    headers: authHeader(),
+  })
+  return extractObject(response)
+}
+
 export async function deleteAdminHackathon(id) {
   return apiRequest(`/admin/hackathons/${id}`, {
     method: 'DELETE',
