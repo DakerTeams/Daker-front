@@ -309,35 +309,20 @@ function MainPage() {
             >
               <div className="row-between row-between--start">
                 <div className="stack-list stack-list--compact">
-                  <div className="row-between row-between--wrap">
-                    <h2>
-                      {hackathon.title}&nbsp;&nbsp;&nbsp;
-                      <span
-                        className={`status-pill status-pill--${hackathon.status}`}
-                      >
-                        {hackathon.statusLabel}
-                      </span>
-                    </h2>
+                  <div className="hackathon-card__topline">
+                    <span className={`status-pill status-pill--${hackathon.status}`}>
+                      {hackathon.statusLabel}
+                    </span>
+                    {hackathon.tags.slice(0, 3).map((tag) => (
+                      <span key={tag} className="tag-chip tag-chip--blue">{tag}</span>
+                    ))}
                   </div>
-                  {hackathon.tags.length > 0 && (
-                    <div className="hackathon-card__tags">
-                      {hackathon.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="tag-chip tag-chip--blue"
-                          style={{ marginRight: "5px" }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <p>{hackathon.summary}</p>
+                  <h2>{hackathon.title}</h2>
+                  {hackathon.summary && <p>{hackathon.summary}</p>}
                 </div>
                 <div className="hackathon-card__meta">
-                  <span>
-                    {hackathon.startDate} ~ {hackathon.endDate}
-                  </span>
+                  <span>{hackathon.startDate}</span>
+                  <span>~ {hackathon.endDate}</span>
                 </div>
               </div>
             </Link>
