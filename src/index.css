@@ -3449,6 +3449,11 @@ h2 {
   grid-template-columns: 1.2fr 1fr 0.9fr 0.9fr 0.6fr 0.8fr;
 }
 
+.admin-table__head--submission-hackathons,
+.admin-table__row--submission-hackathons {
+  grid-template-columns: minmax(0, 1.6fr) 0.8fr 0.8fr 1.1fr 0.9fr;
+}
+
 .admin-status,
 .admin-pill {
   display: inline-flex;
@@ -3587,6 +3592,29 @@ h2 {
 .admin-judge-item p {
   color: #9ca3af;
   font-weight: 700;
+}
+
+.admin-submission-item {
+  align-items: flex-start;
+}
+
+.admin-submission-item__left {
+  align-items: flex-start;
+}
+
+.admin-submission-item__meta {
+  margin-top: 8px;
+}
+
+.admin-submission-item__files {
+  margin-top: 10px;
+  padding-left: 18px;
+  color: #52525b;
+  font-weight: 600;
+}
+
+.admin-submission-item__files li + li {
+  margin-top: 6px;
 }
 
 .admin-user-cell--name {

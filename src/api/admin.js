@@ -1,4 +1,4 @@
-import { apiRequest, createQueryString, extractArray, extractObject } from './client.js'
+import { apiRequest, buildApiUrl, createQueryString, extractArray, extractObject } from './client.js'
 import { getAccessToken } from '../lib/auth.js'
 
 function authHeader() {
@@ -77,4 +77,49 @@ export async function fetchAdminSubmissions(params = {}) {
     headers: authHeader(),
   })
   return extractArray(payload)
+}
+
+export async function fetchAdminSubmissionHackathons() {
+  const payload = await apiRequest('/admin/submissions/hackathons', {
+    headers: authHeader(),
+  })
+  return extractArray(payload)
+}
+
+export async function fetchAdminSubmissionHackathonDetails(hackathonId) {
+  const payload = await apiRequest(`/admin/submissions/hackathons/${hackathonId}`, {
+    headers: authHeader(),
+  })
+  return extractArray(payload)
+}
+
+async function downloadWithAuth(path) {
+  const response = await fetch(buildApiUrl(path), {
+    headers: authHeader(),
+  })
+
+  if (!response.ok) {
+    throw new Error(`다운로드에 실패했습니다. (${response.status})`)
+  }
+
+  const disposition = response.headers.get('content-disposition') ?? ''
+  const fileNameMatch = disposition.match(/filename="([^"]+)"/)
+  const fileName = fileNameMatch?.[1] ?? 'download.zip'
+  const blob = await response.blob()
+  const url = window.URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = fileName
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+export async function downloadAdminSubmission(submissionId) {
+  return downloadWithAuth(`/admin/submissions/${submissionId}/download`)
+}
+
+export async function downloadAdminHackathonSubmissions(hackathonId) {
+  return downloadWithAuth(`/admin/submissions/hackathons/${hackathonId}/download-all`)
 }
