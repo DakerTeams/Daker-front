@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import Navbar from '../components/common/Navbar.jsx'
+import ChatDrawer from '../components/chat/ChatDrawer.jsx'
 import {
   SESSION_EXPIRED_EVENT,
   clearAuthSession,
@@ -10,11 +11,11 @@ import {
 } from '../lib/auth.js'
 import { CHAT_DRAWER_OPEN_EVENT } from '../lib/chat-events.js'
 
-const ChatDrawer = lazy(() => import('../components/chat/ChatDrawer.jsx'))
-
 function MainLayout() {
   const navigate = useNavigate()
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [preferredChatHackathonId, setPreferredChatHackathonId] = useState(null)
+  const [chatRoomsRefreshKey, setChatRoomsRefreshKey] = useState(0)
 
   useEffect(() => {
     let timerId = null
@@ -52,7 +53,14 @@ function MainLayout() {
   }, [navigate])
 
   useEffect(() => {
-    function handleOpenChat() {
+    function handleOpenChat(event) {
+      const nextHackathonId = event.detail?.hackathonId ?? null
+      if (nextHackathonId) {
+        setPreferredChatHackathonId(nextHackathonId)
+      }
+      if (event.detail?.refreshRooms) {
+        setChatRoomsRefreshKey((prev) => prev + 1)
+      }
       setIsChatOpen(true)
     }
 
@@ -69,9 +77,12 @@ function MainLayout() {
       <main className="page-shell">
         <Outlet />
       </main>
-      <Suspense fallback={null}>
-        <ChatDrawer open={isChatOpen} onClose={() => setIsChatOpen(false)} />
-      </Suspense>
+      <ChatDrawer
+        open={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        preferredHackathonId={preferredChatHackathonId}
+        roomsRefreshKey={chatRoomsRefreshKey}
+      />
     </div>
   )
 }
