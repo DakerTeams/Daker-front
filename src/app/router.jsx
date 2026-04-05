@@ -4,7 +4,6 @@ import MainLayout from '../layouts/MainLayout.jsx'
 import AccessDeniedPage from '../pages/AccessDeniedPage.jsx'
 import CampPage from '../pages/CampPage.jsx'
 import AdminPage from '../pages/AdminPage.jsx'
-import AdminHackathonFormPage from '../pages/AdminHackathonFormPage.jsx'
 import GithubAuthCallbackPage from '../pages/GithubAuthCallbackPage.jsx'
 import HackathonDetailPage from '../pages/HackathonDetailPage.jsx'
 import HackathonsPage from '../pages/HackathonsPage.jsx'
@@ -76,22 +75,6 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowRoles={['admin']}>
             <AdminPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'admin/hackathons/new',
-        element: (
-          <ProtectedRoute allowRoles={['admin']}>
-            <AdminHackathonFormPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'admin/hackathons/:id/edit',
-        element: (
-          <ProtectedRoute allowRoles={['admin']}>
-            <AdminHackathonFormPage />
           </ProtectedRoute>
         ),
       },
