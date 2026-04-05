@@ -5552,7 +5552,7 @@ h2 {
 
 /* ── Sidebar ── */
 .chat-drawer__sidebar {
-  width: 260px;
+  width: 300px;
   flex-shrink: 0;
   border-right: 1px solid var(--border);
   display: flex;
@@ -5631,10 +5631,10 @@ h2 {
 .chat-drawer__hackathon-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 8px;
+  padding: 10px 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
 }
 
 .chat-drawer__empty {
@@ -5657,50 +5657,65 @@ h2 {
 .chat-drawer__hackathon-item {
   width: 100%;
   text-align: left;
-  background: none;
-  border: none;
-  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 14px;
   cursor: pointer;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
-  border-radius: 10px;
-  transition: background 0.12s;
+  gap: 8px;
+  border-radius: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.12s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .chat-drawer__hackathon-item:hover {
-  background: var(--surface);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(63, 127, 232, 0.12);
 }
 
 .chat-drawer__hackathon-item--active {
   background: var(--primary-soft);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(63, 127, 232, 0.15);
 }
 
 .chat-drawer__hackathon-item--active .chat-drawer__hackathon-name {
   color: var(--primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .chat-drawer__hackathon-name {
-  font-size: 0.83rem;
+  font-size: 0.875rem;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.4;
+  line-height: 1.45;
   flex: 1;
   min-width: 0;
 }
 
+.chat-drawer__hackathon-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  background: var(--bg);
+  padding: 2px 7px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
 .chat-drawer__leave-btn {
   flex-shrink: 0;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 6px;
   border: 1px solid transparent;
   background: none;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s, background 0.12s, color 0.12s, border-color 0.12s;
@@ -5727,9 +5742,10 @@ h2 {
   display: flex;
   flex-wrap: nowrap;
   gap: 6px;
-  padding: 10px 8px 6px;
+  padding: 4px 0 8px;
   overflow-x: auto;
   scrollbar-width: none;
+  flex-shrink: 0;
 }
 
 .chat-drawer__filter-chips::-webkit-scrollbar {
@@ -5799,12 +5815,6 @@ h2 {
   border-color: var(--primary);
   color: #fff;
   font-weight: 700;
-}
-
-.chat-drawer__hackathon-status {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  flex-shrink: 0;
 }
 
 /* ── Join panel (right side) ── */
