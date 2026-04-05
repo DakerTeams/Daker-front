@@ -32,6 +32,13 @@ export async function joinChat(hackathonId) {
   })
 }
 
+export async function leaveChat(hackathonId) {
+  return apiRequest(`/hackathons/${hackathonId}/chat/leave`, {
+    method: 'DELETE',
+    headers: authHeader(),
+  })
+}
+
 function normalizeMessage(item) {
   return {
     messageId: item.messageId,

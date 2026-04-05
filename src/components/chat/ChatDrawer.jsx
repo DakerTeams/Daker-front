@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchHackathons } from '../../api/hackathons.js'
-import { fetchMyChatRooms, joinChat } from '../../api/chat.js'
+import { fetchMyChatRooms, joinChat, leaveChat } from '../../api/chat.js'
 import { getStoredUser } from '../../lib/auth.js'
 import HackathonChat from './HackathonChat.jsx'
 
@@ -19,6 +19,7 @@ function ChatDrawer({ open, onClose }) {
   const [joinPage, setJoinPage] = useState({ items: [], totalPages: 1, page: 0 })
   const [selectedId, setSelectedId] = useState(null)
   const [joiningId, setJoiningId] = useState(null)
+  const [leavingId, setLeavingId] = useState(null)
   const [joinError, setJoinError] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(0)
@@ -83,6 +84,22 @@ function ChatDrawer({ open, onClose }) {
     }
   }
 
+  async function handleLeave(hackathonId) {
+    setLeavingId(hackathonId)
+    try {
+      await leaveChat(hackathonId)
+      const rooms = await fetchMyChatRooms()
+      setMyRooms(rooms)
+      if (selectedId === hackathonId) {
+        setSelectedId(rooms.length > 0 ? rooms[0].hackathonId : null)
+      }
+    } catch {
+      // 실패 시 조용히 무시
+    } finally {
+      setLeavingId(null)
+    }
+  }
+
   const joinedIds = new Set(myRooms.map((r) => r.hackathonId))
 
   return (
@@ -121,14 +138,25 @@ function ChatDrawer({ open, onClose }) {
               myRooms.length === 0
                 ? <p className="chat-drawer__empty">참가한 채팅방이 없습니다.</p>
                 : myRooms.map((room) => (
-                  <button
+                  <div
                     key={room.hackathonId}
-                    type="button"
                     className={`chat-drawer__hackathon-item${selectedId === room.hackathonId ? ' chat-drawer__hackathon-item--active' : ''}`}
                     onClick={() => setSelectedId(room.hackathonId)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedId(room.hackathonId)}
                   >
                     <span className="chat-drawer__hackathon-name">{room.hackathonTitle}</span>
-                  </button>
+                    <button
+                      type="button"
+                      className="chat-drawer__leave-btn"
+                      disabled={leavingId === room.hackathonId}
+                      onClick={(e) => { e.stopPropagation(); handleLeave(room.hackathonId) }}
+                      title="채팅방 나가기"
+                    >
+                      {leavingId === room.hackathonId ? '...' : '나가기'}
+                    </button>
+                  </div>
                 ))
             )}
 

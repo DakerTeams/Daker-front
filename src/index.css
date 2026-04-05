@@ -5662,8 +5662,9 @@ h2 {
   padding: 10px 12px;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
   border-radius: 10px;
   transition: background 0.12s;
 }
@@ -5688,6 +5689,37 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-drawer__leave-btn {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.chat-drawer__hackathon-item:hover .chat-drawer__leave-btn,
+.chat-drawer__hackathon-item--active .chat-drawer__leave-btn {
+  opacity: 1;
+}
+
+.chat-drawer__leave-btn:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #ef4444;
+}
+
+.chat-drawer__leave-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* ── Join list ── */
