@@ -4,6 +4,14 @@ import { fetchMyChatRooms, joinChat } from '../../api/chat.js'
 import { getStoredUser } from '../../lib/auth.js'
 import HackathonChat from './HackathonChat.jsx'
 
+const STATUS_FILTERS = [
+  { value: 'all', label: '전체' },
+  { value: 'open', label: '모집중' },
+  { value: 'closed', label: '진행중' },
+  { value: 'upcoming', label: '오픈예정' },
+  { value: 'ended', label: '종료' },
+]
+
 function ChatDrawer({ open, onClose }) {
   const [tab, setTab] = useState('my')
   const [myRooms, setMyRooms] = useState([])
@@ -11,6 +19,7 @@ function ChatDrawer({ open, onClose }) {
   const [selectedId, setSelectedId] = useState(null)
   const [joiningId, setJoiningId] = useState(null)
   const [joinError, setJoinError] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const currentUser = getStoredUser()
 
   useEffect(() => {
@@ -66,6 +75,9 @@ function ChatDrawer({ open, onClose }) {
   }
 
   const joinedIds = new Set(myRooms.map((r) => r.hackathonId))
+  const filteredHackathons = statusFilter === 'all'
+    ? allHackathons
+    : allHackathons.filter((h) => h.status === statusFilter)
 
   return (
     <>
@@ -116,10 +128,22 @@ function ChatDrawer({ open, onClose }) {
 
             {currentUser && tab === 'join' && (
               <>
+                <div className="chat-drawer__filter-chips">
+                  {STATUS_FILTERS.map((f) => (
+                    <button
+                      key={f.value}
+                      type="button"
+                      className={`chat-drawer__filter-chip${statusFilter === f.value ? ' chat-drawer__filter-chip--active' : ''}`}
+                      onClick={() => setStatusFilter(f.value)}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
                 {joinError && <p className="chat-drawer__error">{joinError}</p>}
-                {allHackathons.length === 0
-                  ? <p className="chat-drawer__empty">해커톤이 없습니다.</p>
-                  : allHackathons.map((h) => (
+                {filteredHackathons.length === 0
+                  ? <p className="chat-drawer__empty">해당 상태의 해커톤이 없습니다.</p>
+                  : filteredHackathons.map((h) => (
                     <div key={h.id} className="chat-drawer__join-item">
                       <div className="chat-drawer__join-info">
                         <span className={`status-outline status-outline--${h.status}`}>{h.statusLabel}</span>
