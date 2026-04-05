@@ -5730,6 +5730,45 @@ h2 {
   font-weight: 600;
 }
 
+.chat-drawer__pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px 6px;
+}
+
+.chat-drawer__page-btn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.chat-drawer__page-btn:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.chat-drawer__page-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.chat-drawer__page-btn--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
 .chat-drawer__join-item {
   display: flex;
   align-items: center;

@@ -9,17 +9,19 @@ const STATUS_FILTERS = [
   { value: 'open', label: '모집중' },
   { value: 'closed', label: '진행중' },
   { value: 'upcoming', label: '오픈예정' },
-  { value: 'ended', label: '종료' },
 ]
+
+const PAGE_SIZE = 8
 
 function ChatDrawer({ open, onClose }) {
   const [tab, setTab] = useState('my')
   const [myRooms, setMyRooms] = useState([])
-  const [allHackathons, setAllHackathons] = useState([])
+  const [joinPage, setJoinPage] = useState({ items: [], totalPages: 1, page: 0 })
   const [selectedId, setSelectedId] = useState(null)
   const [joiningId, setJoiningId] = useState(null)
   const [joinError, setJoinError] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(0)
   const currentUser = getStoredUser()
 
   useEffect(() => {
@@ -38,10 +40,12 @@ function ChatDrawer({ open, onClose }) {
 
   useEffect(() => {
     if (!open || tab !== 'join') return
-    fetchHackathons({ size: 50 })
-      .then((r) => setAllHackathons(r.items))
+    const params = { page: currentPage, size: PAGE_SIZE }
+    if (statusFilter !== 'all') params.status = statusFilter
+    fetchHackathons(params)
+      .then((r) => setJoinPage({ items: r.items, totalPages: r.totalPages, page: r.page }))
       .catch(() => {})
-  }, [open, tab])
+  }, [open, tab, currentPage, statusFilter])
 
   useEffect(() => {
     function handleKey(e) {
@@ -50,6 +54,11 @@ function ChatDrawer({ open, onClose }) {
     if (open) window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [open, onClose])
+
+  function handleFilterChange(value) {
+    setStatusFilter(value)
+    setCurrentPage(0)
+  }
 
   async function handleJoin(hackathonId) {
     setJoiningId(hackathonId)
@@ -75,9 +84,6 @@ function ChatDrawer({ open, onClose }) {
   }
 
   const joinedIds = new Set(myRooms.map((r) => r.hackathonId))
-  const filteredHackathons = statusFilter === 'all'
-    ? allHackathons
-    : allHackathons.filter((h) => h.status === statusFilter)
 
   return (
     <>
@@ -134,16 +140,16 @@ function ChatDrawer({ open, onClose }) {
                       key={f.value}
                       type="button"
                       className={`chat-drawer__filter-chip${statusFilter === f.value ? ' chat-drawer__filter-chip--active' : ''}`}
-                      onClick={() => setStatusFilter(f.value)}
+                      onClick={() => handleFilterChange(f.value)}
                     >
                       {f.label}
                     </button>
                   ))}
                 </div>
                 {joinError && <p className="chat-drawer__error">{joinError}</p>}
-                {filteredHackathons.length === 0
+                {joinPage.items.length === 0
                   ? <p className="chat-drawer__empty">해당 상태의 해커톤이 없습니다.</p>
-                  : filteredHackathons.map((h) => (
+                  : joinPage.items.map((h) => (
                     <div key={h.id} className="chat-drawer__join-item">
                       <div className="chat-drawer__join-info">
                         <span className={`status-outline status-outline--${h.status}`}>{h.statusLabel}</span>
@@ -170,6 +176,36 @@ function ChatDrawer({ open, onClose }) {
                     </div>
                   ))
                 }
+                {joinPage.totalPages > 1 && (
+                  <div className="chat-drawer__pagination">
+                    <button
+                      type="button"
+                      className="chat-drawer__page-btn"
+                      disabled={currentPage === 0}
+                      onClick={() => setCurrentPage((p) => p - 1)}
+                    >
+                      ‹
+                    </button>
+                    {Array.from({ length: joinPage.totalPages }, (_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`chat-drawer__page-btn${currentPage === i ? ' chat-drawer__page-btn--active' : ''}`}
+                        onClick={() => setCurrentPage(i)}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="chat-drawer__page-btn"
+                      disabled={currentPage === joinPage.totalPages - 1}
+                      onClick={() => setCurrentPage((p) => p + 1)}
+                    >
+                      ›
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>
