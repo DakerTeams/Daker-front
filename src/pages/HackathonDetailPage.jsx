@@ -115,7 +115,13 @@ function HackathonDetailPage() {
           if (!isMounted) return;
 
           setRegistrationStatus(status);
-          setTeamState(status?.teamId ? "hasTeam" : "notRegistered");
+          setTeamState(
+            status?.teamId
+              ? "hasTeam"
+              : status?.registered || status?.id
+                ? "noTeam"
+                : "notRegistered",
+          );
 
           const matchedTeam = myTeams.find(
             (team) => String(team.id) === String(status?.teamId),
@@ -417,40 +423,7 @@ function HackathonDetailPage() {
     if (activeTab === "team") {
       return (
         <div className="stack-list team-tab-layout">
-          <div className="team-state-switcher" aria-label="팀 상태 미리보기">
-            <span className="team-state-switcher__label">데모 상태 :</span>
-            <div className="filter-group">
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === "notRegistered" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setTeamState("notRegistered")}
-              >
-                미참가
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === "noTeam" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setTeamState("noTeam")}
-              >
-                참가 완료 · 팀 없음
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  teamState === "hasTeam" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setTeamState("hasTeam")}
-              >
-                팀 있음
-              </button>
-            </div>
-          </div>
-
-          {teamState === "notRegistered" && (
+{teamState === "notRegistered" && (
             <div className="team-state-card team-state-card--locked">
               <div className="team-state-card__icon">🔒</div>
               <h2 className="team-state-card__title">
