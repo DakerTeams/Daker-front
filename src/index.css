@@ -78,9 +78,13 @@ button,
   border-bottom: 1px solid rgba(216, 224, 215, 0.9);
 }
 
-.navbar__inner,
-.page-shell {
+.navbar__inner {
   width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.page-shell {
+  width: min(1240px, calc(100% - 32px));
   margin: 0 auto;
 }
 
@@ -3269,8 +3273,8 @@ h2 {
 
 .admin-layout {
   display: grid;
-  grid-template-columns: 270px minmax(0, 1fr);
-  gap: 34px;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 28px;
   align-items: start;
 }
 
@@ -3292,23 +3296,32 @@ h2 {
 }
 
 .admin-sidebar__item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 58px;
-  padding: 0 20px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
   border: 0;
-  border-radius: 14px;
+  border-left: 3px solid transparent;
+  border-radius: 0;
   background: transparent;
-  color: #4b5563;
-  font-size: 1rem;
-  font-weight: 800;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  text-align: left;
+}
+
+.admin-sidebar__item:hover {
+  background: #f3f4f6;
+  color: #111827;
 }
 
 .admin-sidebar__item--active {
   background: #eaf2ff;
   color: #3f7fe8;
+  border-left-color: #3f7fe8;
 }
 
 .admin-content {
@@ -3373,6 +3386,7 @@ h2 {
   background: #ffffff;
   padding: 26px 28px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  overflow-x: auto;
 }
 
 .admin-card__title {
@@ -3406,6 +3420,7 @@ h2 {
 .admin-table {
   display: flex;
   flex-direction: column;
+  min-width: 760px;
 }
 
 .admin-table__head,
@@ -3441,7 +3456,7 @@ h2 {
 
 .admin-table__head--hackathons,
 .admin-table__row--hackathons {
-  grid-template-columns: minmax(0, 1.5fr) 0.8fr 1fr 0.7fr 0.8fr 1.2fr;
+  grid-template-columns: minmax(120px, 0.6fr) 90px 210px 70px 170px;
 }
 
 .admin-table__head--users,
@@ -3464,12 +3479,12 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: fit-content;
-  min-height: 32px;
-  padding: 0 14px;
+  width: 84px;
+  min-height: 34px;
+  padding: 0 10px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -3526,8 +3541,9 @@ h2 {
 
 .admin-inline-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
 }
 
 /* Admin hackathon form page */
