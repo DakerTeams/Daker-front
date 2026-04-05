@@ -1334,10 +1334,6 @@ h2 {
   color: var(--text-muted);
   font-size: 0.82rem;
   text-align: right;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 16px;
   align-self: flex-start;
 }
 
