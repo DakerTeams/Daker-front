@@ -426,7 +426,7 @@ function MyPage() {
     ])
 
     const hackathonMap = {}
-    hackathonList.forEach((h) => { hackathonMap[h.id] = h })
+    hackathonList.items.forEach((h) => { hackathonMap[h.id] = h })
 
     const baseTeams = teamList.map((t) => {
       const h = hackathonMap[t.hackathonId]

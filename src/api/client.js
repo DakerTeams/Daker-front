@@ -179,6 +179,24 @@ export function extractArray(payload) {
   return []
 }
 
+export function extractPage(payload) {
+  const root = payload?.data ?? payload ?? {}
+  const content =
+    Array.isArray(root.content) ? root.content :
+    Array.isArray(root.items) ? root.items :
+    Array.isArray(root.data) ? root.data :
+    []
+  const totalElements = root.totalElements ?? root.totalCount ?? content.length
+  const size = root.size ?? root.limit ?? root.pageSize ?? content.length
+  // 백엔드 page는 1-based일 수 있으므로 0-based로 정규화
+  const rawPage = root.number ?? root.page ?? 1
+  const page = rawPage > 0 ? rawPage - 1 : 0
+  const totalPages =
+    root.totalPages ??
+    (size > 0 ? Math.ceil(totalElements / size) : (content.length > 0 ? 1 : 0))
+  return { content, totalPages, totalElements, page, size }
+}
+
 export function extractObject(payload) {
   if (
     payload?.data &&

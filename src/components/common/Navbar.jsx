@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, useLocation } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { fetchMe, logout, refreshAccessToken } from '../../api/auth.js'
 import { getStoredUser, getTokenExpiresAt, subscribeAuthChange } from '../../lib/auth.js'
 
@@ -45,8 +45,8 @@ const navItems = [
 ]
 
 function Navbar() {
-  const location = useLocation()
-  const [user, setUser] = useState(null)
+  const navigate = useNavigate()
+  const [user, setUser] = useState(() => getStoredUser())
   const [refreshing, setRefreshing] = useState(false)
   const secondsLeft = useTokenExpiry()
 
@@ -75,6 +75,7 @@ function Navbar() {
 
   const handleLogout = async () => {
     await logout()
+    navigate('/')
   }
 
   const handleRefreshToken = async () => {
@@ -88,14 +89,16 @@ function Navbar() {
     }
   }
 
-  const isAdminView = location.pathname.startsWith('/admin')
-  const isJudgeView = location.pathname.startsWith('/judge')
-  const visibleNavItems =
-    [
-      ...navItems,
-      ...((isJudgeView || user?.role === 'judge') ? [{ to: '/judge', label: '심사' }] : []),
-      ...((isAdminView || user?.role === 'admin') ? [{ to: '/admin', label: '관리자' }] : []),
-    ]
+  const visibleNavItems = [
+    ...navItems,
+    ...(user?.role === 'judge' ? [{ to: '/judge', label: '심사' }] : []),
+    ...(user?.role === 'admin' ? [{ to: '/admin', label: '관리자' }] : []),
+  ]
+
+  const profileLink =
+    user?.role === 'admin' ? '/admin' :
+    user?.role === 'judge' ? '/judge' :
+    '/me'
 
 
   return (
@@ -138,7 +141,7 @@ function Navbar() {
                   </button>
                 </div>
               )}
-              <Link to="/me" className="navbar__profile">
+              <Link to={profileLink} className="navbar__profile">
                 <span className="navbar__profile-avatar">
                   {user.nickname?.slice(0, 1).toUpperCase()}
                 </span>

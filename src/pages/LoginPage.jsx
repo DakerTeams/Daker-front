@@ -6,6 +6,7 @@ import { normalizeAuthErrorMessage, resolveAuthErrorField } from '../lib/auth-er
 function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const isExpiredRedirect = new URLSearchParams(location.search).get('expired') === '1'
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -108,6 +109,10 @@ function LoginPage() {
           <h1>다시 만나서 반가워요!</h1>
           <p>해커톤 플랫폼에 로그인하세요.</p>
         </div>
+
+        {isExpiredRedirect && (
+          <p className="auth-form__error">세션이 만료되었습니다. 다시 로그인해주세요.</p>
+        )}
 
         <button type="button" className="auth-social-button" onClick={handleGithubLogin}>
           <span className="auth-social-button__icon">◔</span>

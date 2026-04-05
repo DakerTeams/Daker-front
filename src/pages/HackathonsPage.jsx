@@ -1,6 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchHackathons } from "../api/hackathons.js";
+import Pagination from "../components/common/Pagination.jsx";
+
+const PAGE_SIZE = 5
 
 const statusFilters = [
   { key: "all", label: "전체" },
@@ -13,6 +16,8 @@ function HackathonsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("open");
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -25,13 +30,17 @@ function HackathonsPage() {
         const data = await fetchHackathons({
           status: statusFilter === "all" ? undefined : statusFilter.toUpperCase(),
           q: query.trim() || undefined,
+          page,
+          size: PAGE_SIZE,
         });
         if (!isMounted) return;
 
-        setItems(data);
+        setItems(data.items);
+        setTotalPages(data.totalPages);
       } catch {
         if (!isMounted) return;
         setItems([]);
+        setTotalPages(0);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -44,18 +53,19 @@ function HackathonsPage() {
     return () => {
       isMounted = false;
     };
-  }, [query, statusFilter]);
+  }, [query, statusFilter, page]);
 
-  const statusOrder = { upcoming: 0, open: 1, closed: 2 };
-  const filteredHackathons =
-    statusFilter === "all"
-      ? [...items]
-          .filter((h) => h.status !== "ended")
-          .sort(
-            (a, b) =>
-              (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99),
-          )
-      : items;
+  function handleFilterChange(key) {
+    setStatusFilter(key);
+    setPage(0);
+  }
+
+  function handleQueryChange(event) {
+    setQuery(event.target.value);
+    setPage(0);
+  }
+
+  const filteredHackathons = items;
 
   return (
     <section className="page-section">
@@ -72,7 +82,7 @@ function HackathonsPage() {
           <input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={handleQueryChange}
             className="search-input"
             placeholder="제목, 태그 검색... (예: AI/ML, Web)"
           />
@@ -85,7 +95,7 @@ function HackathonsPage() {
                 className={`filter-chip${
                   statusFilter === filter.key ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setStatusFilter(filter.key)}
+                onClick={() => handleFilterChange(filter.key)}
               >
                 {filter.label}
               </button>
@@ -100,7 +110,7 @@ function HackathonsPage() {
         </section>
       ) : null}
 
-      {filteredHackathons.length === 0 ? (
+      {!isLoading && filteredHackathons.length === 0 ? (
         <section className="surface-card empty-panel">
           <p className="empty-panel__title">조건에 맞는 해커톤이 없습니다.</p>
           <p className="page-description">
@@ -108,58 +118,62 @@ function HackathonsPage() {
           </p>
         </section>
       ) : (
-        <div className="stack-list">
-          {filteredHackathons.map((hackathon) => (
-            <Link
-              key={hackathon.id ?? hackathon.slug}
-              to={`/hackathons/${hackathon.id ?? hackathon.slug}`}
-              className="surface-card surface-card--link hackathon-card hackathon-card--list"
-            >
-              <div className="row-between row-between--start">
-                <div className="stack-list stack-list--compact hackathon-card__left">
-                  <div className="hackathon-card__topline">
-                    <span
-                      className={`status-outline status-outline--${hackathon.status}`}
-                    >
-                      {hackathon.statusLabel}
-                    </span>
-                    {hackathon.scoreType === "VOTE" && hackathon.votingOpen && (
-                      <span className="status-outline status-outline--voting">
-                        투표 진행중
+        <>
+          <div className="stack-list">
+            {filteredHackathons.map((hackathon) => (
+              <Link
+                key={hackathon.id ?? hackathon.slug}
+                to={`/hackathons/${hackathon.id ?? hackathon.slug}`}
+                className="surface-card surface-card--link hackathon-card hackathon-card--list"
+              >
+                <div className="row-between row-between--start">
+                  <div className="stack-list stack-list--compact hackathon-card__left">
+                    <div className="hackathon-card__topline">
+                      <span
+                        className={`status-outline status-outline--${hackathon.status}`}
+                      >
+                        {hackathon.statusLabel}
                       </span>
-                    )}
-                    <h2>{hackathon.title}</h2>
-                    {hackathon.tags.length > 0 && (
-                      <div className="hackathon-card__tags">
-                        {hackathon.tags.map((tag) => (
-                          <Fragment key={tag}>
-                            <span className="tag-chip tag-chip--blue">{tag}</span>
-                          </Fragment>
-                        ))}
-                      </div>
-                    )}
+                      {hackathon.scoreType === "VOTE" && hackathon.votingOpen && (
+                        <span className="status-outline status-outline--voting">
+                          투표 진행중
+                        </span>
+                      )}
+                      <h2>{hackathon.title}</h2>
+                      {hackathon.tags.length > 0 && (
+                        <div className="hackathon-card__tags">
+                          {hackathon.tags.map((tag) => (
+                            <Fragment key={tag}>
+                              <span className="tag-chip tag-chip--blue">{tag}</span>
+                            </Fragment>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="hackathon-card__meta hackathon-card__meta--right">
+                    <span className="button-action">상세 보기</span>
                   </div>
                 </div>
 
-                <div className="hackathon-card__meta hackathon-card__meta--right">
-                  <span className="button-action">상세 보기</span>
+                <div className="hackathon-card__footer">
+                  <div className="meta-cluster">
+                    <small className="meta-text">
+                      {hackathon.startDate} ~ {hackathon.endDate}
+                    </small>
+                    <small className="meta-text">
+                      참가자 {hackathon.participantCount}명
+                    </small>
+                    <small className="meta-text">{hackathon.organizer}</small>
+                  </div>
                 </div>
-              </div>
+              </Link>
+            ))}
+          </div>
 
-              <div className="hackathon-card__footer">
-                <div className="meta-cluster">
-                  <small className="meta-text">
-                    {hackathon.startDate} ~ {hackathon.endDate}
-                  </small>
-                  <small className="meta-text">
-                    참가자 {hackathon.participantCount}명
-                  </small>
-                  <small className="meta-text">{hackathon.organizer}</small>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </>
       )}
     </section>
   );

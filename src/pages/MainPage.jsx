@@ -81,11 +81,11 @@ function MainPage() {
           hackathonPromise = Promise.all(
             userTags
               .slice(0, 3)
-              .map((tag) => fetchHackathons({ tag, limit: 3 })),
+              .map((tag) => fetchHackathons({ tag, status: 'OPEN', size: 3 })),
           ).then((results) => {
             const seen = new Set();
             return results
-              .flat()
+              .flatMap((r) => r.items)
               .filter((h) => {
                 if (seen.has(h.id)) return false;
                 seen.add(h.id);
@@ -94,7 +94,7 @@ function MainPage() {
               .slice(0, 3);
           });
         } else {
-          hackathonPromise = fetchHackathons({ limit: 3 });
+          hackathonPromise = fetchHackathons({ status: 'OPEN', size: 3 }).then((r) => r.items);
         }
 
         const [hackathonList, statsResponse] = await Promise.all([

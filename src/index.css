@@ -5289,3 +5289,54 @@ h2 {
   gap: 8px;
   margin-top: 4px;
 }
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 24px 0 8px;
+}
+
+.pagination__btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pagination__btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pagination__btn:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.pagination__btn--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.pagination__btn--active:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.pagination__ellipsis {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  padding: 0 4px;
+  user-select: none;
+}

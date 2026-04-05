@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   applyToTeam,
@@ -9,6 +9,9 @@ import {
   updateTeam,
 } from "../api/teams.js";
 import { getStoredUser } from "../lib/auth.js";
+import Pagination from "../components/common/Pagination.jsx";
+
+const PAGE_SIZE = 6
 
 function createEmptyPosition() {
   return {
@@ -28,6 +31,8 @@ function CampPage() {
   const [query, setQuery] = useState("");
   const [openFilter, setOpenFilter] = useState("all");
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [myTeams, setMyTeams] = useState([]);
@@ -58,6 +63,8 @@ function CampPage() {
           fetchTeams({
             isOpen: openFilter === "all" ? undefined : openFilter === "open",
             q: query.trim() || undefined,
+            page,
+            size: PAGE_SIZE,
           }),
           getStoredUser()
             ? fetchMyTeams().catch(() => [])
@@ -65,14 +72,13 @@ function CampPage() {
         ]);
         if (!isMounted) return;
 
-        if (teamData.length > 0) {
-          setItems(teamData);
-        }
-
+        setItems(teamData.items);
+        setTotalPages(teamData.totalPages);
         setMyTeams(myTeamData);
       } catch {
         if (!isMounted) return;
         setItems([]);
+        setTotalPages(0);
         setMyTeams([]);
       } finally {
         if (isMounted) {
@@ -86,7 +92,7 @@ function CampPage() {
     return () => {
       isMounted = false;
     };
-  }, [openFilter, query]);
+  }, [openFilter, query, page]);
 
   const handleOpenTeam = async (teamId) => {
     setTeamDetailMessage("");
@@ -149,26 +155,17 @@ function CampPage() {
     ? appliedTeamIds.includes(selectedTeam.id)
     : false;
 
-  const filteredTeams = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+  const filteredTeams = items;
 
-    return items.filter((team) => {
-      const matchesOpen =
-        openFilter === "all" ||
-        (openFilter === "open" && team.isOpen) ||
-        (openFilter === "closed" && !team.isOpen);
+  function handleFilterChange(key) {
+    setOpenFilter(key);
+    setPage(0);
+  }
 
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        team.name.toLowerCase().includes(normalizedQuery) ||
-        team.hackathonName.toLowerCase().includes(normalizedQuery) ||
-        team.positions.some((position) =>
-          position.toLowerCase().includes(normalizedQuery),
-        );
-
-      return matchesOpen && matchesQuery;
-    });
-  }, [items, openFilter, query]);
+  function handleQueryChange(event) {
+    setQuery(event.target.value);
+    setPage(0);
+  }
 
   return (
     <section className="page-section">
@@ -205,7 +202,7 @@ function CampPage() {
           <input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={handleQueryChange}
             className="search-input camp-search-input"
             placeholder="팀명, 포지션, 해커톤명으로 검색"
           />
@@ -221,7 +218,7 @@ function CampPage() {
                 className={`filter-chip${
                   openFilter === filter.key ? " filter-chip--active" : ""
                 }`}
-                onClick={() => setOpenFilter(filter.key)}
+                onClick={() => handleFilterChange(filter.key)}
               >
                 {filter.label}
               </button>
@@ -236,7 +233,7 @@ function CampPage() {
         </section>
       ) : null}
 
-      {filteredTeams.length === 0 ? (
+      {!isLoading && filteredTeams.length === 0 ? (
         <section className="surface-card empty-panel">
           <p className="empty-panel__title">
             조건에 맞는 팀 모집글이 없습니다.
@@ -307,6 +304,10 @@ function CampPage() {
             </article>
           ))}
         </div>
+      )}
+
+      {!isLoading && filteredTeams.length > 0 && (
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       )}
 
       {selectedTeam && (
