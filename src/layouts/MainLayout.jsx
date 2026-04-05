@@ -16,7 +16,7 @@ function MainLayout() {
     let timerId = null
 
     function handleExpired() {
-      navigate('/login?expired=1', { replace: true })
+      navigate('/', { replace: true })
     }
 
     window.addEventListener(SESSION_EXPIRED_EVENT, handleExpired)
