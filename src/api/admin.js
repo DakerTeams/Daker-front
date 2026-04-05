@@ -60,10 +60,12 @@ export async function fetchAdminUsers(params = {}) {
 }
 
 export async function changeUserRole(userId, role) {
-  const response = await apiRequest(`/users/${userId}/role`, {
+  const action = role === 'JUDGE' ? 'grant' : 'revoke'
+
+  const response = await apiRequest(`/admin/users/${userId}/judges`, {
     method: 'PATCH',
     headers: authHeader(),
-    body: JSON.stringify({ role }),
+    body: JSON.stringify({ action }),
   })
   return extractObject(response)
 }
