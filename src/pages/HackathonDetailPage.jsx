@@ -5,9 +5,7 @@ import {
   fetchHackathonDetail,
   fetchHackathonLeaderboard,
   fetchHackathonTeams,
-  fetchMySubmissions,
   fetchRegistrationStatus,
-  registerHackathon,
   submitResult,
 } from "../api/hackathons.js";
 import {
@@ -48,7 +46,6 @@ function HackathonDetailPage() {
   const [remoteLeaderboard, setRemoteLeaderboard] = useState(null);
   const [registrationStatus, setRegistrationStatus] = useState(null);
   const [registrationMessage, setRegistrationMessage] = useState("");
-  const [isRegisteringTeam, setIsRegisteringTeam] = useState(false);
   const [myTeamDetail, setMyTeamDetail] = useState(null);
   const [applications, setApplications] = useState([]);
   const [isApplicationsOpen, setIsApplicationsOpen] = useState(false);
@@ -85,12 +82,14 @@ function HackathonDetailPage() {
     let isMounted = true;
 
     async function loadDetail() {
+      let hackathonDetail = null;
       try {
         const [detail, participantTeams, leaderboard] = await Promise.all([
           fetchHackathonDetail(id),
           fetchHackathonTeams(id),
           fetchHackathonLeaderboard(id),
         ]);
+        hackathonDetail = detail;
 
         if (!isMounted) return;
 
@@ -127,7 +126,7 @@ function HackathonDetailPage() {
               ? "notRegistered"
               : !hasTeam
                 ? "noTeam"
-                : detail?.status === "closed" || detail?.status === "ended"
+                : hackathonDetail?.status === "closed" || hackathonDetail?.status === "ended"
                   ? "closed"
                   : "open",
           );
@@ -152,7 +151,7 @@ function HackathonDetailPage() {
             }
 
             setRemoteTeams((current) => {
-              const others = (current ?? participantTeams ?? []).filter(
+              const others = (current ?? []).filter(
                 (team) => String(team.id) !== String(matchedTeam.id),
               );
               return [matchedTeam, ...others];

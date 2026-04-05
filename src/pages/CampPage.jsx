@@ -35,10 +35,6 @@ function enrichTeam(team, hackathonList) {
   }
 }
 
-function enrichTeams(teamList, hackathonList) {
-  return teamList.map((team) => enrichTeam(team, hackathonList))
-}
-
 function CampPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')

@@ -30,13 +30,17 @@ function JudgePage() {
   // 해커톤 변경 시 팀 목록 + 기존 채점 로드
   useEffect(() => {
     if (!selectedId) return
-    setLoading(true)
-    setMessage('')
-    setScoreMap({})
-    setVoteMap({ 1: '', 2: '', 3: '' })
 
-    Promise.all([fetchHackathonTeams(selectedId), fetchMyScores(selectedId)])
-      .then(([teamList, scores]) => {
+    async function loadData() {
+      setLoading(true)
+      setMessage('')
+      setScoreMap({})
+      setVoteMap({ 1: '', 2: '', 3: '' })
+      try {
+        const [teamList, scores] = await Promise.all([
+          fetchHackathonTeams(selectedId),
+          fetchMyScores(selectedId),
+        ])
         setTeams(teamList)
         setExistingScores(scores)
 
@@ -49,9 +53,14 @@ function JudgePage() {
           }
         })
         setScoreMap(initialScoreMap)
-      })
-      .catch(() => setMessage('데이터를 불러오지 못했습니다.'))
-      .finally(() => setLoading(false))
+      } catch {
+        setMessage('데이터를 불러오지 못했습니다.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
   }, [selectedId])
 
   const isScoreMode = selectedHackathon?.raw?.scoreType === 'SCORE'

@@ -35,7 +35,7 @@ function normalizeTeam(item) {
     positions: positionDetails.map((position) => position.positionName),
     positionDetails,
     isOpen:
-      item.isOpen ?? item.open ?? item.status === 'open' ?? false,
+      item.isOpen ?? item.open ?? (item.status === 'open'),
     leaderId:
       item.leader?.userId ??
       item.owner?.userId ??
