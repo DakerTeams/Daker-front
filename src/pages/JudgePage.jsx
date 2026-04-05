@@ -60,7 +60,7 @@ function JudgeSection({ type, hackathons, onToast }) {
       })
       .catch(() => onToast({ type: 'error', message: '팀 목록을 불러오지 못했습니다.' }))
       .finally(() => setLoadingTeams(false))
-  }, [selectedHackathon])
+  }, [selectedHackathon, onToast])
 
   // 팀 선택 시 제출물 로드
   useEffect(() => {
@@ -76,7 +76,7 @@ function JudgeSection({ type, hackathons, onToast }) {
         onToast({ type: 'error', message: '제출물을 불러오지 못했습니다.' })
       })
       .finally(() => setLoadingSubmission(false))
-  }, [selectedTeam, selectedHackathon])
+  }, [selectedTeam, selectedHackathon, onToast])
 
   const criteria = judgeData?.criteria ?? []
   const teams = judgeData?.items ?? []
@@ -401,11 +401,18 @@ function JudgePage() {
   }, [toast])
 
   useEffect(() => {
-    setLoading(true)
-    fetchJudgeHackathons()
-      .then(setHackathons)
-      .catch(() => setToast({ type: 'error', message: '배정된 해커톤 목록을 불러오지 못했습니다.' }))
-      .finally(() => setLoading(false))
+    async function load() {
+      setLoading(true)
+      try {
+        const data = await fetchJudgeHackathons()
+        setHackathons(data)
+      } catch {
+        setToast({ type: 'error', message: '배정된 해커톤 목록을 불러오지 못했습니다.' })
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
 
   const scoreHackathons = hackathons.filter((h) => h.scoreType !== 'VOTE')

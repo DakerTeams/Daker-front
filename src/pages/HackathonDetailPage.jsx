@@ -6,7 +6,6 @@ import {
   fetchHackathonLeaderboard,
   fetchHackathonTeams,
   fetchRegistrationStatus,
-  fetchTeamSubmission,
   submitResult,
 } from "../api/hackathons.js";
 import {
@@ -310,13 +309,6 @@ function HackathonDetailPage() {
       </section>
     );
   }
-
-  function formatFileSize(bytes) {
-    if (!bytes) return ''
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
-  }
-
 
   const renderTabContent = () => {
     if (activeTab === "overview") {
