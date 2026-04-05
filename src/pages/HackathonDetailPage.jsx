@@ -174,7 +174,7 @@ function HackathonDetailPage() {
       prizes: remoteHackathon.prizes ?? [],
       teamStates: remoteHackathon.teamStates ?? {},
       submitStates: remoteHackathon.submitStates ?? {},
-      leaderboard: remoteLeaderboard ?? [],
+      leaderboard: remoteLeaderboard ?? { scoreType: "SCORE", items: [] },
     };
   }, [remoteHackathon, remoteLeaderboard]);
 
@@ -423,7 +423,7 @@ function HackathonDetailPage() {
     if (activeTab === "team") {
       return (
         <div className="stack-list team-tab-layout">
-{teamState === "notRegistered" && (
+          {teamState === "notRegistered" && (
             <div className="team-state-card team-state-card--locked">
               <div className="team-state-card__icon">🔒</div>
               <h2 className="team-state-card__title">
@@ -626,7 +626,8 @@ function HackathonDetailPage() {
                   <div key={team.id} className="participant-team-table__row">
                     <div className="participant-team-table__team">
                       <strong>{team.name}</strong>
-                      {String(team.id) === String(registrationStatus?.teamId) && (
+                      {String(team.id) ===
+                        String(registrationStatus?.teamId) && (
                         <span className="team-role-badge">내 팀</span>
                       )}
                     </div>
@@ -635,11 +636,11 @@ function HackathonDetailPage() {
                     <span
                       className={`status-outline ${
                         team.isOpen
-                          ? 'status-outline--open'
-                          : 'status-outline--closed'
+                          ? "status-outline--open"
+                          : "status-outline--closed"
                       }`}
                     >
-                      {team.isOpen ? '모집 중' : '마감'}
+                      {team.isOpen ? "모집 중" : "마감"}
                     </span>
                   </div>
                 ))}
@@ -687,27 +688,46 @@ function HackathonDetailPage() {
                       파일 첨부 <span className="submit-required">*</span>
                     </span>
                     <div className="submit-dropzone">
-                      <p>{submitFile ? submitFile.name : "ZIP, PDF 파일을 끌어다 놓거나"}</p>
-                      <label className="submit-file-button" style={{ cursor: "pointer" }}>
+                      <p>
+                        {submitFile
+                          ? submitFile.name
+                          : "ZIP, PDF 파일을 끌어다 놓거나"}
+                      </p>
+                      <label
+                        className="submit-file-button"
+                        style={{ cursor: "pointer" }}
+                      >
                         파일 선택
                         <input
                           type="file"
                           accept=".zip,.pdf"
                           style={{ display: "none" }}
-                          onChange={(e) => setSubmitFile(e.target.files[0] ?? null)}
+                          onChange={(e) =>
+                            setSubmitFile(e.target.files[0] ?? null)
+                          }
                         />
                       </label>
                       <span>최대 50MB · ZIP / PDF</span>
                     </div>
                   </label>
 
-                  {submitMessage && <p style={{ color: submitMessage.includes("실패") ? "red" : "green" }}>{submitMessage}</p>}
+                  {submitMessage && (
+                    <p
+                      style={{
+                        color: submitMessage.includes("실패") ? "red" : "green",
+                      }}
+                    >
+                      {submitMessage}
+                    </p>
+                  )}
 
                   <div>
                     <button
                       type="button"
                       className="team-primary-button submit-button"
-                      disabled={isSubmitting || !submitFile || !submitMemo.trim()}
+                      disabled={
+                        isSubmitting || !submitFile || !submitMemo.trim()
+                      }
                       onClick={async () => {
                         if (!submitFile || !submitMemo.trim()) return;
                         setIsSubmitting(true);
@@ -721,7 +741,9 @@ function HackathonDetailPage() {
                           setSubmitFile(null);
                           setSubmitMemo("");
                         } catch {
-                          setSubmitMessage("제출에 실패했습니다. 다시 시도해주세요.");
+                          setSubmitMessage(
+                            "제출에 실패했습니다. 다시 시도해주세요.",
+                          );
                         } finally {
                           setIsSubmitting(false);
                         }
@@ -800,11 +822,11 @@ function HackathonDetailPage() {
     if (activeTab === "leaderboard") {
       return (
         <div className="surface-card">
-          {hackathon.leaderboard.length === 0 ? (
+          {hackathon.leaderboard.items.length === 0 ? (
             <p>아직 공개된 리더보드가 없습니다.</p>
           ) : (
             <div className="stack-list stack-list--compact">
-              {hackathon.leaderboard.map((entry) => (
+              {hackathon.leaderboard.items.map((entry) => (
                 <div
                   key={entry.teamName}
                   className="detail-list-row row-between"
@@ -813,7 +835,7 @@ function HackathonDetailPage() {
                     #{entry.rank} {entry.teamName}
                   </strong>
                   <span className="meta-text">
-                    {entry.submitted ? `${entry.score}점` : "미제출"}
+                    {entry.submitted ? `${entry.score ?? "-"}` : "미제출"}
                   </span>
                 </div>
               ))}
@@ -1020,7 +1042,9 @@ function HackathonDetailPage() {
                     <div>
                       <strong>{application.nickname}</strong>
                       <p className="meta-text">
-                        {application.position ? `지원 역할: ${application.position} · ` : ""}
+                        {application.position
+                          ? `지원 역할: ${application.position} · `
+                          : ""}
                         상태: {application.status} · 신청 ID:{" "}
                         {application.applicationId}
                       </p>
@@ -1180,7 +1204,10 @@ function HackathonDetailPage() {
               </div>
 
               {teamEditForm.positions.map((position, index) => (
-                <div key={`detail-edit-position-${index}`} className="form-grid">
+                <div
+                  key={`detail-edit-position-${index}`}
+                  className="form-grid"
+                >
                   <label className="form-field">
                     <span className="form-label">역할명</span>
                     <input
@@ -1230,7 +1257,9 @@ function HackathonDetailPage() {
                           positions:
                             current.positions.length === 1
                               ? [createEmptyPosition()]
-                              : current.positions.filter((_, itemIndex) => itemIndex !== index),
+                              : current.positions.filter(
+                                  (_, itemIndex) => itemIndex !== index,
+                                ),
                         }))
                       }
                     >
