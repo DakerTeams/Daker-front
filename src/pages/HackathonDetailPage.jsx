@@ -19,6 +19,7 @@ import {
   updateTeam,
 } from "../api/teams.js";
 import { getStoredUser } from "../lib/auth.js";
+import { joinChat } from "../api/chat.js";
 
 const detailTabs = [
   { key: "overview", label: "개요" },
@@ -54,6 +55,9 @@ function HackathonDetailPage() {
   const [applicationMessage, setApplicationMessage] = useState("");
   const [isEditTeamOpen, setIsEditTeamOpen] = useState(false);
   const [votedTeamId, setVotedTeamId] = useState(null)
+  const [chatJoined, setChatJoined] = useState(false)
+  const [chatJoining, setChatJoining] = useState(false)
+  const [chatJoinMessage, setChatJoinMessage] = useState('')
   const [voteError, setVoteError] = useState('')
   const [isVoting, setIsVoting] = useState(false)
   const [teamEditForm, setTeamEditForm] = useState({
@@ -415,12 +419,53 @@ function HackathonDetailPage() {
 
   const renderTabContent = () => {
     if (activeTab === "overview") {
+      async function handleChatJoin() {
+        setChatJoining(true)
+        setChatJoinMessage('')
+        try {
+          await joinChat(id)
+          setChatJoined(true)
+          setChatJoinMessage('채팅방에 참가했습니다.')
+        } catch (err) {
+          if (err?.status === 409) {
+            setChatJoined(true)
+            setChatJoinMessage('이미 참가한 채팅방입니다.')
+          } else {
+            setChatJoinMessage('참가에 실패했습니다.')
+          }
+        } finally {
+          setChatJoining(false)
+        }
+      }
+
       return (
         <div className="detail-section__content">
           <section className="detail-block">
             <h2 className="detail-block__title">대회 개요</h2>
             <p className="detail-description">{hackathon.overview}</p>
           </section>
+
+          {currentUser && (
+            <section className="detail-block detail-chat-join">
+              <h2 className="detail-block__title">채팅</h2>
+              <p className="detail-description">해커톤 참가자들과 실시간으로 소통하세요.</p>
+              <div className="detail-chat-join__row">
+                <button
+                  type="button"
+                  className="team-primary-button"
+                  disabled={chatJoined || chatJoining}
+                  onClick={handleChatJoin}
+                >
+                  {chatJoining ? '참가 중...' : chatJoined ? '채팅방 참가 완료' : '채팅 참가'}
+                </button>
+                {chatJoinMessage && (
+                  <span className={`detail-chat-join__msg${chatJoined ? ' detail-chat-join__msg--ok' : ' detail-chat-join__msg--err'}`}>
+                    {chatJoinMessage}
+                  </span>
+                )}
+              </div>
+            </section>
+          )}
 
           <section className="detail-block">
             <h2 className="detail-block__title">평가 기준</h2>

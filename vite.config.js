@@ -9,12 +9,20 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    optimizeDeps: {
+      include: ['sockjs-client', '@stomp/stompjs'],
+    },
     server: {
       proxy: {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
+        },
+        '/ws': {
+          target: proxyTarget,
+          changeOrigin: true,
+          ws: true,
         },
       },
     },
