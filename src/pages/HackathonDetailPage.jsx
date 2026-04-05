@@ -115,12 +115,21 @@ function HackathonDetailPage() {
           if (!isMounted) return;
 
           setRegistrationStatus(status);
+
+          const hasTeam = Boolean(status?.teamId);
+          const isRegistered = hasTeam || Boolean(status?.registered || status?.id);
+
           setTeamState(
-            status?.teamId
-              ? "hasTeam"
-              : status?.registered || status?.id
+            hasTeam ? "hasTeam" : isRegistered ? "noTeam" : "notRegistered",
+          );
+          setSubmitState(
+            !isRegistered
+              ? "notRegistered"
+              : !hasTeam
                 ? "noTeam"
-                : "notRegistered",
+                : detail?.status === "closed" || detail?.status === "ended"
+                  ? "closed"
+                  : "open",
           );
 
           const matchedTeam = myTeams.find(
@@ -153,6 +162,7 @@ function HackathonDetailPage() {
           if (!isMounted) return;
           setRegistrationStatus(null);
           setTeamState("notRegistered");
+          setSubmitState("notRegistered");
         }
       }
     }
@@ -759,62 +769,37 @@ function HackathonDetailPage() {
         );
       }
 
-      return (
-        <div className="stack-list">
-          <div className="surface-card surface-card--soft">
-            <div className="filter-group" aria-label="제출 상태 미리보기">
-              <button
-                type="button"
-                className={`filter-chip${
-                  submitState === "notRegistered" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setSubmitState("notRegistered")}
-              >
-                미참가
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  submitState === "noTeam" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setSubmitState("noTeam")}
-              >
-                팀 없음
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  submitState === "open" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setSubmitState("open")}
-              >
-                제출 가능
-              </button>
-              <button
-                type="button"
-                className={`filter-chip${
-                  submitState === "closed" ? " filter-chip--active" : ""
-                }`}
-                onClick={() => setSubmitState("closed")}
-              >
-                제출 마감
-              </button>
-            </div>
+      if (submitState === "notRegistered") {
+        return (
+          <div className="team-state-card team-state-card--locked">
+            <div className="team-state-card__icon">🔒</div>
+            <h2 className="team-state-card__title">해커톤에 먼저 참가해야 합니다</h2>
+            <p className="team-state-card__description">
+              제출하려면 먼저 이 해커톤에 참가 신청을 해주세요.
+            </p>
           </div>
+        );
+      }
 
-          <div className="surface-card">
-            <p className="meta-text">제출 탭 상태</p>
-            <h2>{hackathon.submitStates[submitState]}</h2>
-            <div className="surface-card surface-card--soft">
-              <p className="meta-text">제출 폼 필드</p>
-              <ul className="bullet-list">
-                <li>제출 제목</li>
-                <li>한 줄 요약</li>
-                <li>규칙별 URL / PDF / ZIP 첨부</li>
-                <li>팀 소개 및 메모</li>
-              </ul>
-            </div>
+      if (submitState === "noTeam") {
+        return (
+          <div className="team-state-card team-state-card--ready">
+            <div className="team-state-card__icon">🤝</div>
+            <h2 className="team-state-card__title">팀을 먼저 구성해주세요</h2>
+            <p className="team-state-card__description">
+              팀 없이는 제출할 수 없어요. 팀 탭에서 팀을 생성하거나 기존 팀에 합류해주세요.
+            </p>
           </div>
+        );
+      }
+
+      return (
+        <div className="team-state-card team-state-card--locked">
+          <div className="team-state-card__icon">⏰</div>
+          <h2 className="team-state-card__title">제출이 마감되었습니다</h2>
+          <p className="team-state-card__description">
+            이 해커톤의 제출 기간이 종료되었습니다.
+          </p>
         </div>
       );
     }
