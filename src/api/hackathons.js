@@ -7,10 +7,9 @@ import {
 import { getAccessToken } from '../lib/auth.js'
 
 const hackathonStatusLabels = {
-  draft: '임시저장',
   upcoming: '오픈예정',
   open: '모집중',
-  closed: '마감',
+  closed: '진행중',
   ended: '종료',
 }
 
@@ -51,6 +50,8 @@ function normalizeHackathon(item) {
     description: item.description ?? '',
     status,
     statusLabel: hackathonStatusLabels[status] ?? status,
+    scoreType: item.scoreType ?? null,
+    votingOpen: item.votingOpen ?? false,
     period: startDate && endDate ? `${startDate} - ${endDate}` : '',
     startDate,
     endDate,
@@ -179,6 +180,22 @@ export async function fetchMySubmissions(id) {
     },
   })
   return extractObject(payload)
+}
+
+export async function fetchTeamSubmission(hackathonId, teamId) {
+  const payload = await apiRequest(`/hackathons/${hackathonId}/teams/${teamId}/submission`, {
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
+  })
+  return extractObject(payload)
+}
+
+export async function submitVote(hackathonId, teamId) {
+  const response = await apiRequest(`/hackathons/${hackathonId}/votes`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
+    body: JSON.stringify({ teamId }),
+  })
+  return extractObject(response)
 }
 
 export async function fetchHackathonLeaderboard(id) {
