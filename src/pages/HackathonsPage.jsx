@@ -72,9 +72,6 @@ function HackathonsPage() {
       <div className="page-header">
         <p className="eyebrow">/hackathons</p>
         <h1>해커톤 목록</h1>
-        <p className="page-description">
-          참가 가능한 모든 해커톤을 확인하세요.
-        </p>
       </div>
 
       <section className="surface-card">

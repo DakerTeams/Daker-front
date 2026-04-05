@@ -140,9 +140,6 @@ function TeamCreatePage() {
         <div className="page-header">
           <p className="eyebrow">/team-create</p>
           <h1>팀 생성</h1>
-          <p className="page-description">
-            해커톤에 연결하거나 독립 팀으로 먼저 생성할 수 있습니다.
-          </p>
         </div>
 
         <div className="team-create-step">
