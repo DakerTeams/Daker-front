@@ -5693,12 +5693,19 @@ h2 {
 /* ── Join list ── */
 .chat-drawer__filter-chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   padding: 10px 8px 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chat-drawer__filter-chips::-webkit-scrollbar {
+  display: none;
 }
 
 .chat-drawer__filter-chip {
+  flex-shrink: 0;
   padding: 4px 10px;
   border-radius: 20px;
   border: 1px solid var(--border);
@@ -5708,6 +5715,7 @@ h2 {
   font-weight: 500;
   cursor: pointer;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
+  white-space: nowrap;
 }
 
 .chat-drawer__filter-chip:hover {
