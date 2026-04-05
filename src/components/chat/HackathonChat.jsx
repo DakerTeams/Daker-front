@@ -11,7 +11,7 @@ function formatTime(createdAt) {
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
 }
 
-function HackathonChat({ hackathonId }) {
+function HackathonChat({ hackathonId, title }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [connected, setConnected] = useState(false)
@@ -98,6 +98,7 @@ function HackathonChat({ hackathonId }) {
   return (
     <div className="chat-panel">
       <div className="chat-panel__header">
+        {title && <span className="chat-panel__title">{title}</span>}
         <span className={`chat-status${connected ? ' chat-status--on' : ''}`}>
           {connected ? '연결됨' : '연결 중...'}
         </span>
@@ -107,7 +108,7 @@ function HackathonChat({ hackathonId }) {
 
       <div className="chat-messages">
         {messages.length === 0 && (
-          <p className="chat-empty-msg">아직 메시지가 없습니다. 첫 번째로 말을 걸어보세요!</p>
+          <p className="chat-empty-msg">아직 메시지가 없습니다.<br />첫 번째로 말을 걸어보세요!</p>
         )}
         {messages.map((msg) => {
           const isMine = msg.senderId === currentUser?.userId
@@ -140,8 +141,9 @@ function HackathonChat({ hackathonId }) {
           type="submit"
           className="chat-send-btn"
           disabled={!connected || !input.trim()}
+          title="전송"
         >
-          전송
+          ↑
         </button>
       </form>
     </div>

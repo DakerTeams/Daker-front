@@ -155,7 +155,11 @@ function ChatDrawer({ open, onClose }) {
           {!currentUser ? (
             <div className="chat-empty">로그인 후 채팅에 참여할 수 있습니다.</div>
           ) : selectedId && tab === 'my' ? (
-            <HackathonChat hackathonId={selectedId} key={selectedId} />
+            <HackathonChat
+              hackathonId={selectedId}
+              key={selectedId}
+              title={myRooms.find((r) => r.hackathonId === selectedId)?.hackathonTitle ?? ''}
+            />
           ) : (
             <div className="chat-empty">
               {tab === 'my' ? '채팅방을 선택하세요.' : '참가할 해커톤을 선택하세요.'}
