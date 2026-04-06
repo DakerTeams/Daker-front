@@ -177,12 +177,13 @@ export async function cancelRegistration(id) {
   })
 }
 
-export async function registerHackathon(id) {
+export async function registerHackathon(id, teamId) {
   return apiRequest(`/hackathons/${id}/register`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${getAccessToken()}`,
     },
+    body: JSON.stringify({ teamId }),
   })
 }
 
@@ -236,4 +237,3 @@ export async function fetchHackathonLeaderboard(id) {
       : [],
   }
 }
-

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   applyToTeam,
   deleteTeam,
@@ -28,6 +28,8 @@ const openFilters = [
 
 function CampPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preferredHackathonId = searchParams.get("hackathonId") ?? "";
   const [query, setQuery] = useState("");
   const [openFilter, setOpenFilter] = useState("all");
   const [items, setItems] = useState([]);
@@ -191,7 +193,13 @@ function CampPage() {
           <button
             type="button"
             className="button-link"
-            onClick={() => navigate("/team-create")}
+            onClick={() =>
+              navigate(
+                preferredHackathonId
+                  ? `/team-create?hackathonId=${preferredHackathonId}`
+                  : "/team-create",
+              )
+            }
           >
             + 팀 생성하기
           </button>
