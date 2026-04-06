@@ -120,7 +120,7 @@ function TeamCreatePage() {
         positions,
       })
 
-      navigate(form.hackathonId ? `/hackathons/${form.hackathonId}` : '/camp')
+      navigate(form.hackathonId ? `/hackathons/${form.hackathonId}?tab=team` : '/camp')
     } catch {
       setMessage('팀 생성에 실패했습니다. 등록 기간과 입력값을 확인해주세요.')
     } finally {

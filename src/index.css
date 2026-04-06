@@ -4902,6 +4902,14 @@ h2 {
   margin-top: 8px;
 }
 
+.team-state-actions--sidebar {
+  justify-content: stretch;
+}
+
+.team-state-actions--sidebar .detail-apply-button {
+  width: 100%;
+}
+
 .team-primary-button,
 .team-secondary-button,
 .team-danger-button {
@@ -5447,11 +5455,68 @@ h2 {
   font-size: 1rem;
 }
 
+.team-notice-copy--compact {
+  margin-top: 18px;
+}
+
+.team-notice-copy--error {
+  color: #dc2626;
+}
+
 .team-notice-actions {
   display: flex;
   justify-content: flex-end;
   gap: 18px;
   margin-top: 28px;
+}
+
+.team-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.team-select-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px 20px;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.team-select-item:hover {
+  border-color: #c7d2fe;
+  background: #fafbff;
+}
+
+.team-select-item--active {
+  border-color: #3f7fe8;
+  box-shadow: 0 0 0 3px rgba(63, 127, 232, 0.1);
+  background: #f8fbff;
+}
+
+.team-select-item input[type="radio"] {
+  margin-top: 4px;
+  accent-color: #3f7fe8;
+}
+
+.team-select-item__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.team-select-item__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .submit-guide-card {
