@@ -177,9 +177,9 @@ function ChatDrawer({ open, onClose }) {
                     </button>
                   ))}
                 </div>
-                {joinPage.items.length === 0
+                {joinPage.items.filter((h) => !joinedIds.has(h.id)).length === 0
                   ? <p className="chat-drawer__empty">해당 상태의 해커톤이 없습니다.</p>
-                  : joinPage.items.map((h) => (
+                  : joinPage.items.filter((h) => !joinedIds.has(h.id)).map((h) => (
                     <div
                       key={h.id}
                       className={`chat-drawer__hackathon-item${joinSelectedId === h.id ? ' chat-drawer__hackathon-item--active' : ''}`}
