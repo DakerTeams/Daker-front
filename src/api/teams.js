@@ -30,6 +30,7 @@ function normalizeTeam(item) {
     name: item.name ?? '이름 없는 팀',
     hackathonSlug: item.hackathonSlug ?? item.hackathon?.slug ?? 'independent',
     hackathonName:
+      item.hackathonTitle ??
       item.hackathonName ??
       item.hackathon?.title ??
       (item.hackathonId ? `해커톤 #${item.hackathonId}` : '해커톤 미정'),
