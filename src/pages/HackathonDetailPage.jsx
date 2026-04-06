@@ -9,6 +9,7 @@ import {
   submitResult,
 } from "../api/hackathons.js";
 import {
+  applyToTeam,
   decideTeamApplication,
   deleteTeam,
   fetchMyTeams,
@@ -69,7 +70,40 @@ function HackathonDetailPage() {
   const [submitFile, setSubmitFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [teamDetailMessage, setTeamDetailMessage] = useState("");
+  const [isApplying, setIsApplying] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState("");
+  const [appliedTeamIds, setAppliedTeamIds] = useState([]);
   const currentUser = getStoredUser();
+
+  async function handleOpenTeam(teamId) {
+    setSelectedPosition("");
+    setTeamDetailMessage(currentUser ? "" : "로그인 후 합류 신청이 가능합니다.");
+    try {
+      const detail = await fetchTeamDetail(teamId);
+      setSelectedTeam(detail);
+    } catch {
+      const fallback = participantTeams.find((t) => t.id === teamId) ?? null;
+      setSelectedTeam({ ...fallback, members: [] });
+      setTeamDetailMessage("팀 상세 정보를 불러오지 못해 기본 정보만 표시합니다.");
+    }
+  }
+
+  async function handleApply() {
+    if (!currentUser) { navigate("/login"); return; }
+    setIsApplying(true);
+    setTeamDetailMessage("");
+    try {
+      await applyToTeam(selectedTeam.id, selectedPosition || null);
+      setAppliedTeamIds((prev) => prev.includes(selectedTeam.id) ? prev : [...prev, selectedTeam.id]);
+      setTeamDetailMessage("합류 신청이 완료되었습니다.");
+    } catch {
+      setTeamDetailMessage("합류 신청에 실패했습니다. 이미 신청했거나 팀 정원이 찼을 수 있습니다.");
+    } finally {
+      setIsApplying(false);
+    }
+  }
 
   const openTeamCreateNotice = () => {
     if (!currentUser) {
@@ -635,28 +669,30 @@ function HackathonDetailPage() {
                     <span>팀원 수</span>
                     <span>상태</span>
                   </div>
-                  {participantTeams.map((team) => (
-                    <div key={team.id} className="participant-team-table__row">
-                      <div className="participant-team-table__team">
-                        <strong>{team.name}</strong>
-                        {String(team.id) ===
-                          String(registrationStatus?.teamId) && (
-                          <span className="team-role-badge">내 팀</span>
-                        )}
-                      </div>
-                      <span>{team.leader}</span>
-                      <span>{team.currentMembers}명</span>
-                      <span
-                        className={`status-outline ${
-                          team.isOpen
-                            ? "status-outline--open"
-                            : "status-outline--closed"
-                        }`}
+                  {participantTeams.map((team) => {
+                    const isMyTeam = String(team.id) === String(registrationStatus?.teamId);
+                    const clickable = team.isOpen && !isMyTeam;
+                    return (
+                      <div
+                        key={team.id}
+                        className={`participant-team-table__row${clickable ? " participant-team-table__row--clickable" : ""}`}
+                        role={clickable ? "button" : undefined}
+                        tabIndex={clickable ? 0 : undefined}
+                        onClick={clickable ? () => handleOpenTeam(team.id) : undefined}
+                        onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpenTeam(team.id); } } : undefined}
                       >
-                        {team.isOpen ? "모집 중" : "마감"}
-                      </span>
-                    </div>
-                  ))}
+                        <div className="participant-team-table__team">
+                          <strong>{team.name}</strong>
+                          {isMyTeam && <span className="team-role-badge">내 팀</span>}
+                        </div>
+                        <span>{team.leader}</span>
+                        <span>{team.currentMembers}명</span>
+                        <span className={`status-outline ${team.isOpen ? "status-outline--open" : "status-outline--closed"}`}>
+                          {team.isOpen ? "모집 중" : "마감"}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             </>
@@ -676,28 +712,30 @@ function HackathonDetailPage() {
                   <span>팀원 수</span>
                   <span>상태</span>
                 </div>
-                {participantTeams.map((team) => (
-                  <div key={team.id} className="participant-team-table__row">
-                    <div className="participant-team-table__team">
-                      <strong>{team.name}</strong>
-                      {String(team.id) ===
-                        String(registrationStatus?.teamId) && (
-                        <span className="team-role-badge">내 팀</span>
-                      )}
-                    </div>
-                    <span>{team.leader}</span>
-                    <span>{team.currentMembers}명</span>
-                    <span
-                      className={`status-outline ${
-                        team.isOpen
-                          ? "status-outline--open"
-                          : "status-outline--closed"
-                      }`}
+                {participantTeams.map((team) => {
+                  const isMyTeam = String(team.id) === String(registrationStatus?.teamId);
+                  const clickable = team.isOpen && !isMyTeam;
+                  return (
+                    <div
+                      key={team.id}
+                      className={`participant-team-table__row${clickable ? " participant-team-table__row--clickable" : ""}`}
+                      role={clickable ? "button" : undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                      onClick={clickable ? () => handleOpenTeam(team.id) : undefined}
+                      onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpenTeam(team.id); } } : undefined}
                     >
-                      {team.isOpen ? "모집 중" : "마감"}
-                    </span>
-                  </div>
-                ))}
+                      <div className="participant-team-table__team">
+                        <strong>{team.name}</strong>
+                        {isMyTeam && <span className="team-role-badge">내 팀</span>}
+                      </div>
+                      <span>{team.leader}</span>
+                      <span>{team.currentMembers}명</span>
+                      <span className={`status-outline ${team.isOpen ? "status-outline--open" : "status-outline--closed"}`}>
+                        {team.isOpen ? "모집 중" : "마감"}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -1359,6 +1397,127 @@ function HackathonDetailPage() {
           </div>
         </div>
       ) : null}
+
+      {selectedTeam && (
+        <div
+          className="drawer-backdrop"
+          role="presentation"
+          onClick={() => setSelectedTeam(null)}
+        >
+          <aside
+            className="team-create-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hackathon-team-detail-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="team-create-drawer__header">
+              <div>
+                <p className="eyebrow">team detail</p>
+                <h2 id="hackathon-team-detail-title">{selectedTeam.name}</h2>
+              </div>
+              <button type="button" className="drawer-close-button" onClick={() => setSelectedTeam(null)}>
+                닫기
+              </button>
+            </div>
+
+            <div className="team-create-drawer__body">
+              <section className="surface-card">
+                <div className="stack-list stack-list--compact">
+                  <p>{selectedTeam.description || "팀 소개가 아직 없습니다."}</p>
+                </div>
+              </section>
+
+              <section className="surface-card">
+                <div className="stack-list stack-list--compact">
+                  <div className="info-row">
+                    <span>팀장</span>
+                    <span>{selectedTeam.leader}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>모집 상태</span>
+                    <span>{selectedTeam.isOpen ? "모집 중" : "마감"}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>현재 인원</span>
+                    <span>{selectedTeam.currentMembers} / {selectedTeam.maxMembers}명</span>
+                  </div>
+                </div>
+              </section>
+
+              {selectedTeam.positionDetails?.length > 0 && (
+                <section className="surface-card">
+                  <p className="meta-text">모집 포지션</p>
+                  <div className="team-positions">
+                    {selectedTeam.positionDetails.map((pos) => (
+                      <span key={pos.positionName} className="tag-chip">
+                        {pos.positionName} · {pos.requiredCount}명
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {selectedTeam.isOpen && (
+                <section className="surface-card">
+                  <label className="form-field">
+                    <span className="form-label">지원할 역할</span>
+                    <select
+                      className="form-control"
+                      value={selectedPosition}
+                      onChange={(e) => setSelectedPosition(e.target.value)}
+                    >
+                      <option value="">역할 선택 안 함</option>
+                      {(selectedTeam.positionDetails ?? []).map((pos) => (
+                        <option key={pos.positionName} value={pos.positionName}>
+                          {pos.positionName} ({pos.requiredCount}명)
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </section>
+              )}
+
+              {selectedTeam.members?.length > 0 && (
+                <section className="surface-card">
+                  <p className="meta-text">팀원</p>
+                  <div className="stack-list stack-list--compact">
+                    {selectedTeam.members.map((m) => (
+                      <div key={m.userId} className="info-row">
+                        <span>{m.nickname}</span>
+                        {m.position && <span className="tag-chip">{m.position}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+
+            <div className="team-create-drawer__footer">
+              {teamDetailMessage && <p className="meta-text">{teamDetailMessage}</p>}
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => setSelectedTeam(null)}
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                className="team-primary-button"
+                onClick={handleApply}
+                disabled={!selectedTeam.isOpen || isApplying || appliedTeamIds.includes(selectedTeam.id)}
+              >
+                {appliedTeamIds.includes(selectedTeam.id)
+                  ? "신청 완료"
+                  : isApplying
+                    ? "신청 중..."
+                    : "합류 신청"}
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
     </section>
   );
 }

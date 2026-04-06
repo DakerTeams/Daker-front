@@ -57,7 +57,9 @@ function normalizeTeam(item) {
       item.maxMemberCount ??
       item.maxTeamSize ??
       1,
-    contactLabel: item.contactLabel ?? '연락하기',
+    contact: item.contact
+      ? { type: item.contact.type ?? '', value: item.contact.value ?? '' }
+      : null,
     description: item.description ?? item.intro ?? '',
     raw: item,
   }
@@ -135,7 +137,8 @@ export async function deleteTeam(id) {
 }
 
 export async function fetchTeamDetail(id) {
-  const payload = await apiRequest(`/teams/${id}`)
+  const token = getAccessToken()
+  const payload = await apiRequest(`/teams/${id}`, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined)
   const data = extractObject(payload)
 
   return {

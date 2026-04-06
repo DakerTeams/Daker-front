@@ -109,14 +109,47 @@ function ApplicationsModal({ team, onClose, onUpdate }) {
   )
 }
 
+const CONTACT_TYPES = [
+  { value: 'KAKAO', label: '카카오 오픈채팅' },
+  { value: 'DISCORD', label: '디스코드' },
+  { value: 'SLACK', label: '슬랙' },
+  { value: 'EMAIL', label: '이메일' },
+]
+
 function EditTeamModal({ team, onClose, onSaved }) {
   const [form, setForm] = useState({
     name: team.name,
     description: team.description ?? '',
     isOpen: team.isOpen ?? false,
+    maxMemberCount: String(team.maxMembers ?? 4),
+    positions: team.positionDetails?.length > 0
+      ? team.positionDetails.map((p) => ({ positionName: p.positionName, requiredCount: String(p.requiredCount) }))
+      : [{ positionName: '', requiredCount: '1' }],
+    contactType: team.contact?.type ?? '',
+    contactValue: team.contact?.value ?? '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+
+  function addPosition() {
+    setForm((f) => ({ ...f, positions: [...f.positions, { positionName: '', requiredCount: '1' }] }))
+  }
+
+  function removePosition(index) {
+    setForm((f) => ({
+      ...f,
+      positions: f.positions.length === 1
+        ? [{ positionName: '', requiredCount: '1' }]
+        : f.positions.filter((_, i) => i !== index),
+    }))
+  }
+
+  function updatePosition(index, field, value) {
+    setForm((f) => ({
+      ...f,
+      positions: f.positions.map((p, i) => i === index ? { ...p, [field]: value } : p),
+    }))
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -126,6 +159,12 @@ function EditTeamModal({ team, onClose, onSaved }) {
         name: form.name,
         description: form.description,
         isOpen: form.isOpen,
+        maxMemberCount: Number(form.maxMemberCount) || null,
+        positions: form.positions
+          .map((p) => ({ positionName: p.positionName.trim(), requiredCount: Number(p.requiredCount) || 1 }))
+          .filter((p) => p.positionName),
+        contactType: form.contactType || null,
+        contactValue: form.contactValue || null,
       })
       onSaved()
       onClose()
@@ -138,42 +177,128 @@ function EditTeamModal({ team, onClose, onSaved }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="mypage-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="mypage-modal mypage-modal--wide" onClick={(e) => e.stopPropagation()}>
         <div className="mypage-modal__header">
           <div>
-            <h2>팀 수정</h2>
-            <p className="mypage-modal__subtitle">{team.name}</p>
+            <p className="eyebrow">edit team</p>
+            <h2>{team.name}</h2>
           </div>
           <button type="button" className="mypage-modal__close" onClick={onClose}>✕</button>
         </div>
 
-        <div className="mypage-modal__body">
-          <div className="mypage-modal__form">
-            <label className="mypage-modal__label">
-              팀 이름
-              <input
-                className="mypage-modal__input"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              />
-            </label>
-            <label className="mypage-modal__label">
-              팀 소개
-              <textarea
-                className="mypage-modal__input mypage-modal__textarea"
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              />
-            </label>
-            <label className="mypage-modal__toggle">
-              <input
-                type="checkbox"
-                checked={form.isOpen}
-                onChange={(e) => setForm((f) => ({ ...f, isOpen: e.target.checked }))}
-              />
-              팀원 모집 중
-            </label>
+        <div className="mypage-modal__body mypage-modal__body--sections">
+          <div className="surface-card">
+            <p className="eyebrow">기본 정보</p>
+            <div className="mypage-modal__form">
+              <label className="mypage-modal__label">
+                팀 이름
+                <input
+                  className="mypage-modal__input"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </label>
+              <label className="mypage-modal__label">
+                팀 소개
+                <textarea
+                  className="mypage-modal__input mypage-modal__textarea"
+                  value={form.description}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                />
+              </label>
+            </div>
           </div>
+
+          <div className="surface-card">
+            <p className="eyebrow">모집 설정</p>
+            <div className="mypage-modal__form">
+              <label className="mypage-modal__toggle">
+                <input
+                  type="checkbox"
+                  checked={form.isOpen}
+                  onChange={(e) => setForm((f) => ({ ...f, isOpen: e.target.checked }))}
+                />
+                팀원 모집 중
+              </label>
+              <label className="mypage-modal__label">
+                최대 팀원 수
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  className="mypage-modal__input"
+                  value={form.maxMemberCount}
+                  onChange={(e) => setForm((f) => ({ ...f, maxMemberCount: e.target.value }))}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="surface-card">
+            <div className="mypage-modal__section-row">
+              <p className="eyebrow">모집 역할</p>
+              <button type="button" className="button-link button-link--ghost" onClick={addPosition}>
+                + 추가
+              </button>
+            </div>
+            <div className="mypage-modal__form">
+              {form.positions.map((pos, index) => (
+                <div key={index} className="mypage-modal__position-row">
+                  <input
+                    className="mypage-modal__input"
+                    placeholder="역할명 (예: 프론트엔드)"
+                    value={pos.positionName}
+                    onChange={(e) => updatePosition(index, 'positionName', e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    className="mypage-modal__input mypage-modal__input--count"
+                    value={pos.requiredCount}
+                    onChange={(e) => updatePosition(index, 'requiredCount', e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="button-link button-link--ghost"
+                    onClick={() => removePosition(index)}
+                  >
+                    삭제
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="surface-card">
+            <p className="eyebrow">연락 수단</p>
+            <div className="mypage-modal__form">
+              <label className="mypage-modal__label">
+                수단
+                <select
+                  className="mypage-modal__input"
+                  value={form.contactType}
+                  onChange={(e) => setForm((f) => ({ ...f, contactType: e.target.value }))}
+                >
+                  <option value="">선택 안 함</option>
+                  {CONTACT_TYPES.map((ct) => (
+                    <option key={ct.value} value={ct.value}>{ct.label}</option>
+                  ))}
+                </select>
+              </label>
+              {form.contactType && (
+                <label className="mypage-modal__label">
+                  연락처
+                  <input
+                    className="mypage-modal__input"
+                    placeholder={form.contactType === 'EMAIL' ? '이메일 주소' : '링크 또는 채널명'}
+                    value={form.contactValue}
+                    onChange={(e) => setForm((f) => ({ ...f, contactValue: e.target.value }))}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
           {error && <p className="mypage-modal__error">{error}</p>}
         </div>
 
@@ -329,59 +454,87 @@ function TeamInfoModal({ team, hackathonName, onClose }) {
       .finally(() => setLoading(false))
   }, [team.id])
 
+  const contactTypeLabel = CONTACT_TYPES.find((ct) => ct.value === detail?.contact?.type)?.label ?? detail?.contact?.type
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="mypage-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="mypage-modal mypage-modal--wide" onClick={(e) => e.stopPropagation()}>
         <div className="mypage-modal__header">
           <div>
+            <p className="eyebrow">team info</p>
             <h2>{team.name}</h2>
             <p className="mypage-modal__subtitle">{hackathonName}</p>
           </div>
           <button type="button" className="mypage-modal__close" onClick={onClose}>✕</button>
         </div>
 
-        <div className="mypage-modal__body">
+        <div className="mypage-modal__body mypage-modal__body--sections">
           {loading ? (
             <p className="mypage-modal__empty">불러오는 중...</p>
           ) : (
             <>
               {detail?.description && (
-                <p className="mypage-team-info__desc">{detail.description}</p>
+                <div className="surface-card">
+                  <p className="eyebrow">팀 소개</p>
+                  <p>{detail.description}</p>
+                </div>
               )}
 
-              <div className="mypage-team-info__meta">
-                <div className="info-row">
-                  <span>모집 상태</span>
-                  <strong className={detail?.isOpen ? 'mypage-team-info__open' : 'mypage-team-info__closed'}>
-                    {detail?.isOpen ? '모집 중' : '모집 마감'}
-                  </strong>
-                </div>
-                <div className="info-row">
-                  <span>팀원</span>
-                  <strong>{detail?.currentMembers} / {detail?.maxMembers}명</strong>
+              <div className="surface-card">
+                <p className="eyebrow">팀 정보</p>
+                <div className="stack-list stack-list--compact">
+                  <div className="info-row">
+                    <span>모집 상태</span>
+                    <strong className={detail?.isOpen ? 'mypage-team-info__open' : 'mypage-team-info__closed'}>
+                      {detail?.isOpen ? '모집 중' : '모집 마감'}
+                    </strong>
+                  </div>
+                  <div className="info-row">
+                    <span>팀원</span>
+                    <strong>{detail?.currentMembers} / {detail?.maxMembers}명</strong>
+                  </div>
                 </div>
               </div>
 
-              {detail?.positions?.length > 0 && (
-                <div>
-                  <p className="mypage-modal__section-label">모집 포지션</p>
+              {detail?.positionDetails?.length > 0 && (
+                <div className="surface-card">
+                  <p className="eyebrow">모집 포지션</p>
                   <div className="mypage-team-info__positions">
-                    {detail.positions.map((pos, i) => (
-                      <span key={i} className="mypage-team-info__position">{pos}</span>
+                    {detail.positionDetails.map((pos) => (
+                      <span key={pos.positionName} className="tag-chip">
+                        {pos.positionName} · {pos.requiredCount}명
+                      </span>
                     ))}
                   </div>
                 </div>
               )}
 
+              {detail?.contact?.value && (
+                <div className="surface-card">
+                  <p className="eyebrow">연락처</p>
+                  <div className="info-row">
+                    <span>{contactTypeLabel}</span>
+                    <a
+                      href={detail.contact.value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mypage-team-info__contact-link"
+                    >
+                      {detail.contact.value}
+                    </a>
+                  </div>
+                </div>
+              )}
+
               {detail?.members?.length > 0 && (
-                <div>
-                  <p className="mypage-modal__section-label">팀원 목록</p>
+                <div className="surface-card">
+                  <p className="eyebrow">팀원</p>
                   <div className="mypage-modal__list">
                     {detail.members.map((m) => (
                       <div key={m.userId} className="mypage-app-item">
                         <span className="mypage-app-item__name">{m.nickname}</span>
                         {m.position && (
-                          <span className="mypage-team-info__position">{m.position}</span>
+                          <span className="tag-chip">{m.position}</span>
                         )}
                       </div>
                     ))}
@@ -408,6 +561,7 @@ function MyPage() {
   const [applicationCounts, setApplicationCounts] = useState({})
   const [applicationsModal, setApplicationsModal] = useState(null)
   const [infoModal, setInfoModal] = useState(null)
+  const [editTeamModal, setEditTeamModal] = useState(null)
   const [profileEditOpen, setProfileEditOpen] = useState(false)
   const [userTagObjects, setUserTagObjects] = useState([]) // { tagId, name }[]
 
@@ -425,13 +579,18 @@ function MyPage() {
       fetchHackathons({ limit: 50 }),
     ])
 
-    const hackathonMap = {}
-    hackathonList.items.forEach((h) => { hackathonMap[h.id] = h })
+    const hackathonById = {}
+    const hackathonByTitle = {}
+    hackathonList.items.forEach((h) => {
+      hackathonById[h.id] = h
+      if (h.title) hackathonByTitle[h.title] = h
+    })
 
     const baseTeams = teamList.map((t) => {
-      const h = hackathonMap[t.hackathonId]
+      const h = hackathonById[t.hackathonId] ?? hackathonByTitle[t.hackathonName] ?? null
       return {
         ...t,
+        hackathonId: h?.id ?? t.hackathonId,
         hackathonName: h?.title ?? t.hackathonName,
         hackathonStartDate: h?.startDate ?? null,
         hackathonEndDate: h?.endDate ?? null,
@@ -609,13 +768,22 @@ function MyPage() {
                     </div>
                     <div className="mypage-team-item__col mypage-team-item__col--actions">
                       {isLeader && (
-                        <button
-                          type="button"
-                          className="team-primary-button team-primary-button--small"
-                          onClick={() => setApplicationsModal(team)}
-                        >
-                          신청 관리{applicationCounts[team.id] > 0 ? ` (${applicationCounts[team.id]})` : ''}
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            className="team-primary-button team-primary-button--small"
+                            onClick={() => setApplicationsModal(team)}
+                          >
+                            신청 관리{applicationCounts[team.id] > 0 ? ` (${applicationCounts[team.id]})` : ''}
+                          </button>
+                          <button
+                            type="button"
+                            className="team-secondary-button team-secondary-button--muted"
+                            onClick={() => setEditTeamModal(team)}
+                          >
+                            팀 수정
+                          </button>
+                        </>
                       )}
                       <button
                         type="button"
@@ -701,6 +869,14 @@ function MyPage() {
           team={infoModal}
           hackathonName={infoModal.hackathonName}
           onClose={() => setInfoModal(null)}
+        />
+      )}
+
+      {editTeamModal && (
+        <EditTeamModal
+          team={editTeamModal}
+          onClose={() => setEditTeamModal(null)}
+          onSaved={() => loadTeams(user)}
         />
       )}
 
