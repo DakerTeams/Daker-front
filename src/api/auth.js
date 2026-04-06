@@ -13,7 +13,7 @@ function normalizeUser(user) {
     userId: user.userId,
     nickname: user.nickname,
     email: user.email,
-    role: String(user.role ?? 'USER').toLowerCase(),
+    role: user.role ? String(user.role).toLowerCase() : null,
     accountStatus: user.accountStatus ?? 'ACTIVE',
     createdAt: user.createdAt ?? '',
     tags: Array.isArray(user.tags) ? user.tags.map((t) => t.name ?? t) : [],
@@ -40,11 +40,19 @@ export async function login(payload) {
     expiresIn: data.expiresIn,
   })
 
+  let resolvedUser = sessionUser
+
+  try {
+    resolvedUser = await fetchMe()
+  } catch {
+    // 로그인은 성공했으므로 최소 사용자 정보는 유지하고, 추가 프로필 조회 실패만 무시한다.
+  }
+
   return {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
     expiresIn: data.expiresIn,
-    user: sessionUser,
+    user: resolvedUser,
   }
 }
 

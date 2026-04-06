@@ -1,62 +1,610 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   changeUserRole,
+  closeAdminHackathon,
+  createAdminHackathon,
   deleteAdminHackathon,
+  downloadAdminHackathonSubmissions,
+  downloadAdminSubmission,
+  fetchAdminDashboard,
   fetchAdminHackathons,
-  fetchAdminSubmissions,
+  fetchAdminSubmissionHackathonDetails,
+  fetchAdminSubmissionHackathons,
   fetchAdminUsers,
+  updateAdminHackathon,
 } from '../api/admin.js'
-import { fetchPlatformStats } from '../api/stats.js'
 
 const adminMenu = [
   { key: 'dashboard', label: '대시보드', icon: '📊' },
   { key: 'hackathons', label: '해커톤 관리', icon: '🏆' },
   { key: 'users', label: '유저 관리', icon: '👥' },
-  { key: 'judges', label: '심사위원 관리', icon: '⚖️' },
   { key: 'submissions', label: '제출물 관리', icon: '📂' },
 ]
 
 const statusLabelMap = {
-  draft: { label: '임시저장', type: 'draft' },
-  upcoming: { label: '오픈예정', type: 'upcoming' },
+  upcoming: { label: '모집예정', type: 'upcoming' },
   open: { label: '모집중', type: 'open' },
   closed: { label: '마감', type: 'closed' },
   ended: { label: '종료', type: 'ended' },
 }
 
+const hackathonStatusOptions = [
+  { value: 'UPCOMING', label: '모집예정' },
+  { value: 'OPEN', label: '모집중' },
+  { value: 'CLOSED', label: '마감' },
+  { value: 'ENDED', label: '종료' },
+]
+
+const scoreTypeOptions = [
+  { value: 'JUDGE', label: 'JUDGE (심사위원)' },
+  { value: 'SCORE', label: 'SCORE (점수)' },
+  { value: 'VOTE', label: 'VOTE (투표)' },
+]
+
+const linkTypeOptions = ['WEBSITE', 'GITHUB', 'NOTION', 'DISCORD', 'OTHER']
+
+function createEmptyHackathonForm() {
+  return {
+    title: '',
+    summary: '',
+    description: '',
+    thumbnailUrl: '',
+    organizerName: '',
+    status: 'UPCOMING',
+    scoreType: 'JUDGE',
+    registrationStartAt: '',
+    registrationEndAt: '',
+    startAt: '',
+    endAt: '',
+    submissionDeadlineAt: '',
+    maxTeamSize: '4',
+    maxParticipants: '',
+    campEnabled: false,
+    allowSolo: false,
+    tags: '',
+    prizes: [],
+    criteria: [],
+    milestones: [],
+    notices: [],
+    links: [],
+  }
+}
+
+function formatDateTimeInput(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const pad = (number) => String(number).padStart(2, '0')
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function formatDateTimeDisplay(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function formatDateRange(startAt, endAt) {
+  const start = formatDateTimeDisplay(startAt)
+  const end = formatDateTimeDisplay(endAt)
+
+  if (start === '-' && end === '-') return '-'
+  return `${start} ~ ${end}`
+}
+
+function formatDateTime(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const pad = (number) => String(number).padStart(2, '0')
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function buildHackathonForm(item) {
+  if (!item) return createEmptyHackathonForm()
+
+  return {
+    title: item.title ?? '',
+    summary: item.summary ?? '',
+    description: item.description ?? '',
+    thumbnailUrl: item.thumbnailUrl ?? '',
+    organizerName: item.organizerName ?? '',
+    status: item.status ?? 'UPCOMING',
+    scoreType: item.scoreType ?? 'JUDGE',
+    registrationStartAt: formatDateTimeInput(item.registrationStartAt),
+    registrationEndAt: formatDateTimeInput(item.registrationEndAt),
+    startAt: formatDateTimeInput(item.startAt),
+    endAt: formatDateTimeInput(item.endAt),
+    submissionDeadlineAt: formatDateTimeInput(item.submissionDeadlineAt),
+    maxTeamSize: String(item.maxTeamSize ?? 4),
+    maxParticipants: item.maxParticipants ? String(item.maxParticipants) : '',
+    campEnabled: Boolean(item.campEnabled),
+    allowSolo: Boolean(item.allowSolo),
+    tags: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags ?? ''),
+    prizes: Array.isArray(item.prizes) ? item.prizes : [],
+    criteria: Array.isArray(item.criteria) ? item.criteria : [],
+    milestones: Array.isArray(item.milestones) ? item.milestones : [],
+    notices: Array.isArray(item.notices) ? item.notices : [],
+    links: Array.isArray(item.links) ? item.links : [],
+  }
+}
+
+function buildHackathonPayload(form) {
+  const tags = form.tags.split(',').map((t) => t.trim()).filter(Boolean)
+  return {
+    title: form.title.trim(),
+    summary: form.summary.trim() || null,
+    description: form.description.trim() || null,
+    thumbnailUrl: form.thumbnailUrl.trim() || null,
+    organizerName: form.organizerName.trim(),
+    status: form.status,
+    scoreType: form.scoreType,
+    registrationStartAt: form.registrationStartAt || null,
+    registrationEndAt: form.registrationEndAt || null,
+    startAt: form.startAt || null,
+    endAt: form.endAt || null,
+    submissionDeadlineAt: form.submissionDeadlineAt || null,
+    maxTeamSize: Number(form.maxTeamSize),
+    maxParticipants: form.maxParticipants ? Number(form.maxParticipants) : null,
+    campEnabled: form.campEnabled,
+    allowSolo: form.allowSolo,
+    tags: tags.length > 0 ? tags : undefined,
+    prizes: form.prizes.length > 0 ? form.prizes : undefined,
+    criteria: form.criteria.length > 0 ? form.criteria : undefined,
+    milestones: form.milestones.length > 0 ? form.milestones : undefined,
+    notices: form.notices.length > 0 ? form.notices : undefined,
+    links: form.links.length > 0 ? form.links : undefined,
+  }
+}
+
+function HackathonFormModal({ initialValue, onClose, onSubmit, saving }) {
+  const [form, setForm] = useState(() => buildHackathonForm(initialValue))
+  const [error, setError] = useState('')
+  const isEdit = Boolean(initialValue)
+
+  function updateField(name, value) {
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }))
+  }
+
+  async function handleSubmit() {
+    if (
+      !form.title.trim() ||
+      !form.organizerName.trim() ||
+      !form.registrationStartAt ||
+      !form.registrationEndAt ||
+      !form.startAt ||
+      !form.endAt
+    ) {
+      setError('제목, 주최자, 모집 기간, 진행 기간은 필수입니다.')
+      return
+    }
+
+    if (Number(form.maxTeamSize) <= 0) {
+      setError('최대 팀 인원은 1 이상이어야 합니다.')
+      return
+    }
+
+    setError('')
+
+    try {
+      await onSubmit(buildHackathonPayload(form))
+    } catch (submitError) {
+      setError(submitError.message || '저장에 실패했습니다.')
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="mypage-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="mypage-modal__header">
+          <div>
+            <h2>{isEdit ? '해커톤 수정' : '해커톤 등록'}</h2>
+            <p className="mypage-modal__subtitle">
+              {isEdit ? '상태와 기본 정보를 수정할 수 있습니다.' : '새 해커톤을 등록합니다.'}
+            </p>
+          </div>
+          <button type="button" className="mypage-modal__close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="mypage-modal__body">
+          <div className="mypage-modal__form">
+            <label className="mypage-modal__label">
+              해커톤명
+              <input
+                className="mypage-modal__input"
+                value={form.title}
+                onChange={(event) => updateField('title', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              한 줄 소개
+              <input
+                className="mypage-modal__input"
+                value={form.summary}
+                onChange={(event) => updateField('summary', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              설명
+              <textarea
+                className="mypage-modal__input mypage-modal__textarea"
+                value={form.description}
+                onChange={(event) => updateField('description', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              주최자
+              <input
+                className="mypage-modal__input"
+                value={form.organizerName}
+                onChange={(event) => updateField('organizerName', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              모집 상태
+              <select
+                className="mypage-modal__input"
+                value={form.status}
+                onChange={(event) => updateField('status', event.target.value)}
+              >
+                {hackathonStatusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="mypage-modal__label">
+              심사 방식
+              <select
+                className="mypage-modal__input"
+                value={form.scoreType}
+                onChange={(event) => updateField('scoreType', event.target.value)}
+              >
+                {scoreTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="mypage-modal__label">
+              모집 시작일
+              <input
+                type="datetime-local"
+                className="mypage-modal__input"
+                value={form.registrationStartAt}
+                onChange={(event) => updateField('registrationStartAt', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              모집 종료일
+              <input
+                type="datetime-local"
+                className="mypage-modal__input"
+                value={form.registrationEndAt}
+                onChange={(event) => updateField('registrationEndAt', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              해커톤 시작일
+              <input
+                type="datetime-local"
+                className="mypage-modal__input"
+                value={form.startAt}
+                onChange={(event) => updateField('startAt', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              해커톤 종료일
+              <input
+                type="datetime-local"
+                className="mypage-modal__input"
+                value={form.endAt}
+                onChange={(event) => updateField('endAt', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              제출 마감일
+              <input
+                type="datetime-local"
+                className="mypage-modal__input"
+                value={form.submissionDeadlineAt}
+                onChange={(event) => updateField('submissionDeadlineAt', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              최대 팀 인원
+              <input
+                type="number"
+                min="1"
+                className="mypage-modal__input"
+                value={form.maxTeamSize}
+                onChange={(event) => updateField('maxTeamSize', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              최대 참가자 수
+              <input
+                type="number"
+                min="1"
+                className="mypage-modal__input"
+                value={form.maxParticipants}
+                onChange={(event) => updateField('maxParticipants', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__toggle">
+              <input
+                type="checkbox"
+                checked={form.campEnabled}
+                onChange={(event) => updateField('campEnabled', event.target.checked)}
+              />
+              팀원 모집 사용
+            </label>
+
+            <label className="mypage-modal__toggle">
+              <input
+                type="checkbox"
+                checked={form.allowSolo}
+                onChange={(event) => updateField('allowSolo', event.target.checked)}
+              />
+              개인 참가 허용
+            </label>
+
+            <label className="mypage-modal__label">
+              썸네일 URL
+              <input
+                className="mypage-modal__input"
+                value={form.thumbnailUrl}
+                placeholder="https://..."
+                onChange={(event) => updateField('thumbnailUrl', event.target.value)}
+              />
+            </label>
+
+            <label className="mypage-modal__label">
+              태그 (쉼표 구분)
+              <input
+                className="mypage-modal__input"
+                value={form.tags}
+                placeholder="AI, ML, 웹개발"
+                onChange={(event) => updateField('tags', event.target.value)}
+              />
+            </label>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>상금</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('prizes', [...form.prizes, { rank: form.prizes.length + 1, label: '', amount: '' }])}>+ 추가</button>
+              </div>
+              {form.prizes.map((prize, i) => (
+                <div key={i} className="admin-form-row">
+                  <input className="mypage-modal__input admin-form-row__small" type="number" placeholder="순위" value={prize.rank} onChange={(e) => { const next = [...form.prizes]; next[i] = { ...prize, rank: Number(e.target.value) }; updateField('prizes', next) }} />
+                  <input className="mypage-modal__input" placeholder="라벨 (대상)" value={prize.label} onChange={(e) => { const next = [...form.prizes]; next[i] = { ...prize, label: e.target.value }; updateField('prizes', next) }} />
+                  <input className="mypage-modal__input" placeholder="금액 (500만원)" value={prize.amount} onChange={(e) => { const next = [...form.prizes]; next[i] = { ...prize, amount: e.target.value }; updateField('prizes', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('prizes', form.prizes.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>평가 기준</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('criteria', [...form.criteria, { label: '', weight: '', maxScore: '' }])}>+ 추가</button>
+              </div>
+              {form.criteria.map((c, i) => (
+                <div key={i} className="admin-form-row">
+                  <input className="mypage-modal__input" placeholder="항목명" value={c.label} onChange={(e) => { const next = [...form.criteria]; next[i] = { ...c, label: e.target.value }; updateField('criteria', next) }} />
+                  <input className="mypage-modal__input admin-form-row__small" placeholder="비중 (40%)" value={c.weight} onChange={(e) => { const next = [...form.criteria]; next[i] = { ...c, weight: e.target.value }; updateField('criteria', next) }} />
+                  <input className="mypage-modal__input admin-form-row__small" type="number" placeholder="최고점" value={c.maxScore} onChange={(e) => { const next = [...form.criteria]; next[i] = { ...c, maxScore: e.target.value ? Number(e.target.value) : '' }; updateField('criteria', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('criteria', form.criteria.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>일정 (milestones)</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('milestones', [...form.milestones, { label: '', date: '' }])}>+ 추가</button>
+              </div>
+              {form.milestones.map((m, i) => (
+                <div key={i} className="admin-form-row">
+                  <input className="mypage-modal__input" placeholder="라벨" value={m.label} onChange={(e) => { const next = [...form.milestones]; next[i] = { ...m, label: e.target.value }; updateField('milestones', next) }} />
+                  <input className="mypage-modal__input" type="datetime-local" value={m.date ? formatDateTimeInput(m.date) : ''} onChange={(e) => { const next = [...form.milestones]; next[i] = { ...m, date: e.target.value }; updateField('milestones', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('milestones', form.milestones.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>공지사항</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('notices', [...form.notices, { content: '' }])}>+ 추가</button>
+              </div>
+              {form.notices.map((n, i) => (
+                <div key={i} className="admin-form-row">
+                  <input className="mypage-modal__input" placeholder="공지 내용" value={n.content} onChange={(e) => { const next = [...form.notices]; next[i] = { content: e.target.value }; updateField('notices', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('notices', form.notices.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-form-section">
+              <div className="admin-form-section__head">
+                <span>링크</span>
+                <button type="button" className="admin-form-add-btn" onClick={() => updateField('links', [...form.links, { linkType: 'WEBSITE', label: '', url: '' }])}>+ 추가</button>
+              </div>
+              {form.links.map((l, i) => (
+                <div key={i} className="admin-form-row">
+                  <select className="mypage-modal__input admin-form-row__small" value={l.linkType} onChange={(e) => { const next = [...form.links]; next[i] = { ...l, linkType: e.target.value }; updateField('links', next) }}>
+                    {linkTypeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <input className="mypage-modal__input admin-form-row__small" placeholder="라벨" value={l.label} onChange={(e) => { const next = [...form.links]; next[i] = { ...l, label: e.target.value }; updateField('links', next) }} />
+                  <input className="mypage-modal__input" placeholder="https://..." value={l.url} onChange={(e) => { const next = [...form.links]; next[i] = { ...l, url: e.target.value }; updateField('links', next) }} />
+                  <button type="button" className="admin-form-remove-btn" onClick={() => updateField('links', form.links.filter((_, j) => j !== i))}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {error ? <p className="mypage-modal__error">{error}</p> : null}
+        </div>
+
+        <div className="mypage-modal__footer">
+          <button type="button" className="team-secondary-button" onClick={onClose}>취소</button>
+          <button type="button" className="team-primary-button" onClick={handleSubmit} disabled={saving}>
+            {saving ? '저장 중...' : isEdit ? '수정' : '등록'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SubmissionHackathonModal({
+  open,
+  hackathon,
+  items,
+  loading,
+  onClose,
+  onDownloadSubmission,
+  onDownloadAll,
+}) {
+  if (!open || !hackathon) return null
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="mypage-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="mypage-modal__header">
+          <div>
+            <h2>{hackathon.hackathonName}</h2>
+            <p className="mypage-modal__subtitle">
+              제출 팀 {hackathon.submittedTeamCount}개, 파일 {hackathon.totalFileCount}개
+            </p>
+          </div>
+          <div className="admin-inline-actions">
+            <button type="button" className="team-primary-button" onClick={() => onDownloadAll(hackathon.hackathonId)}>
+              전체 다운로드
+            </button>
+            <button type="button" className="mypage-modal__close" onClick={onClose}>✕</button>
+          </div>
+        </div>
+
+        <div className="mypage-modal__body">
+          {loading ? (
+            <p className="mypage-modal__empty">제출물을 불러오는 중...</p>
+          ) : items.length === 0 ? (
+            <p className="mypage-modal__empty">제출된 팀이 없습니다.</p>
+          ) : (
+            <div className="admin-judge-list">
+              {items.map((item) => (
+                <article key={item.submissionId} className="admin-judge-item admin-submission-item">
+                  <div className="admin-judge-item__left admin-submission-item__left">
+                    <div>
+                      <h3>{item.teamName}</h3>
+                      <p>{formatDateTime(item.submittedAt)}</p>
+                      <p className="admin-submission-item__meta">
+                        파일 {item.submissionItems?.length ?? 0}개 · {item.reviewStatus === 'reviewed' ? '검토 완료' : '검토 대기'}
+                      </p>
+                      {item.submissionItems?.length > 0 && (
+                        <ul className="admin-submission-item__files">
+                          {item.submissionItems.map((submissionItem) => (
+                            <li key={submissionItem.itemId}>
+                              {submissionItem.originalFileName ?? submissionItem.fileName ?? submissionItem.valueUrl ?? '링크 자료'}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-action-button"
+                    onClick={() => onDownloadSubmission(item.submissionId)}
+                  >
+                    자료 다운로드
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mypage-modal__footer">
+          <button type="button" className="team-secondary-button" onClick={onClose}>닫기</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AdminPage() {
   const [activeSection, setActiveSection] = useState('dashboard')
   const [userFilter, setUserFilter] = useState('all')
-
+  const [dashboard, setDashboard] = useState(null)
   const [hackathons, setHackathons] = useState([])
   const [users, setUsers] = useState([])
-  const [submissions, setSubmissions] = useState([])
-  const [platformStats, setPlatformStats] = useState(null)
+  const [submissionHackathons, setSubmissionHackathons] = useState([])
+  const [submissionModalHackathon, setSubmissionModalHackathon] = useState(null)
+  const [submissionModalItems, setSubmissionModalItems] = useState([])
+  const [submissionModalLoading, setSubmissionModalLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [actionMessage, setActionMessage] = useState('')
+  const [toast, setToast] = useState(null)
+  const [editingHackathon, setEditingHackathon] = useState(null)
+  const [isHackathonModalOpen, setIsHackathonModalOpen] = useState(false)
+  const [isSavingHackathon, setIsSavingHackathon] = useState(false)
+
+  useEffect(() => {
+    if (!toast) return undefined
+
+    const timer = window.setTimeout(() => {
+      setToast(null)
+    }, 2600)
+
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
   useEffect(() => {
     const load = async () => {
       setError(null)
       setLoading(true)
+
       try {
         if (activeSection === 'dashboard') {
-          const [stats, hackathonList] = await Promise.all([
-            fetchPlatformStats(),
-            fetchAdminHackathons(),
-          ])
-          setPlatformStats(stats)
-          setHackathons(hackathonList)
+          const data = await fetchAdminDashboard()
+          setDashboard(data)
+          setHackathons(data?.hackathons?.hackathonList?.items ?? [])
         } else if (activeSection === 'hackathons') {
           const data = await fetchAdminHackathons()
           setHackathons(data)
-        } else if (activeSection === 'users' || activeSection === 'judges') {
+        } else if (activeSection === 'users') {
           const data = await fetchAdminUsers()
           setUsers(data)
         } else if (activeSection === 'submissions') {
-          const data = await fetchAdminSubmissions()
-          setSubmissions(data)
+          const data = await fetchAdminSubmissionHackathons()
+          setSubmissionHackathons(data)
         }
       } catch (err) {
         setError(`데이터를 불러오지 못했습니다. (${err.message})`)
@@ -70,22 +618,85 @@ function AdminPage() {
 
   const filteredUsers = useMemo(() => {
     if (userFilter === 'all') return users
-    return users.filter((u) => String(u.role ?? '').toLowerCase() === userFilter)
+    return users.filter((user) => String(user.role ?? '').toLowerCase() === userFilter)
   }, [users, userFilter])
 
-  const judges = useMemo(
-    () => users.filter((u) => String(u.role ?? '').toLowerCase() === 'judge'),
-    [users],
-  )
+  function openCreateHackathonModal() {
+    setEditingHackathon(null)
+    setIsHackathonModalOpen(true)
+  }
+
+  function openEditHackathonModal(item) {
+    setEditingHackathon(item)
+    setIsHackathonModalOpen(true)
+  }
+
+  function closeHackathonModal() {
+    if (isSavingHackathon) return
+    setEditingHackathon(null)
+    setIsHackathonModalOpen(false)
+  }
+
+  async function handleSaveHackathon(payload) {
+    setIsSavingHackathon(true)
+
+    try {
+      if (editingHackathon) {
+        const updated = await updateAdminHackathon(editingHackathon.id, payload)
+        setHackathons((current) =>
+          current.map((item) =>
+            item.id === editingHackathon.id
+              ? {
+                  ...item,
+                  ...payload,
+                  id: updated.id ?? item.id,
+                }
+              : item,
+          ),
+        )
+        setToast({ type: 'success', message: '해커톤이 수정되었습니다.' })
+      } else {
+        const created = await createAdminHackathon(payload)
+        const nextHackathon = {
+          ...payload,
+          id: created.id,
+          createdAt: created.createdAt,
+          updatedAt: created.updatedAt,
+          numOfTeams: 0,
+        }
+        setHackathons((current) => [nextHackathon, ...current])
+        setToast({ type: 'success', message: '해커톤이 등록되었습니다.' })
+      }
+
+      setIsHackathonModalOpen(false)
+      setEditingHackathon(null)
+    } finally {
+      setIsSavingHackathon(false)
+    }
+  }
+
+  async function handleCloseHackathon(id) {
+    if (!window.confirm('해커톤을 마감 처리하시겠습니까?')) return
+    try {
+      await closeAdminHackathon(id)
+      setHackathons((current) =>
+        current.map((item) => item.id === id ? { ...item, status: 'CLOSED' } : item),
+      )
+      setToast({ type: 'success', message: '마감 처리되었습니다.' })
+    } catch {
+      setToast({ type: 'error', message: '마감 처리에 실패했습니다.' })
+    }
+  }
 
   async function handleDeleteHackathon(id) {
-    if (!window.confirm('해커톤을 삭제하시겠습니까?')) return
+    if (!window.confirm('해커톤을 삭제하시겠습니까? 삭제는 소프트 삭제로 처리됩니다.')) return
+
     try {
       await deleteAdminHackathon(id)
-      setHackathons((prev) => prev.filter((h) => h.id !== id))
-      setActionMessage('삭제되었습니다.')
+      setHackathons((current) => current.filter((item) => item.id !== id))
+      setToast({ type: 'success', message: '해커톤이 삭제되었습니다.' })
     } catch {
-      setActionMessage('삭제에 실패했습니다.')
+      setToast({ type: 'error', message: '해커톤 삭제에 실패했습니다.' })
     }
   }
 
@@ -93,14 +704,67 @@ function AdminPage() {
     const newRole = currentRole === 'JUDGE' ? 'USER' : 'JUDGE'
     const label = newRole === 'JUDGE' ? '심사위원으로 승격' : '일반 유저로 변경'
     if (!window.confirm(`${label}하시겠습니까?`)) return
+
     try {
       await changeUserRole(userId, newRole)
-      setUsers((prev) =>
-        prev.map((u) => (u.userId === userId ? { ...u, role: newRole } : u)),
+      setUsers((current) =>
+        current.map((user) => (user.userId === userId ? { ...user, role: newRole } : user)),
       )
-      setActionMessage('역할이 변경되었습니다.')
-    } catch {
-      setActionMessage('역할 변경에 실패했습니다.')
+      setToast({
+        type: 'success',
+        message: newRole === 'JUDGE' ? '심사위원으로 지정했습니다.' : '심사위원 권한을 회수했습니다.',
+      })
+    } catch (requestError) {
+      setToast({
+        type: 'error',
+        message: requestError?.message || '실패했습니다.',
+      })
+    }
+  }
+
+  async function handleOpenSubmissionModal(hackathon) {
+    setSubmissionModalHackathon(hackathon)
+    setSubmissionModalLoading(true)
+
+    try {
+      const data = await fetchAdminSubmissionHackathonDetails(hackathon.hackathonId)
+      setSubmissionModalItems(data)
+    } catch (requestError) {
+      setToast({
+        type: 'error',
+        message: requestError?.message || '제출물을 불러오지 못했습니다.',
+      })
+      setSubmissionModalItems([])
+    } finally {
+      setSubmissionModalLoading(false)
+    }
+  }
+
+  function handleCloseSubmissionModal() {
+    setSubmissionModalHackathon(null)
+    setSubmissionModalItems([])
+    setSubmissionModalLoading(false)
+  }
+
+  async function handleDownloadSubmission(submissionId) {
+    try {
+      await downloadAdminSubmission(submissionId)
+    } catch (requestError) {
+      setToast({
+        type: 'error',
+        message: requestError?.message || '다운로드에 실패했습니다.',
+      })
+    }
+  }
+
+  async function handleDownloadAllSubmissions(hackathonId) {
+    try {
+      await downloadAdminHackathonSubmissions(hackathonId)
+    } catch (requestError) {
+      setToast({
+        type: 'error',
+        message: requestError?.message || '전체 다운로드에 실패했습니다.',
+      })
     }
   }
 
@@ -109,56 +773,52 @@ function AdminPage() {
       <h1 className="admin-title">대시보드</h1>
       {loading && <p className="admin-subtitle">불러오는 중...</p>}
       {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
-      {platformStats && (
+      {dashboard && (
         <div className="admin-stats-grid">
           <article className="admin-stat-card">
-            <strong>{platformStats.participants.toLocaleString()}</strong>
+            <strong>{dashboard.users?.total ?? 0}</strong>
             <span>전체 참가자</span>
           </article>
           <article className="admin-stat-card">
-            <strong>{platformStats.activeHackathons}</strong>
+            <strong>{dashboard.hackathons?.active ?? 0}</strong>
             <span>활성 해커톤</span>
           </article>
           <article className="admin-stat-card">
-            <strong>{platformStats.totalPrize}</strong>
-            <span>총 상금</span>
+            <strong>{dashboard.participatedTeams?.total ?? 0}</strong>
+            <span>전체 팀</span>
+          </article>
+          <article className="admin-stat-card">
+            <strong>{dashboard.submissions?.total ?? 0}</strong>
+            <span>전체 제출물</span>
           </article>
         </div>
       )}
-      {hackathons.length > 0 && (() => {
-        const counts = { upcoming: 0, open: 0, closed: 0, ended: 0 }
-        hackathons.forEach((h) => {
-          const s = String(h.status ?? '').toLowerCase()
-          if (counts[s] !== undefined) counts[s]++
-        })
-        return (
-          <div className="admin-stats-grid">
-            {[
-              { key: 'upcoming', label: '오픈 예정' },
-              { key: 'open', label: '모집 중' },
-              { key: 'closed', label: '마감' },
-              { key: 'ended', label: '종료' },
-            ].map(({ key, label }) => (
-              <article key={key} className={`admin-stat-card admin-status--${key}`}>
-                <strong>{counts[key]}</strong>
-                <span>{label}</span>
-              </article>
-            ))}
-          </div>
-        )
-      })()}
+      {dashboard?.hackathons && (
+        <div className="admin-stats-grid">
+          {[
+            { key: 'upcoming', label: '모집예정', value: dashboard.hackathons.upcoming ?? 0 },
+            { key: 'open', label: '모집중', value: dashboard.hackathons.active ?? 0 },
+            { key: 'closed', label: '마감', value: dashboard.hackathons.closed ?? 0 },
+            { key: 'ended', label: '종료', value: dashboard.hackathons.ended ?? 0 },
+          ].map(({ key, label, value }) => (
+            <article key={key} className={`admin-stat-card admin-status--${key}`}>
+              <strong>{value}</strong>
+              <span>{label}</span>
+            </article>
+          ))}
+        </div>
+      )}
     </>
   )
 
   const renderHackathons = () => (
     <>
       <div className="row-between row-between--wrap">
-        <h1 className="admin-title">해커톤 관리</h1>
-        <button type="button" className="team-primary-button">
+      <h1 className="admin-title">해커톤 관리</h1>
+        <button type="button" className="team-primary-button" onClick={openCreateHackathonModal}>
           + 새 해커톤 등록
         </button>
       </div>
-      {actionMessage && <p className="admin-subtitle">{actionMessage}</p>}
       {loading && <p className="admin-subtitle">불러오는 중...</p>}
       {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
       <section className="admin-card">
@@ -172,20 +832,36 @@ function AdminPage() {
             <span>액션</span>
           </div>
           {hackathons.map((item) => {
-            const statusInfo = statusLabelMap[String(item.status).toLowerCase()] ?? { label: item.status, type: 'muted' }
+            const statusInfo =
+              statusLabelMap[String(item.status ?? '').toLowerCase()] ??
+              { label: item.status, type: 'muted' }
+
             return (
               <div key={item.id} className="admin-table__row admin-table__row--hackathons">
                 <strong>{item.title}</strong>
                 <span className={`admin-status admin-status--${statusInfo.type}`}>
                   {statusInfo.label}
                 </span>
-                <span>{item.startDate ?? '-'} ~ {item.endDate ?? '-'}</span>
-                <span>{item.teamCount ?? '-'}</span>
+                <span>{formatDateRange(item.startAt, item.endAt)}</span>
+                <span>{item.numOfTeams ?? item.teamCount ?? '-'}</span>
                 <span className="admin-pill admin-pill--blue">{item.scoreType ?? '-'}</span>
                 <div className="admin-inline-actions">
-                  <button type="button" className="team-secondary-button team-secondary-button--muted">
+                  <button
+                    type="button"
+                    className="team-secondary-button team-secondary-button--muted"
+                    onClick={() => openEditHackathonModal(item)}
+                  >
                     수정
                   </button>
+                  {String(item.status ?? '').toLowerCase() === 'open' && (
+                    <button
+                      type="button"
+                      className="admin-action-button"
+                      onClick={() => handleCloseHackathon(item.id)}
+                    >
+                      마감
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="admin-action-button admin-action-button--danger"
@@ -205,9 +881,11 @@ function AdminPage() {
   const renderUsers = () => (
     <>
       <h1 className="admin-title">유저 관리</h1>
-      {actionMessage && <p className="admin-subtitle">{actionMessage}</p>}
       {loading && <p className="admin-subtitle">불러오는 중...</p>}
       {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
+      <p className="admin-subtitle">
+        유저 역할 변경은 여기서 통합 관리합니다. 별도 심사위원 탭은 제거했습니다.
+      </p>
       <div className="admin-toolbar">
         <input className="search-input admin-search-input" placeholder="닉네임, 이메일 검색..." />
         <div className="filter-group">
@@ -243,10 +921,10 @@ function AdminPage() {
             const isJudge = role === 'judge'
             return (
               <div key={user.userId ?? user.email} className="admin-table__row admin-table__row--users">
-                <strong>{user.nickname}</strong>
-                <span>{user.email}</span>
+                <strong className="admin-user-cell admin-user-cell--name">{user.nickname}</strong>
+                <span className="admin-user-cell admin-user-cell--email">{user.email}</span>
                 <span className={`admin-pill admin-pill--${role}`}>{user.role}</span>
-                <span>{user.createdAt?.slice(0, 10) ?? '-'}</span>
+                <span className="admin-user-cell admin-user-cell--date">{user.createdAt?.slice(0, 10) ?? '-'}</span>
                 <button
                   type="button"
                   className={`admin-action-button admin-action-button--${isJudge ? 'danger' : 'primary'}`}
@@ -262,68 +940,35 @@ function AdminPage() {
     </>
   )
 
-  const renderJudges = () => (
-    <>
-      <h1 className="admin-title">심사위원 관리</h1>
-      <p className="admin-subtitle">
-        심사위원은 모든 해커톤을 심사할 수 있습니다. 역할 부여/회수만 관리하세요.
-      </p>
-      {actionMessage && <p className="admin-subtitle">{actionMessage}</p>}
-      {loading && <p className="admin-subtitle">불러오는 중...</p>}
-      {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
-      <section className="admin-card">
-        <h2 className="admin-card__title">현재 심사위원 {judges.length}명</h2>
-        <div className="admin-judge-list">
-          {judges.map((judge) => (
-            <article key={judge.userId ?? judge.email} className="admin-judge-item">
-              <div className="admin-judge-item__left">
-                <span className="admin-judge-item__icon">⚖️</span>
-                <div>
-                  <h3>{judge.nickname}</h3>
-                  <p>{judge.email}</p>
-                </div>
-              </div>
-              <div className="admin-inline-actions">
-                <span className="admin-pill admin-pill--judge">심사위원</span>
-                <button
-                  type="button"
-                  className="admin-action-button admin-action-button--danger"
-                  onClick={() => handleChangeRole(judge.userId, 'JUDGE')}
-                >
-                  역할 회수
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </>
-  )
-
   const renderSubmissions = () => (
     <>
       <h1 className="admin-title">제출물 관리</h1>
+      <p className="admin-subtitle">
+        해커톤별 제출 현황을 확인하고, 모달에서 팀별 자료 또는 전체 제출물을 다운로드할 수 있습니다.
+      </p>
       {loading && <p className="admin-subtitle">불러오는 중...</p>}
       {error && <p className="admin-subtitle" style={{ color: 'red' }}>{error}</p>}
       <section className="admin-card">
         <div className="admin-table">
-          <div className="admin-table__head admin-table__head--submissions">
+          <div className="admin-table__head admin-table__head--submission-hackathons">
             <span>해커톤</span>
-            <span>팀명</span>
-            <span>제출 시각</span>
-            <span>파일</span>
-            <span>재제출</span>
+            <span>제출 팀</span>
+            <span>자료 수</span>
+            <span>마지막 제출</span>
             <span>액션</span>
           </div>
-          {submissions.map((item) => (
-            <div key={`${item.hackathonId}-${item.teamId}`} className="admin-table__row admin-table__row--submissions">
-              <span>{item.hackathonTitle ?? item.hackathonId}</span>
-              <strong>{item.teamName ?? item.teamId}</strong>
-              <span>{item.submittedAt?.slice(0, 16).replace('T', ' ') ?? '-'}</span>
-              <span className="admin-pill admin-pill--file">{item.fileName ?? item.fileType ?? '-'}</span>
-              <span className="admin-pill admin-pill--blue">{item.retryCount ?? 0}회</span>
-              <button type="button" className="team-secondary-button team-secondary-button--muted">
-                다운로드
+          {submissionHackathons.map((item) => (
+            <div key={item.hackathonId} className="admin-table__row admin-table__row--submission-hackathons">
+              <strong>{item.hackathonName}</strong>
+              <span>{item.submittedTeamCount}팀</span>
+              <span className="admin-pill admin-pill--blue">{item.totalFileCount}개</span>
+              <span>{formatDateTime(item.latestSubmittedAt)}</span>
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => handleOpenSubmissionModal(item)}
+              >
+                제출물 보기
               </button>
             </div>
           ))}
@@ -333,34 +978,60 @@ function AdminPage() {
   )
 
   return (
-    <section className="admin-layout">
-      <aside className="admin-sidebar">
-        <p className="admin-sidebar__label">관리자 패널</p>
-        <nav className="admin-sidebar__nav">
-          {adminMenu.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`admin-sidebar__item${
-                activeSection === item.key ? ' admin-sidebar__item--active' : ''
-              }`}
-              onClick={() => setActiveSection(item.key)}
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+    <>
+      <section className="admin-layout">
+        <aside className="admin-sidebar">
+          <p className="admin-sidebar__label">관리자 패널</p>
+          <nav className="admin-sidebar__nav">
+            {adminMenu.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className={`admin-sidebar__item${
+                  activeSection === item.key ? ' admin-sidebar__item--active' : ''
+                }`}
+                onClick={() => setActiveSection(item.key)}
+              >
+                <span>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-      <div className="admin-content">
-        {activeSection === 'dashboard' && renderDashboard()}
-        {activeSection === 'hackathons' && renderHackathons()}
-        {activeSection === 'users' && renderUsers()}
-        {activeSection === 'judges' && renderJudges()}
-        {activeSection === 'submissions' && renderSubmissions()}
-      </div>
-    </section>
+        <div className="admin-content">
+          {activeSection === 'dashboard' && renderDashboard()}
+          {activeSection === 'hackathons' && renderHackathons()}
+          {activeSection === 'users' && renderUsers()}
+          {activeSection === 'submissions' && renderSubmissions()}
+        </div>
+      </section>
+
+      {toast && (
+        <div className={`admin-toast admin-toast--${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
+
+      {isHackathonModalOpen && (
+        <HackathonFormModal
+          initialValue={editingHackathon}
+          onClose={closeHackathonModal}
+          onSubmit={handleSaveHackathon}
+          saving={isSavingHackathon}
+        />
+      )}
+
+      <SubmissionHackathonModal
+        open={Boolean(submissionModalHackathon)}
+        hackathon={submissionModalHackathon}
+        items={submissionModalItems}
+        loading={submissionModalLoading}
+        onClose={handleCloseSubmissionModal}
+        onDownloadSubmission={handleDownloadSubmission}
+        onDownloadAll={handleDownloadAllSubmissions}
+      />
+    </>
   )
 }
 

@@ -637,10 +637,20 @@ function MyPage() {
             {myTeams.length === 0 ? (
               <p className="page-description">참가한 해커톤이 없습니다.</p>
             ) : (
-              myTeams.map((team) => {
+              [...myTeams]
+                .sort((a, b) => {
+                  const order = { ended: 0, closed: 1, open: 2, upcoming: 3 }
+                  const oa = order[a.hackathonStatus] ?? 9
+                  const ob = order[b.hackathonStatus] ?? 9
+                  if (oa !== ob) return oa - ob
+                  const da = a.hackathonEndDate ?? a.hackathonStartDate ?? ''
+                  const db = b.hackathonEndDate ?? b.hackathonStartDate ?? ''
+                  return da.localeCompare(db)
+                })
+                .map((team) => {
                 const status = team.hackathonStatus
                 const isDone = status === 'ended'
-                const isActive = status === 'open'
+                const isActive = status === 'closed'
 
                 return (
                   <div key={team.id} className="mypage-timeline-item">
@@ -651,7 +661,7 @@ function MyPage() {
                       <div className="mypage-timeline-item__head">
                         <h3>{team.hackathonName}</h3>
                         <span className={`mypage-timeline-badge mypage-timeline-badge--${status ?? 'closed'}`}>
-                          {isDone ? '완료' : isActive ? '진행 중' : team.hackathonStatusLabel ?? '마감'}
+                          {isDone ? '완료' : isActive ? '심사 중' : status === 'open' ? '모집 중' : team.hackathonStatusLabel ?? '오픈 예정'}
                         </span>
                       </div>
                       <p className="mypage-timeline-item__team">{team.name}</p>

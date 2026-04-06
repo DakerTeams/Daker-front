@@ -1,12 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getGithubLoginUrl, login } from '../api/auth.js'
+import { clearAuthSession } from '../lib/auth.js'
 import { normalizeAuthErrorMessage, resolveAuthErrorField } from '../lib/auth-error.js'
 
 function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const isExpiredRedirect = new URLSearchParams(location.search).get('expired') === '1'
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('expired') === '1') {
+      clearAuthSession()
+      navigate('/', { replace: true })
+    }
+  }, [location.search, navigate])
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -110,9 +117,6 @@ function LoginPage() {
           <p>해커톤 플랫폼에 로그인하세요.</p>
         </div>
 
-        {isExpiredRedirect && (
-          <p className="auth-form__error">세션이 만료되었습니다. 다시 로그인해주세요.</p>
-        )}
 
         <button type="button" className="auth-social-button" onClick={handleGithubLogin}>
           <span className="auth-social-button__icon">◔</span>
