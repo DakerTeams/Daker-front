@@ -5077,6 +5077,20 @@ h2 {
   font-size: 1rem;
 }
 
+.participant-team-table__row--clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.participant-team-table__row--clickable:hover {
+  background: #f8fafb;
+}
+
 .participant-team-table__team {
   display: flex;
   align-items: center;
@@ -5107,6 +5121,10 @@ h2 {
   max-height: 90vh;
 }
 
+.mypage-modal--wide {
+  width: min(720px, 100%);
+}
+
 .mypage-modal__header {
   display: flex;
   align-items: flex-start;
@@ -5135,6 +5153,30 @@ h2 {
   padding: 24px 32px;
   overflow-y: auto;
   flex: 1;
+}
+
+.mypage-modal__body--sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 28px;
+}
+
+.mypage-modal__section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mypage-modal__position-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mypage-modal__input--count {
+  width: 72px;
+  flex-shrink: 0;
 }
 
 .mypage-modal__footer {
@@ -5338,6 +5380,18 @@ h2 {
   color: #374151;
   font-size: 1.05rem;
   font-weight: 700;
+}
+
+.mypage-team-info__contact-link {
+  color: var(--primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.mypage-team-info__contact-link:hover {
+  text-decoration: underline;
 }
 
 .mypage-modal__close {
