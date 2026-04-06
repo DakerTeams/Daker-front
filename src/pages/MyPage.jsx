@@ -557,7 +557,7 @@ function MyPage() {
           </div>
           <div>
             <span>랭킹</span>
-            <strong>{user?.rank != null ? `#${user.rank}` : '-'}</strong>
+            <strong>{(user?.points > 0 && user?.rank != null) ? `#${user.rank}` : '-'}</strong>
           </div>
           <div>
             <span>참가 횟수</span>
