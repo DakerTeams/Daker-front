@@ -54,6 +54,7 @@ function HackathonDetailPage() {
   );
   const [teamState, setTeamState] = useState("notRegistered");
   const [submitState, setSubmitState] = useState("notRegistered");
+  const [isParticipationModeOpen, setIsParticipationModeOpen] = useState(false);
   const [isTeamNoticeOpen, setIsTeamNoticeOpen] = useState(false);
   const [teamNoticeMode, setTeamNoticeMode] = useState(null);
   const [isExistingTeamSelectOpen, setIsExistingTeamSelectOpen] = useState(false);
@@ -141,7 +142,7 @@ function HackathonDetailPage() {
     }
   }
 
-  const openParticipationNotice = (mode) => {
+  const openParticipationEntry = () => {
     if (!currentUser) {
       setRegistrationMessage("로그인 후 팀 생성과 해커톤 참가가 가능합니다.");
       navigate("/login");
@@ -149,6 +150,11 @@ function HackathonDetailPage() {
     }
 
     setRegistrationMessage("");
+    setIsParticipationModeOpen(true);
+  };
+
+  const openParticipationNotice = (mode) => {
+    setIsParticipationModeOpen(false);
     setTeamNoticeMode(mode);
     setIsTeamNoticeOpen(true);
   };
@@ -620,9 +626,9 @@ function HackathonDetailPage() {
               <button
                 type="button"
                 className="team-primary-button"
-                onClick={() => openParticipationNotice("new")}
+                onClick={openParticipationEntry}
               >
-                팀 만들고 참가하기
+                신청하기
               </button>
             </div>
           )}
@@ -1115,16 +1121,9 @@ function HackathonDetailPage() {
                 <button
                   type="button"
                   className="detail-apply-button"
-                  onClick={() => openParticipationNotice("new")}
+                  onClick={openParticipationEntry}
                 >
-                  새로운 팀으로 참가
-                </button>
-                <button
-                  type="button"
-                  className="detail-apply-button detail-apply-button--secondary"
-                  onClick={() => openParticipationNotice("existing")}
-                >
-                  기존 팀으로 참가
+                  신청하기
                 </button>
               </div>
             )}
@@ -1186,6 +1185,52 @@ function HackathonDetailPage() {
                 {teamNoticeMode === "existing"
                   ? "확인, 기존 팀 선택하기"
                   : "확인, 팀원 모집 페이지로"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isParticipationModeOpen && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setIsParticipationModeOpen(false)}
+        >
+          <div
+            className="team-notice-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="participation-mode-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="participation-mode-title">참가 방식을 선택해주세요</h2>
+            <p className="team-notice-copy team-notice-copy--compact">
+              새로운 팀을 만들거나, 이미 내가 속한 기존 팀으로 이 해커톤에 참가할 수 있어요.
+            </p>
+            <div className="team-state-actions team-state-actions--modal">
+              <button
+                type="button"
+                className="team-primary-button"
+                onClick={() => openParticipationNotice("new")}
+              >
+                새로운 팀으로 참가
+              </button>
+              <button
+                type="button"
+                className="team-secondary-button"
+                onClick={() => openParticipationNotice("existing")}
+              >
+                기존 팀으로 참가
+              </button>
+            </div>
+            <div className="team-notice-actions">
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                onClick={() => setIsParticipationModeOpen(false)}
+              >
+                취소
               </button>
             </div>
           </div>
