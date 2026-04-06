@@ -609,30 +609,21 @@ function HackathonDetailPage() {
             <div className="team-state-card team-state-card--locked">
               <div className="team-state-card__icon">🔒</div>
               <h2 className="team-state-card__title">
-                참가할 방식부터 선택해주세요
+                해커톤에 먼저 신청해야 합니다
               </h2>
               <p className="team-state-card__description">
-                새 팀을 만들거나, 이미 내가 속한 기존 팀으로 이 해커톤에 참가할 수 있어요.
+                팀을 구성하려면 먼저 이 해커톤에 참가 신청을 해야 해요.
               </p>
               <p className="team-state-card__description">
-                두 경우 모두 유의사항을 먼저 확인한 뒤 다음 단계로 이동합니다.
+                신청 후 팀을 생성하거나 기존 팀에 합류할 수 있어요.
               </p>
-              <div className="team-state-actions">
-                <button
-                  type="button"
-                  className="team-primary-button"
-                  onClick={() => openParticipationNotice("new")}
-                >
-                  새로운 팀으로 참가
-                </button>
-                <button
-                  type="button"
-                  className="team-secondary-button"
-                  onClick={() => openParticipationNotice("existing")}
-                >
-                  기존 팀으로 참가
-                </button>
-              </div>
+              <button
+                type="button"
+                className="team-primary-button"
+                onClick={() => openParticipationNotice("new")}
+              >
+                팀 만들고 참가하기
+              </button>
             </div>
           )}
 
