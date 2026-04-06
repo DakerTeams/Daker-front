@@ -4910,6 +4910,10 @@ h2 {
   width: 100%;
 }
 
+.team-state-actions--modal {
+  margin-top: 24px;
+}
+
 .team-primary-button,
 .team-secondary-button,
 .team-danger-button {
