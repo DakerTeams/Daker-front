@@ -194,6 +194,7 @@ function HackathonDetailPage() {
       const newTeam = await createTeam({
         name: teamCreateForm.name.trim(),
         description: teamCreateForm.description.trim() || null,
+        isOpen: true,
         maxMemberCount: Number(teamCreateForm.maxMemberCount) || 4,
         hackathonId: Number(id),
         positions: teamCreateForm.positions
