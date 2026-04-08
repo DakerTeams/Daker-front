@@ -30,6 +30,7 @@ function CampPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preferredHackathonId = searchParams.get("hackathonId") ?? "";
+  const hackathonSlug = searchParams.get("hackathon") ?? "";
   const [query, setQuery] = useState("");
   const [openFilter, setOpenFilter] = useState("all");
   const [items, setItems] = useState([]);
@@ -65,6 +66,7 @@ function CampPage() {
           fetchTeams({
             isOpen: openFilter === "all" ? undefined : openFilter === "open",
             q: query.trim() || undefined,
+            hackathon: hackathonSlug || undefined,
             page,
             size: PAGE_SIZE,
           }),
@@ -94,7 +96,7 @@ function CampPage() {
     return () => {
       isMounted = false;
     };
-  }, [openFilter, query, page]);
+  }, [openFilter, query, page, hackathonSlug]);
 
   const handleOpenTeam = async (teamId) => {
     setSelectedPosition("");
@@ -184,11 +186,22 @@ function CampPage() {
       <section className="surface-card">
         <div className="row-between row-between--wrap">
           <div className="stack-list stack-list--compact">
-            <h2>함께 해커톤을 완주할 팀원을 찾아보세요.</h2>
-            <p className="page-description">
-              모집 상태와 해커톤별로 필터링해서 원하는 팀을 빠르게 찾을 수
-              있습니다.
-            </p>
+            {hackathonSlug ? (
+              <>
+                <h2>해커톤 팀 목록</h2>
+                <p className="page-description">
+                  <span className="camp-hackathon-filter-badge">{hackathonSlug}</span> 해커톤의 팀만 표시 중입니다.&nbsp;
+                  <button type="button" className="button-link" onClick={() => navigate("/camp")}>전체 보기</button>
+                </p>
+              </>
+            ) : (
+              <>
+                <h2>함께 해커톤을 완주할 팀원을 찾아보세요.</h2>
+                <p className="page-description">
+                  모집 상태와 해커톤별로 필터링해서 원하는 팀을 빠르게 찾을 수 있습니다.
+                </p>
+              </>
+            )}
           </div>
           <button
             type="button"

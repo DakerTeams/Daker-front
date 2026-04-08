@@ -53,7 +53,7 @@ function HackathonDetailPage() {
   const [activeTab, setActiveTab] = useState(
     detailTabs.some((tab) => tab.key === requestedTab) ? requestedTab : "overview",
   );
-  const [teamState, setTeamState] = useState("notRegistered");
+  const [teamState, setTeamState] = useState("A");
   const [submitState, setSubmitState] = useState("notRegistered");
   const [isParticipationModeOpen, setIsParticipationModeOpen] = useState(false);
   const [isTeamNoticeOpen, setIsTeamNoticeOpen] = useState(false);
@@ -365,15 +365,17 @@ function HackathonDetailPage() {
 
           if (isMounted) setTeamState(newTeamState);
 
-          const matchedTeam = isRegisteredHere
-            ? myTeams.find(team => String(team.id) === String(registeredTeamId))
-            : null;
+          // D 상태: myTeams에 없는 경우(팀원으로 가입한 팀)도 registeredTeamId로 직접 조회
+          const teamIdForDetail = isRegisteredHere ? (
+            myTeams.find(team => String(team.id) === String(registeredTeamId))?.id ?? registeredTeamId
+          ) : null;
 
-          if (matchedTeam) {
+          if (teamIdForDetail) {
             try {
+              const isLeaderState = newTeamState === "D2";
               const [detail, applicationRows] = await Promise.all([
-                fetchTeamDetail(matchedTeam.id),
-                fetchTeamApplications(matchedTeam.id),
+                fetchTeamDetail(teamIdForDetail),
+                isLeaderState ? fetchTeamApplications(teamIdForDetail) : Promise.resolve([]),
               ]);
 
               if (!isMounted) return;
@@ -381,15 +383,17 @@ function HackathonDetailPage() {
               setApplications(applicationRows);
             } catch {
               if (!isMounted) return;
-              setMyTeamDetail(matchedTeam);
+              const fallback = myTeams.find(t => String(t.id) === String(registeredTeamId));
+              if (fallback) setMyTeamDetail(fallback);
               setApplications([]);
             }
 
             setRemoteTeams((current) => {
               const others = (current ?? []).filter(
-                (team) => String(team.id) !== String(matchedTeam.id),
+                (team) => String(team.id) !== String(teamIdForDetail),
               );
-              return [matchedTeam, ...others];
+              const matched = myTeams.find(t => String(t.id) === String(teamIdForDetail));
+              return matched ? [matched, ...others] : others;
             });
           }
         } catch {
@@ -1064,7 +1068,7 @@ function HackathonDetailPage() {
                     </button>
                     <button
                       type="button"
-                      className={`team-primary-button team-primary-button--small${applications.length === 0 ? " team-primary-button--disabled" : ""}`}
+                      className={`team-secondary-button team-secondary-button--muted${applications.length === 0 ? " team-primary-button--disabled" : ""}`}
                       disabled={applications.length === 0}
                       onClick={() => setIsApplicationsOpen(true)}
                     >
