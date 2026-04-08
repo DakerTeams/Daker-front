@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Trophy } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   applyToTeam,
@@ -30,6 +31,7 @@ function CampPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preferredHackathonId = searchParams.get("hackathonId") ?? "";
+  const hackathonSlug = searchParams.get("hackathon") ?? "";
   const [query, setQuery] = useState("");
   const [openFilter, setOpenFilter] = useState("all");
   const [items, setItems] = useState([]);
@@ -65,6 +67,7 @@ function CampPage() {
           fetchTeams({
             isOpen: openFilter === "all" ? undefined : openFilter === "open",
             q: query.trim() || undefined,
+            hackathon: hackathonSlug || undefined,
             page,
             size: PAGE_SIZE,
           }),
@@ -94,7 +97,7 @@ function CampPage() {
     return () => {
       isMounted = false;
     };
-  }, [openFilter, query, page]);
+  }, [openFilter, query, page, hackathonSlug]);
 
   const handleOpenTeam = async (teamId) => {
     setSelectedPosition("");
@@ -184,11 +187,22 @@ function CampPage() {
       <section className="surface-card">
         <div className="row-between row-between--wrap">
           <div className="stack-list stack-list--compact">
-            <h2>함께 해커톤을 완주할 팀원을 찾아보세요.</h2>
-            <p className="page-description">
-              모집 상태와 해커톤별로 필터링해서 원하는 팀을 빠르게 찾을 수
-              있습니다.
-            </p>
+            {hackathonSlug ? (
+              <>
+                <h2>해커톤 팀 목록</h2>
+                <p className="page-description">
+                  <span className="camp-hackathon-filter-badge">{hackathonSlug}</span> 해커톤의 팀만 표시 중입니다.&nbsp;
+                  <button type="button" className="button-link" onClick={() => navigate("/camp")}>전체 보기</button>
+                </p>
+              </>
+            ) : (
+              <>
+                <h2>함께 해커톤을 완주할 팀원을 찾아보세요.</h2>
+                <p className="page-description">
+                  모집 상태와 해커톤별로 필터링해서 원하는 팀을 빠르게 찾을 수 있습니다.
+                </p>
+              </>
+            )}
           </div>
           <button
             type="button"
@@ -271,7 +285,7 @@ function CampPage() {
                 <div>
                   <h2>{team.name}</h2>
                   <p className="team-card__hackathon">
-                    🏆 {team.hackathonName}
+                    <Trophy size={13} strokeWidth={2} style={{verticalAlign:'middle', marginRight:4}} />{team.hackathonName}
                   </p>
                 </div>
                 <span
@@ -349,7 +363,7 @@ function CampPage() {
             <div className="team-create-drawer__body">
               <section className="surface-card">
                 <div className="stack-list stack-list--compact">
-                  <p className="meta-text">🏆 {selectedTeam.hackathonName}</p>
+                  <p className="meta-text"><Trophy size={13} strokeWidth={2} style={{verticalAlign:'middle', marginRight:4}} />{selectedTeam.hackathonName}</p>
                   <p>
                     {selectedTeam.description || "팀 소개가 아직 없습니다."}
                   </p>
