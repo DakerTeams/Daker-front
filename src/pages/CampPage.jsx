@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Trophy } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   applyToTeam,
@@ -284,7 +285,7 @@ function CampPage() {
                 <div>
                   <h2>{team.name}</h2>
                   <p className="team-card__hackathon">
-                    🏆 {team.hackathonName}
+                    <Trophy size={13} strokeWidth={2} style={{verticalAlign:'middle', marginRight:4}} />{team.hackathonName}
                   </p>
                 </div>
                 <span
@@ -362,7 +363,7 @@ function CampPage() {
             <div className="team-create-drawer__body">
               <section className="surface-card">
                 <div className="stack-list stack-list--compact">
-                  <p className="meta-text">🏆 {selectedTeam.hackathonName}</p>
+                  <p className="meta-text"><Trophy size={13} strokeWidth={2} style={{verticalAlign:'middle', marginRight:4}} />{selectedTeam.hackathonName}</p>
                   <p>
                     {selectedTeam.description || "팀 소개가 아직 없습니다."}
                   </p>

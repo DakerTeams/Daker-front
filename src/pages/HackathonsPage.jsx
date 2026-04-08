@@ -137,6 +137,9 @@ function HackathonsPage() {
                         </span>
                       )}
                       <h2>{hackathon.title}</h2>
+                      {hackathon.summary && (
+                        <p className="hackathon-card__summary">{hackathon.summary}</p>
+                      )}
                       {hackathon.tags.length > 0 && (
                         <div className="hackathon-card__tags">
                           {hackathon.tags.map((tag) => (
