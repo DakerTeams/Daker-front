@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, Clock, Handshake, Info, Lock, Trophy, Users } from "lucide-react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   cancelRegistration,
@@ -110,6 +111,7 @@ function HackathonDetailPage() {
   const [selectedTeamForRegistration, setSelectedTeamForRegistration] = useState("");
   const [registerConfirmOpen, setRegisterConfirmOpen] = useState(false);
   const [teamCreateAutoRegister, setTeamCreateAutoRegister] = useState(false);
+  const [c2View, setC2View] = useState("choice"); // "choice" | "select"
   const currentUser = getStoredUser();
 
   useEffect(() => {
@@ -363,7 +365,10 @@ function HackathonDetailPage() {
             setSubmitState(getSubmitState(false, false, hackathonDetail?.status));
           }
 
-          if (isMounted) setTeamState(newTeamState);
+          if (isMounted) {
+            setTeamState(newTeamState);
+            if (newTeamState === "C2") setC2View("choice");
+          }
 
           // D 상태: myTeams에 없는 경우(팀원으로 가입한 팀)도 registeredTeamId로 직접 조회
           const teamIdForDetail = isRegisteredHere ? (
@@ -825,7 +830,7 @@ function HackathonDetailPage() {
           {/* A: 팀 없음 */}
           {teamState === "A" && (
             <div className="team-state-card team-state-card--locked">
-              <div className="team-state-card__icon">👥</div>
+              <div className="team-state-card__icon"><Users size={36} strokeWidth={1.5} /></div>
               <h2 className="team-state-card__title">팀이 없어요</h2>
               <p className="team-state-card__description">
                 팀을 만들거나 합류한 뒤 해커톤에 신청할 수 있어요.
@@ -845,7 +850,7 @@ function HackathonDetailPage() {
           {teamState === "B" && (
             <section className="my-team-panel">
               <div className="team-state-warning">
-                <span className="team-state-warning__icon">⚠️</span>
+                <span className="team-state-warning__icon"><AlertTriangle size={18} /></span>
                 <div>
                   <p className="team-state-warning__title">참가 가능한 팀이 없어요.</p>
                   <p className="team-state-warning__desc">내 모든 팀이 이미 다른 해커톤에 참가 중이에요.</p>
@@ -888,7 +893,7 @@ function HackathonDetailPage() {
           {teamState === "C1" && (
             <section className="my-team-panel">
               <div className="team-state-warning team-state-warning--info">
-                <span className="team-state-warning__icon">ℹ️</span>
+                <span className="team-state-warning__icon"><Info size={18} /></span>
                 <div>
                   <p className="team-state-warning__title">팀장이 신청해야 해커톤에 참가할 수 있어요.</p>
                   <p className="team-state-warning__desc">팀장에게 이 해커톤 신청을 요청해보세요.</p>
@@ -924,7 +929,33 @@ function HackathonDetailPage() {
           )}
 
           {/* C-2: 신청 가능한 팀 있음 / 팀장인 팀 있음 */}
-          {teamState === "C2" && (
+          {teamState === "C2" && c2View === "choice" && (
+            <div className="team-state-card">
+              <div className="team-state-card__icon"><Trophy size={36} strokeWidth={1.5} /></div>
+              <h2 className="team-state-card__title">어떻게 참가하시겠어요?</h2>
+              <p className="team-state-card__description">
+                기존 팀으로 바로 신청하거나, 새로운 팀을 만들어 참가할 수 있어요.
+              </p>
+              <div className="team-state-actions">
+                <button
+                  type="button"
+                  className="team-primary-button"
+                  onClick={() => setC2View("select")}
+                >
+                  기존 팀으로 참가
+                </button>
+                <button
+                  type="button"
+                  className="team-secondary-button"
+                  onClick={() => openTeamCreateModal(false)}
+                >
+                  새로운 팀 생성
+                </button>
+              </div>
+            </div>
+          )}
+
+          {teamState === "C2" && c2View === "select" && (
             <section className="my-team-panel">
               <div className="my-team-panel__header">
                 <h2 className="my-team-panel__title">어떤 팀으로 신청할까요?</h2>
@@ -979,9 +1010,9 @@ function HackathonDetailPage() {
                 <button
                   type="button"
                   className="button-link button-link--ghost"
-                  onClick={() => openTeamCreateModal(false)}
+                  onClick={() => setC2View("choice")}
                 >
-                  + 새 팀 만들기
+                  ← 돌아가기
                 </button>
               </div>
               {registrationMessage && <p className="meta-text">{registrationMessage}</p>}
@@ -1220,7 +1251,7 @@ function HackathonDetailPage() {
       if (submitState === "notRegistered") {
         return (
           <div className="team-state-card team-state-card--locked">
-            <div className="team-state-card__icon">🔒</div>
+            <div className="team-state-card__icon"><Lock size={36} strokeWidth={1.5} /></div>
             <h2 className="team-state-card__title">해커톤에 먼저 참가해야 합니다</h2>
             <p className="team-state-card__description">
               제출하려면 먼저 이 해커톤에 참가 신청을 해주세요.
@@ -1232,7 +1263,7 @@ function HackathonDetailPage() {
       if (submitState === "noTeam") {
         return (
           <div className="team-state-card team-state-card--ready">
-            <div className="team-state-card__icon">🤝</div>
+            <div className="team-state-card__icon"><Handshake size={36} strokeWidth={1.5} /></div>
             <h2 className="team-state-card__title">팀을 먼저 구성해주세요</h2>
             <p className="team-state-card__description">
               팀 없이는 제출할 수 없어요. 팀 탭에서 팀을 생성하거나 기존 팀에 합류해주세요.
@@ -1243,7 +1274,7 @@ function HackathonDetailPage() {
 
       return (
         <div className="team-state-card team-state-card--locked">
-          <div className="team-state-card__icon">⏰</div>
+          <div className="team-state-card__icon"><Clock size={36} strokeWidth={1.5} /></div>
           <h2 className="team-state-card__title">제출이 마감되었습니다</h2>
           <p className="team-state-card__description">
             이 해커톤의 제출 기간이 종료되었습니다.
