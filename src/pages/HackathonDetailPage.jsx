@@ -109,6 +109,7 @@ function HackathonDetailPage() {
   const [registerHereLoading, setRegisterHereLoading] = useState(false);
   const [selectedTeamForRegistration, setSelectedTeamForRegistration] = useState("");
   const [registerConfirmOpen, setRegisterConfirmOpen] = useState(false);
+  const [teamCreateAutoRegister, setTeamCreateAutoRegister] = useState(false);
   const currentUser = getStoredUser();
 
   useEffect(() => {
@@ -174,10 +175,11 @@ function HackathonDetailPage() {
     setIsTeamNoticeOpen(true);
   };
 
-  function openTeamCreateModal() {
+  function openTeamCreateModal(autoRegister = false) {
     if (!currentUser) { navigate("/login"); return; }
     setTeamCreateForm({ name: "", description: "", maxMemberCount: "4", positions: [{ positionName: "", requiredCount: "1" }] });
     setTeamCreateError(null);
+    setTeamCreateAutoRegister(autoRegister);
     setIsTeamCreateModalOpen(true);
   }
 
@@ -185,7 +187,7 @@ function HackathonDetailPage() {
     setIsCreatingTeam(true);
     setTeamCreateError(null);
     try {
-      await createTeam({
+      const newTeam = await createTeam({
         name: teamCreateForm.name.trim(),
         description: teamCreateForm.description.trim() || null,
         maxMemberCount: Number(teamCreateForm.maxMemberCount) || 4,
@@ -195,17 +197,18 @@ function HackathonDetailPage() {
           .filter((p) => p.positionName),
       });
       setIsTeamCreateModalOpen(false);
-      const freshMyTeams = await fetchMyTeams();
-      setMyTeams(freshMyTeams);
-      const freshEligible = freshMyTeams.filter(
-        t => !t.hackathonId || String(t.hackathonId) === String(id)
-      );
-      const freshLeaderTeam = freshEligible.find(
-        t => String(t.leaderId) === String(currentUser?.userId) || t.leader === currentUser?.nickname
-      );
-      if (freshLeaderTeam) {
-        setSelectedTeamForRegistration(String(freshLeaderTeam.id));
-        setTeamState("C2"); // creator is always the leader
+
+      if (teamCreateAutoRegister && newTeam?.id) {
+        // A / B / C-1: 생성 후 바로 이 해커톤으로 신청
+        await registerHackathon(id, newTeam.id);
+        await completeRegistration(newTeam.id, "팀을 생성하고 해커톤에 참가 신청했습니다.");
+      } else {
+        // C-2: 팀 목록 갱신 후 새 팀 선택 상태로
+        const freshMyTeams = await fetchMyTeams();
+        setMyTeams(freshMyTeams);
+        if (newTeam?.id) {
+          setSelectedTeamForRegistration(String(newTeam.id));
+        }
       }
     } catch {
       setTeamCreateError("팀 생성에 실패했습니다. 다시 시도해주세요.");
@@ -824,7 +827,7 @@ function HackathonDetailPage() {
                 팀을 만들거나 합류한 뒤 해커톤에 신청할 수 있어요.
               </p>
               <div className="team-state-actions">
-                <button type="button" className="team-primary-button" onClick={openTeamCreateModal}>
+                <button type="button" className="team-primary-button" onClick={() => openTeamCreateModal(true)}>
                   팀 만들기
                 </button>
                 <button type="button" className="team-secondary-button" onClick={() => navigate(`/camp?hackathon=${hackathon?.slug ?? ""}`)}>
@@ -865,6 +868,15 @@ function HackathonDetailPage() {
                   ))}
                 </div>
               </div>
+              <div className="my-team-panel__actions">
+                <button
+                  type="button"
+                  className="team-secondary-button"
+                  onClick={() => openTeamCreateModal(true)}
+                >
+                  + 새 팀 만들어서 신청하기
+                </button>
+              </div>
             </section>
           )}
 
@@ -894,6 +906,15 @@ function HackathonDetailPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+              <div className="my-team-panel__actions">
+                <button
+                  type="button"
+                  className="team-secondary-button"
+                  onClick={() => openTeamCreateModal(true)}
+                >
+                  + 새 팀 만들어서 신청하기
+                </button>
               </div>
             </section>
           )}
@@ -942,7 +963,7 @@ function HackathonDetailPage() {
                   })}
                 </div>
               </div>
-              <div className="my-team-panel__actions">
+              <div className="my-team-panel__actions my-team-panel__actions--spread">
                 <button
                   type="button"
                   className="team-primary-button"
@@ -950,6 +971,13 @@ function HackathonDetailPage() {
                   onClick={() => setRegisterConfirmOpen(true)}
                 >
                   {registerHereLoading ? "신청 중..." : "이 팀으로 신청하기"}
+                </button>
+                <button
+                  type="button"
+                  className="button-link button-link--ghost"
+                  onClick={() => openTeamCreateModal(false)}
+                >
+                  + 새 팀 만들기
                 </button>
               </div>
               {registrationMessage && <p className="meta-text">{registrationMessage}</p>}
