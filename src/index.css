@@ -5088,6 +5088,83 @@ h2 {
   padding-top: 18px;
 }
 
+.my-team-panel__actions--end {
+  justify-content: flex-end;
+}
+
+.my-team-panel__actions--spread {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.my-team-panel__actions-left {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.team-role-badge--member {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+.team-state-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.team-state-warning--info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.team-state-warning__icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.team-state-warning__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #92400e;
+  margin-bottom: 2px;
+}
+
+.team-state-warning--info .team-state-warning__title {
+  color: #1d4ed8;
+}
+
+.team-state-warning__desc {
+  font-size: 0.85rem;
+  color: #78350f;
+}
+
+.team-state-warning--info .team-state-warning__desc {
+  color: #3b82f6;
+}
+
+.team-select-item--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.team-select-item--disabled input {
+  cursor: not-allowed;
+}
+
+.team-primary-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .participant-team-table {
   display: flex;
   flex-direction: column;
