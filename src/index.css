@@ -2042,6 +2042,17 @@ h2 {
   gap: 10px;
 }
 
+.camp-hackathon-filter-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
 .camp-contact-button {
   display: inline-flex;
   align-items: center;
@@ -4914,6 +4925,12 @@ h2 {
   margin-top: 24px;
 }
 
+.team-state-actions--inline {
+  justify-content: flex-end;
+  margin-top: 0;
+  gap: 8px;
+}
+
 .team-primary-button,
 .team-secondary-button,
 .team-danger-button {
@@ -4940,6 +4957,15 @@ h2 {
   min-height: 52px;
   padding: 0 24px;
   border-radius: 14px;
+}
+
+.team-primary-button--compact,
+.team-secondary-button--compact {
+  min-height: 36px;
+  min-width: unset;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
 }
 
 .team-secondary-button {
@@ -5101,6 +5127,12 @@ h2 {
 
 .participant-team-table__row--clickable:hover {
   background: #f8fafb;
+}
+
+.participant-team-table__row--mine {
+  background: #f0f7ff;
+  border-left: 3px solid #3b82f6;
+  padding-left: 13px;
 }
 
 .participant-team-table__team {
