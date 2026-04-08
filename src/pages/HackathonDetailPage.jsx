@@ -113,6 +113,8 @@ function HackathonDetailPage() {
   const [teamCreateAutoRegister, setTeamCreateAutoRegister] = useState(false);
   const [c2View, setC2View] = useState("choice"); // "choice" | "select"
   const currentUser = getStoredUser();
+  const currentUserId = currentUser?.userId ?? null;
+  const currentUserNickname = currentUser?.nickname ?? null;
 
   useEffect(() => {
     const nextTab = detailTabs.some((tab) => tab.key === requestedTab) ? requestedTab : "overview";
@@ -341,8 +343,8 @@ function HackathonDetailPage() {
             const registeredTeam = myTeams.find(t => String(t.id) === String(registeredTeamId));
             const isLeaderOfRegistered =
               registeredTeam &&
-              (String(registeredTeam.leaderId) === String(currentUser?.userId) ||
-                registeredTeam.leader === currentUser?.nickname);
+              (String(registeredTeam.leaderId) === String(currentUserId) ||
+                registeredTeam.leader === currentUserNickname);
             newTeamState = isLeaderOfRegistered ? "D2" : "D1";
             setSubmitState(getSubmitState(true, true, hackathonDetail?.status));
           } else {
@@ -354,8 +356,8 @@ function HackathonDetailPage() {
               newTeamState = "B";
             } else {
               const firstLeaderTeam = eligibleTeams.find(
-                t => String(t.leaderId) === String(currentUser?.userId) ||
-                     t.leader === currentUser?.nickname
+                t => String(t.leaderId) === String(currentUserId) ||
+                     t.leader === currentUserNickname
               );
               newTeamState = firstLeaderTeam ? "C2" : "C1";
               if (firstLeaderTeam && isMounted) {
@@ -416,7 +418,7 @@ function HackathonDetailPage() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, currentUserId, currentUserNickname]);
 
   const hackathon = useMemo(() => {
     if (!remoteHackathon) return null;
@@ -438,12 +440,6 @@ function HackathonDetailPage() {
   );
 
   const currentLeaderId = myTeamDetail?.leaderId ?? null;
-  const currentLeaderName =
-    myTeamDetail?.leader ?? registrationStatus?.teamName ?? "";
-  const isCurrentUserLeader =
-    Boolean(currentUser?.userId) &&
-    ((currentLeaderId && currentLeaderId === currentUser.userId) ||
-      (currentUser?.nickname && currentLeaderName === currentUser.nickname));
 
   useEffect(() => {
     if (!myTeamDetail) return;
