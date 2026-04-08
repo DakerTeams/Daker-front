@@ -93,8 +93,9 @@ export async function fetchTeams(params = {}) {
   }
 }
 
-export async function fetchMyTeams() {
-  const payload = await apiRequest('/teams/me', {
+export async function fetchMyTeams(hackathonId) {
+  const query = hackathonId != null ? createQueryString({ hackathonId }) : ''
+  const payload = await apiRequest(`/teams/me${query}`, {
     headers: {
       Authorization: `Bearer ${getAccessToken()}`,
     },

@@ -209,7 +209,7 @@ function HackathonDetailPage() {
         await completeRegistration(newTeam.id, "팀을 생성하고 해커톤에 참가 신청했습니다.");
       } else {
         // C-2: 팀 목록 갱신 후 새 팀 선택 상태로
-        const freshMyTeams = await fetchMyTeams();
+        const freshMyTeams = await fetchMyTeams(id);
         setMyTeams(freshMyTeams);
         if (newTeam?.id) {
           setSelectedTeamForRegistration(String(newTeam.id));
@@ -255,7 +255,7 @@ function HackathonDetailPage() {
       setRegistrationStatus(null);
       setMyTeamDetail(null);
       setApplications([]);
-      const freshMyTeams = await fetchMyTeams();
+      const freshMyTeams = await fetchMyTeams(id);
       setMyTeams(freshMyTeams);
       const nextState = freshMyTeams.length === 0 ? "A" : resolveTeamStateFromList(freshMyTeams);
       setTeamState(nextState);
@@ -274,7 +274,7 @@ function HackathonDetailPage() {
     try {
       setIsDeletingTeam(true);
       await deleteTeam(myTeamDetail.id);
-      const freshMyTeams = await fetchMyTeams();
+      const freshMyTeams = await fetchMyTeams(id);
       setMyTeams(freshMyTeams);
       setMyTeamDetail(null);
       setApplications([]);
@@ -323,7 +323,7 @@ function HackathonDetailPage() {
         try {
           const [statusResult, myTeamsResult] = await Promise.allSettled([
             fetchRegistrationStatus(id),
-            fetchMyTeams(),
+            fetchMyTeams(id),
           ]);
 
           if (!isMounted) return;
