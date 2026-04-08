@@ -320,12 +320,15 @@ function HackathonDetailPage() {
 
       if (getStoredUser()) {
         try {
-          const [status, myTeams] = await Promise.all([
+          const [statusResult, myTeamsResult] = await Promise.allSettled([
             fetchRegistrationStatus(id),
             fetchMyTeams(),
           ]);
 
           if (!isMounted) return;
+
+          const status = statusResult.status === "fulfilled" ? statusResult.value : null;
+          const myTeams = myTeamsResult.status === "fulfilled" ? myTeamsResult.value : [];
 
           setRegistrationStatus(status);
           setMyTeams(myTeams);
