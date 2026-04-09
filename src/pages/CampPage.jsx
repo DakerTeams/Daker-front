@@ -7,10 +7,12 @@ import {
   fetchMyTeams,
   fetchTeamDetail,
   fetchTeams,
+  isHackathonDeletionBlocked,
   updateTeam,
 } from "../api/teams.js";
 import { getStoredUser } from "../lib/auth.js";
 import Pagination from "../components/common/Pagination.jsx";
+import Toast from "../components/common/Toast.jsx";
 
 const PAGE_SIZE = 6
 
@@ -55,6 +57,7 @@ function CampPage() {
   const [editMessage, setEditMessage] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -494,6 +497,15 @@ function CampPage() {
                   <button
                     type="button"
                     className="team-danger-button"
+                    disabled={
+                      isDeleting ||
+                      isHackathonDeletionBlocked(selectedTeam.hackathonStatus)
+                    }
+                    title={
+                      isHackathonDeletionBlocked(selectedTeam.hackathonStatus)
+                        ? "진행 중인 해커톤의 팀은 삭제할 수 없습니다."
+                        : undefined
+                    }
                     onClick={async () => {
                       try {
                         setIsDeleting(true);
@@ -511,8 +523,14 @@ function CampPage() {
                           ),
                         );
                         setSelectedTeam(null);
-                      } catch {
-                        setTeamDetailMessage("팀 삭제에 실패했습니다.");
+                        setToast({ type: "success", message: "팀이 삭제되었습니다." });
+                      } catch (err) {
+                        // 진행 중 해커톤이면 백엔드가 400 + data.message 로 사유를 내려줍니다.
+                        const message =
+                          err?.status === 400 && err?.message
+                            ? err.message
+                            : "팀 삭제에 실패했습니다.";
+                        setToast({ type: "error", message });
                       } finally {
                         setIsDeleting(false);
                       }
@@ -811,6 +829,8 @@ function CampPage() {
           </aside>
         </div>
       ) : null}
+
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </section>
   );
 }
