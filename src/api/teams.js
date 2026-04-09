@@ -7,6 +7,13 @@ import {
 } from './client.js'
 import { getAccessToken } from '../lib/auth.js'
 
+// 진행 중인 해커톤(=closed: 라벨 "진행중") 팀은 삭제가 불가능합니다.
+// 참고로 이 코드베이스의 상태 라벨(api/hackathons.js)은 다음과 같습니다:
+//   upcoming → 오픈예정, open → 모집중, closed → 진행중, ended → 종료
+export function isHackathonDeletionBlocked(status) {
+  return status === 'closed'
+}
+
 function normalizeTeam(item) {
   const positionDetails = Array.isArray(item.positions)
     ? item.positions
@@ -34,6 +41,11 @@ function normalizeTeam(item) {
       item.hackathonName ??
       item.hackathon?.title ??
       (item.hackathonId ? `해커톤 #${item.hackathonId}` : '해커톤 미정'),
+    hackathonStatus:
+      item.hackathonStatus ?? item.hackathon?.status ?? null,
+    hackathonStatusLabel:
+      item.hackathonStatusLabel ?? item.hackathon?.statusLabel ?? null,
+    isDeleted: item.isDeleted === true,
     positions: positionDetails.map((position) => position.positionName),
     positionDetails,
     isOpen:

@@ -7,9 +7,12 @@ import {
   fetchTeamDetail,
   fetchTeamApplications,
   decideTeamApplication,
+  deleteTeam,
+  isHackathonDeletionBlocked,
   updateTeam,
 } from '../api/teams.js'
 import { getStoredUser, SESSION_EXPIRED_EVENT } from '../lib/auth.js'
+import Toast from '../components/common/Toast.jsx'
 
 function ApplicationsModal({ team, onClose, onUpdate }) {
   const [applications, setApplications] = useState([])
@@ -116,7 +119,7 @@ const CONTACT_TYPES = [
   { value: 'EMAIL', label: '이메일' },
 ]
 
-function EditTeamModal({ team, onClose, onSaved }) {
+function EditTeamModal({ team, onClose, onSaved, onDeleted }) {
   const [form, setForm] = useState({
     name: team.name,
     description: team.description ?? '',
@@ -130,6 +133,9 @@ function EditTeamModal({ team, onClose, onSaved }) {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const deleteBlocked = isHackathonDeletionBlocked(team.hackathonStatus)
 
   function addPosition() {
     setForm((f) => ({ ...f, positions: [...f.positions, { positionName: '', requiredCount: '1' }] }))
@@ -149,6 +155,27 @@ function EditTeamModal({ team, onClose, onSaved }) {
       ...f,
       positions: f.positions.map((p, i) => i === index ? { ...p, [field]: value } : p),
     }))
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteTeam(team.id)
+      setConfirmDelete(false)
+      onDeleted?.({ type: 'success', message: '팀이 삭제되었습니다.' })
+      onClose()
+    } catch (err) {
+      // 진행 중 해커톤이면 백엔드가 400 + data.message 로 사유를 내려줍니다.
+      const message =
+        err?.status === 400 && err?.message
+          ? err.message
+          : '팀 삭제에 실패했습니다.'
+      setConfirmDelete(false)
+      onDeleted?.({ type: 'error', message })
+    } finally {
+      setDeleting(false)
+    }
   }
 
   async function handleSave() {
@@ -302,18 +329,67 @@ function EditTeamModal({ team, onClose, onSaved }) {
           {error && <p className="mypage-modal__error">{error}</p>}
         </div>
 
-        <div className="mypage-modal__footer">
-          <button type="button" className="team-secondary-button" onClick={onClose}>취소</button>
+        <div className="mypage-modal__footer mypage-modal__footer--spread">
           <button
             type="button"
-            className="team-primary-button"
-            disabled={saving || !form.name.trim()}
-            onClick={handleSave}
+            className="team-danger-button"
+            disabled={deleting || deleteBlocked}
+            title={deleteBlocked ? '진행 중인 해커톤의 팀은 삭제할 수 없습니다.' : undefined}
+            onClick={() => setConfirmDelete(true)}
           >
-            {saving ? '저장 중...' : '저장'}
+            팀 삭제
           </button>
+          <div className="mypage-modal__footer-actions">
+            <button type="button" className="team-secondary-button" onClick={onClose}>취소</button>
+            <button
+              type="button"
+              className="team-primary-button"
+              disabled={saving || !form.name.trim()}
+              onClick={handleSave}
+            >
+              {saving ? '저장 중...' : '저장'}
+            </button>
+          </div>
         </div>
       </div>
+
+      {confirmDelete && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => !deleting && setConfirmDelete(false)}
+        >
+          <div
+            className="team-notice-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>팀을 삭제할까요?</h2>
+            <p className="team-notice-copy">
+              팀을 삭제하면 팀원 전체의 해커톤 참가가 취소돼요. 정말 삭제하시겠어요?
+            </p>
+            <div className="team-notice-actions">
+              <button
+                type="button"
+                className="team-secondary-button team-secondary-button--muted"
+                disabled={deleting}
+                onClick={() => setConfirmDelete(false)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="team-danger-button"
+                disabled={deleting}
+                onClick={handleDelete}
+              >
+                {deleting ? '삭제 중...' : '삭제'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -561,6 +637,7 @@ function MyPage() {
   const [applicationCounts, setApplicationCounts] = useState({})
   const [applicationsModal, setApplicationsModal] = useState(null)
   const [infoModal, setInfoModal] = useState(null)
+  const [toast, setToast] = useState(null)
   const [editTeamModal, setEditTeamModal] = useState(null)
   const [profileEditOpen, setProfileEditOpen] = useState(false)
   const [userTagObjects, setUserTagObjects] = useState([]) // { tagId, name }[]
@@ -751,23 +828,28 @@ function MyPage() {
             ) : (
               myTeams.map((team) => {
                 const isLeader = Number(team.leaderId) === Number(user?.userId)
+                const isDeleted = team.isDeleted
                 return (
                   <article
                     key={team.id}
-                    className={`mypage-team-item${isLeader ? ' mypage-team-item--primary' : ''}`}
+                    className={`mypage-team-item${isLeader ? ' mypage-team-item--primary' : ''}${isDeleted ? ' mypage-team-item--deleted' : ''}`}
+                    aria-disabled={isDeleted || undefined}
                   >
                     <div className="mypage-team-item__col mypage-team-item__col--name">
                       <span className={`mypage-role-badge${isLeader ? ' mypage-role-badge--leader' : ''}`}>
                         {isLeader ? '팀장' : '팀원'}
                       </span>
                       <h3>{team.name}</h3>
+                      {isDeleted && (
+                        <span className="mypage-deleted-badge">삭제됨</span>
+                      )}
                     </div>
                     <div className="mypage-team-item__col mypage-team-item__col--hackathon">
                       <p>{team.hackathonName}</p>
                       <span>{team.currentMembers} / {team.maxMembers}명</span>
                     </div>
                     <div className="mypage-team-item__col mypage-team-item__col--actions">
-                      {isLeader && (
+                      {isLeader && !isDeleted && (
                         <>
                           <button
                             type="button"
@@ -785,13 +867,15 @@ function MyPage() {
                           </button>
                         </>
                       )}
-                      <button
-                        type="button"
-                        className="team-secondary-button team-secondary-button--muted"
-                        onClick={() => setInfoModal(team)}
-                      >
-                        팀 정보
-                      </button>
+                      {!isDeleted && (
+                        <button
+                          type="button"
+                          className="team-secondary-button team-secondary-button--muted"
+                          onClick={() => setInfoModal(team)}
+                        >
+                          팀 정보
+                        </button>
+                      )}
                     </div>
                   </article>
                 )
@@ -819,9 +903,14 @@ function MyPage() {
                 const status = team.hackathonStatus
                 const isDone = status === 'ended'
                 const isActive = status === 'closed'
+                const isDeleted = team.isDeleted
 
                 return (
-                  <div key={team.id} className="mypage-timeline-item">
+                  <div
+                    key={team.id}
+                    className={`mypage-timeline-item${isDeleted ? ' mypage-timeline-item--deleted' : ''}`}
+                    aria-disabled={isDeleted || undefined}
+                  >
                     <div className="mypage-timeline-item__line">
                       <div className={`mypage-timeline-item__dot${isDone ? ' mypage-timeline-item__dot--done' : isActive ? ' mypage-timeline-item__dot--active' : ''}`} />
                     </div>
@@ -831,6 +920,9 @@ function MyPage() {
                         <span className={`mypage-timeline-badge mypage-timeline-badge--${status ?? 'closed'}`}>
                           {isDone ? '완료' : isActive ? '심사 중' : status === 'open' ? '모집 중' : team.hackathonStatusLabel ?? '오픈 예정'}
                         </span>
+                        {isDeleted && (
+                          <span className="mypage-deleted-badge">삭제됨</span>
+                        )}
                       </div>
                       <p className="mypage-timeline-item__team">{team.name}</p>
                       <div className="mypage-timeline-item__meta">
@@ -877,6 +969,12 @@ function MyPage() {
           team={editTeamModal}
           onClose={() => setEditTeamModal(null)}
           onSaved={() => loadTeams(user)}
+          onDeleted={(nextToast) => {
+            setToast(nextToast)
+            if (nextToast?.type === 'success') {
+              loadTeams(user)
+            }
+          }}
         />
       )}
 
@@ -892,6 +990,8 @@ function MyPage() {
           }}
         />
       )}
+
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </section>
   )
 }
